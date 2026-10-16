@@ -1,0 +1,34 @@
+{
+  "name": "@vuedraw/core",
+  "version": "0.1.0",
+  "description": "Framework-agnostic canvas engine behind vuedraw — element model, scene store, history, geometry and hand-drawn rendering.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Vishnu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vishnu/vuedraw",
+    "directory": "packages/core"
+  },
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "perfect-freehand": "^1.2.3",
+    "roughjs": "^4.6.6"
+  }
+}

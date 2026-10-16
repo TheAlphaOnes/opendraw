@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+.nuxt/
+.output/
+.data/
+coverage/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# local reference material (vendored excalidraw source lives here)
+.context/
+
+# logs & os
+*.log
+.DS_Store
+
+# scratch
+/tmp

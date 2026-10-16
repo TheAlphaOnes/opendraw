@@ -1,0 +1,18 @@
+{
+  "name": "vuedraw-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@vuedraw/core": "workspace:*",
+    "nuxt": "^4.6.2",
+    "vuedraw": "workspace:*",
+    "vue": "^3.5.44",
+    "vue-router": "^4.5.0"
+  }
+}
