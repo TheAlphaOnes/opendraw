@@ -1,13 +1,31 @@
 # vuedraw
 
-An [Excalidraw](https://excalidraw.com)-style hand-drawn canvas for the Nuxt 4 ecosystem.
+An Excalidraw-style hand-drawn canvas for the Nuxt 4 ecosystem. Drop `<VueDraw />` into any Nuxt app and get the full whiteboard: shapes, arrows, freehand, text, selection, transforms, undo/redo, themes, and export.
 
-Draw rectangles, diamonds, ellipses, arrows, lines, freehand strokes, and text
-with the rough.js hand-drawn look, on a canvas that behaves the way Excalidraw
-taught everyone to expect: drag to create, click an edge to select, handles to
-resize and rotate, one undo entry per gesture, escape to commit text.
+vuedraw is a pnpm monorepo built on a framework-free engine, published as a Nuxt module.
 
-vuedraw ships as a Nuxt module, built on a framework-free engine.
+## Features
+
+- **The full toolset** — selection, hand (pan), rectangle, diamond, ellipse, arrow, line, freedraw, text, and eraser
+- **Hand-drawn rendering** — rough.js sketch geometry for shapes, perfect-freehand pressure-aware strokes for freedraw
+- **Excalidraw-grade interaction** — drag to create, click an edge to select, handles to resize and rotate, marquee select, modifier snapping
+- **Gesture-level history** — snapshot undo/redo where one undo reverts one gesture, not one keystroke
+- **Text editing in place** — a per-session editor with a stable layout box, so the caret behaves during IME composition and fast typing
+- **Themes** — dark mode inverts element colors in-canvas; your canvas background is user data and is never filtered
+- **Export** — PNG download and JSON scene save/load
+- **Headless mode** — every panel is optional; build your own UI on the same editor context
+- **A framework-free core** — `@vuedraw/core` runs anywhere TypeScript does: tests, workers, other frameworks
+
+## Credits
+
+vuedraw exists because [Excalidraw](https://github.com/excalidraw/excalidraw) showed how a canvas editor should feel. Its behavior contract was learned by reading the Excalidraw codebase: the element model, the single mutation funnel and history semantics, selection and transform math, text WYSIWYG, and the two-canvas render split. vuedraw is an independent implementation for the Nuxt ecosystem; it is not a fork and is not affiliated with the Excalidraw team.
+
+Built on open source:
+
+- [Excalidraw](https://github.com/excalidraw/excalidraw) — the behavioral blueprint, [MIT](https://github.com/excalidraw/excalidraw/blob/master/LICENSE)
+- [rough.js](https://github.com/roughjs/rough) — hand-drawn shape geometry, MIT
+- [perfect-freehand](https://github.com/steveruizok/perfect-freehand) — pressure-aware freehand strokes, MIT
+- [Nuxt](https://nuxt.com) and [Vue](https://vuejs.org) — the ecosystem this is built for
 
 ## Packages
 
@@ -64,7 +82,7 @@ The full editor, ready to drop on a page.
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `ui` | `'full' \| 'minimal' \| 'none'` | `'full'` | Chrome level. `full` adds the tool dock, style panel, actions panel, and context menu. `minimal` keeps the dock and actions. `none` is the bare canvas for custom UI. |
-| `theme` | `'light' \| 'dark'` | `'light'` | Editor theme. Switching swaps the default canvas background (`#ffffff` <-> `#121212`); a background you customized is left untouched. |
+| `theme` | `'light' \| 'dark'` | `'light'` | Editor theme. Switching swaps the default canvas background (`#ffffff` to `#121212` and back); a background you customized is left untouched. |
 | `grid` | `boolean \| number` | `false` | `true` shows a 20px grid; a number sets the cell size. |
 | `initialElements` | `VueDrawElement[]` | `[]` | Scene to open with. |
 
