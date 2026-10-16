@@ -93,7 +93,6 @@ export interface VueDrawElementBase {
 export interface VueDrawLinearElement extends VueDrawElementBase {
   type: 'line' | 'arrow'
   points: Point[]
-  lastCommittedPoint: Point | null
 }
 
 export interface VueDrawLineElement extends VueDrawLinearElement {

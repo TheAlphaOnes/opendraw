@@ -1,0 +1,531 @@
+/**
+ * Static scene rendering: canvas background, grid and every element shape,
+ * drawn in scene coordinates onto a 2D context.
+ *
+ * The hand-drawn look comes from rough.js. Drawable generation is the
+ * expensive part, and elements are immutable (copy-on-write), so a module
+ * level `WeakMap` keyed by element reference caches the generated drawables
+ * and unchanged elements are simply replayed each frame. The cache entry
+ * records the theme it was colored for, so a theme switch regenerates once
+ * and then hits again.
+ *
+ * Freedraw strokes bypass rough.js entirely: perfect-freehand produces the
+ * outline and we fill it as a single smoothed `Path2D`.
+ */
+
+import roughDefault from 'roughjs'
+import type { Config, Drawable, Options } from 'roughjs/bin/core.js'
+import type { RoughCanvas } from 'roughjs/bin/canvas.js'
+import type { RoughGenerator } from 'roughjs/bin/generator.js'
+import { getStroke } from 'perfect-freehand'
+import { TRANSPARENT } from '../elements/defaults.js'
+import { fontCss, textLines } from '../geometry/text.js'
+import type {
+  Point,
+  Size,
+  Viewport,
+  VueDrawAppState,
+  VueDrawElement,
+  VueDrawFreedrawElement,
+  VueDrawLinearElement,
+  VueDrawTextElement,
+} from '../types.js'
+import { applyViewportTransform, screenToScene } from '../viewport.js'
+import { themeColor, UI } from './theme.js'
+
+/**
+ * rough.js is a CJS package whose `.d.ts` is ESM-flavored (`export default`),
+ * so under NodeNext the default import types as the module namespace. Every
+ * runtime we target (Node ESM, Vite, Vitest) hands the factory object itself
+ * to the default import, so re-bind it to the shape rough actually exports.
+ */
+const rough = roughDefault as unknown as {
+  canvas(canvas: HTMLCanvasElement, config?: Config): RoughCanvas
+  generator(config?: Config): RoughGenerator
+}
+
+/** Screen pixel dimensions of the canvas being rendered into. */
+export interface CanvasSize {
+  width: number
+  height: number
+}
+
+export interface SceneRenderInput {
+  /** Ordered back-to-front. */
+  elements: readonly VueDrawElement[]
+  appState: Readonly<
+    Pick<VueDrawAppState, 'theme' | 'viewBackgroundColor' | 'viewport' | 'gridSize' | 'editingId'>
+  >
+  canvasSize: CanvasSize
+  /** devicePixelRatio — fold into the transform so callers stay CSS-px. */
+  dpr: number
+}
+
+// ---------------------------------------------------------------------------
+// Stroke dash arrays — shared with tests
+// ---------------------------------------------------------------------------
+
+export function getDashArrayDashed(strokeWidth: number): number[] {
+  return [8, 8 + strokeWidth]
+}
+
+export function getDashArrayDotted(strokeWidth: number): number[] {
+  return [1.5, 6 + strokeWidth]
+}
+
+// ---------------------------------------------------------------------------
+// Roughness scaling — small shapes look cleaner with reduced jitter
+// ---------------------------------------------------------------------------
+
+type BoxElement = Extract<VueDrawElement, { type: 'rectangle' | 'diamond' | 'ellipse' }>
+
+function isBoxLike(element: VueDrawElement): element is BoxElement {
+  return element.type === 'rectangle' || element.type === 'diamond' || element.type === 'ellipse'
+}
+
+function isLinearType(element: VueDrawElement): element is VueDrawLinearElement {
+  return element.type === 'line' || element.type === 'arrow'
+}
+
+/**
+ * The extent roughness is scaled against. For stroke-based elements the
+ * geometry lives in `points`, not `width`/`height`, so measure from there.
+ */
+function elementExtent(element: VueDrawElement): Size {
+  if (!isLinearType(element) && element.type !== 'freedraw') {
+    return { width: element.width, height: element.height }
+  }
+  let x1 = Number.POSITIVE_INFINITY
+  let y1 = Number.POSITIVE_INFINITY
+  let x2 = Number.NEGATIVE_INFINITY
+  let y2 = Number.NEGATIVE_INFINITY
+  if (isLinearType(element)) {
+    for (const p of element.points) {
+      x1 = Math.min(x1, p.x)
+      y1 = Math.min(y1, p.y)
+      x2 = Math.max(x2, p.x)
+      y2 = Math.max(y2, p.y)
+    }
+  } else {
+    for (const p of element.points) {
+      x1 = Math.min(x1, p[0]!)
+      y1 = Math.min(y1, p[1]!)
+      x2 = Math.max(x2, p[0]!)
+      y2 = Math.max(y2, p[1]!)
+    }
+  }
+  return { width: x2 - x1, height: y2 - y1 }
+}
+
+/**
+ * Keeps the hand-drawn feel on sizeable shapes but tightens it on tiny
+ * ones, where full roughness turns into visual noise. Modeled on
+ * Excalidraw's heuristic.
+ */
+export function adjustRoughness(element: VueDrawElement): number {
+  const { width, height } = elementExtent(element)
+  const minSize = Math.min(width, height)
+  const maxSize = Math.max(width, height)
+  const roughness = element.roughness
+  if (
+    // Both sides relatively big.
+    (minSize >= 20 && maxSize >= 50) ||
+    // A closed shape keeps its roughness once both sides reach 15px.
+    (isBoxLike(element) && minSize >= 15) ||
+    // Long linear elements keep their character.
+    (isLinearType(element) && maxSize >= 50)
+  ) {
+    return roughness
+  }
+  return Math.min(roughness / (maxSize < 10 ? 3 : 2), 2.5)
+}
+
+// ---------------------------------------------------------------------------
+// rough.js options & shape generation
+// ---------------------------------------------------------------------------
+
+/** One generator instance for the whole module — drawables are seed-stable. */
+const generator = rough.generator()
+
+interface CachedShape {
+  /** Theme the drawables were colored for — a theme switch regenerates. */
+  dark: boolean
+  drawables: readonly Drawable[]
+}
+
+/** Elements are immutable, so reference identity is a valid cache key. */
+const shapeCache = new WeakMap<VueDrawElement, CachedShape>()
+
+function buildRoughOptions(element: VueDrawElement, dark: boolean): Options {
+  const strokeWidth = element.strokeWidth
+  return {
+    seed: element.seed,
+    roughness: adjustRoughness(element),
+    stroke: themeColor(element.strokeColor, dark),
+    // Non-solid strokes lose the second sketch pass, so widen a touch to
+    // keep the perceived weight — and keep fill metrics tied to the plain
+    // width so hachure density doesn't shift.
+    strokeWidth:
+      element.strokeStyle !== 'solid' ? strokeWidth + 0.5 : strokeWidth,
+    strokeLineDash:
+      element.strokeStyle === 'dashed'
+        ? getDashArrayDashed(strokeWidth)
+        : element.strokeStyle === 'dotted'
+          ? getDashArrayDotted(strokeWidth)
+          : undefined,
+    disableMultiStroke: element.strokeStyle !== 'solid',
+    fill:
+      element.backgroundColor !== TRANSPARENT
+        ? themeColor(element.backgroundColor, dark)
+        : undefined,
+    fillStyle: element.fillStyle,
+    fillWeight: strokeWidth / 2,
+    hachureGap: strokeWidth * 4,
+    preserveVertices: element.roughness < 2,
+  }
+}
+
+/** rough.js consumes `[x, y]` tuples. */
+function toRoughPoints(points: readonly Point[]): [number, number][] {
+  return points.map((p) => [p.x, p.y] as [number, number])
+}
+
+function buildBoxShape(element: BoxElement, dark: boolean): Drawable[] {
+  const options = buildRoughOptions(element, dark)
+  switch (element.type) {
+    case 'rectangle':
+      return [generator.rectangle(0, 0, element.width, element.height, options)]
+    case 'diamond':
+      return [
+        generator.polygon(
+          [
+            [element.width / 2, 0],
+            [element.width, element.height / 2],
+            [element.width / 2, element.height],
+            [0, element.height / 2],
+          ],
+          options,
+        ),
+      ]
+    case 'ellipse':
+      return [
+        generator.ellipse(
+          element.width / 2,
+          element.height / 2,
+          element.width,
+          element.height,
+          { ...options, curveFitting: 1 },
+        ),
+      ]
+  }
+}
+
+/** First and last point this close (scene px) counts as a closed loop. */
+const LOOP_MAX_DISTANCE = 10
+
+function isClosedLoop(points: readonly Point[]): boolean {
+  if (points.length < 3) {
+    return false
+  }
+  const first = points[0]!
+  const last = points[points.length - 1]!
+  return Math.hypot(first.x - last.x, first.y - last.y) <= LOOP_MAX_DISTANCE
+}
+
+/** Chevron angle and length, in Excalidraw's proportions. */
+const ARROWHEAD_ANGLE = 20 * (Math.PI / 180)
+const ARROWHEAD_SIZE = 30
+
+function buildArrowhead(element: VueDrawLinearElement, options: Options): Drawable[] {
+  const points = element.points
+  const tip = points[points.length - 1]
+  const previous = points[points.length - 2]
+  if (!tip || !previous) {
+    return []
+  }
+  const dx = tip.x - previous.x
+  const dy = tip.y - previous.y
+  const segmentLength = Math.hypot(dx, dy)
+  if (segmentLength === 0) {
+    return []
+  }
+  const direction = Math.atan2(dy, dx)
+  const length = Math.min((ARROWHEAD_SIZE * element.strokeWidth) / 2, segmentLength / 2)
+  const strokeOptions: Options = { ...options, fill: undefined }
+  const drawables: Drawable[] = []
+  for (const offset of [-ARROWHEAD_ANGLE, ARROWHEAD_ANGLE]) {
+    const angle = direction + Math.PI + offset
+    const endX = tip.x + Math.cos(angle) * length
+    const endY = tip.y + Math.sin(angle) * length
+    drawables.push(generator.line(tip.x, tip.y, endX, endY, strokeOptions))
+  }
+  return drawables
+}
+
+function buildLinearShape(element: VueDrawLinearElement, dark: boolean): Drawable[] {
+  const points = toRoughPoints(element.points)
+  if (isClosedLoop(element.points)) {
+    // Only closed loops take a fill; the polygon closes the path.
+    return [generator.polygon(points, buildRoughOptions(element, dark))]
+  }
+  const strokeOptions: Options = { ...buildRoughOptions(element, dark), fill: undefined }
+  const drawables: Drawable[] = [generator.linearPath(points, strokeOptions)]
+  if (element.type === 'arrow') {
+    drawables.push(...buildArrowhead(element, strokeOptions))
+  }
+  return drawables
+}
+
+function buildShape(element: VueDrawElement, dark: boolean): readonly Drawable[] {
+  if (isBoxLike(element)) {
+    return buildBoxShape(element, dark)
+  }
+  if (isLinearType(element)) {
+    return buildLinearShape(element, dark)
+  }
+  // Freedraw and text never render through rough.js.
+  return []
+}
+
+function getShape(element: VueDrawElement, dark: boolean): readonly Drawable[] {
+  const cached = shapeCache.get(element)
+  if (cached && cached.dark === dark) {
+    return cached.drawables
+  }
+  const drawables = buildShape(element, dark)
+  shapeCache.set(element, { dark, drawables })
+  return drawables
+}
+
+// ---------------------------------------------------------------------------
+// Freedraw — perfect-freehand outline filled as one smoothed path
+// ---------------------------------------------------------------------------
+
+/** Stroke size relative to `strokeWidth`, tuned by Excalidraw visually. */
+const FREEDRAW_SIZE_FACTOR = 4.25
+
+const freedrawPathCache = new WeakMap<VueDrawFreedrawElement, Path2D>()
+
+function getFreedrawPath(element: VueDrawFreedrawElement): Path2D {
+  const cached = freedrawPathCache.get(element)
+  if (cached) {
+    return cached
+  }
+  const outline = getStroke(element.points, {
+    simulatePressure: element.simulatePressure,
+    size: element.strokeWidth * FREEDRAW_SIZE_FACTOR,
+    thinning: 0.6,
+    smoothing: 0.5,
+    streamline: 0.5,
+    easing: (t: number) => Math.sin((t * Math.PI) / 2),
+    last: true,
+  })
+  const path = outlineToPath(outline)
+  freedrawPathCache.set(element, path)
+  return path
+}
+
+/** Quadratic-midpoint smoothing: M to the first point, Q through the rest. */
+function outlineToPath(outline: readonly (readonly number[])[]): Path2D {
+  const path = new Path2D()
+  const count = outline.length
+  if (count === 0) {
+    return path
+  }
+  const [startX, startY] = outline[0]!
+  path.moveTo(startX!, startY!)
+  for (let i = 0; i < count; i++) {
+    const current = outline[i]!
+    const next = outline[(i + 1) % count]!
+    const midX = (current[0]! + next[0]!) / 2
+    const midY = (current[1]! + next[1]!) / 2
+    path.quadraticCurveTo(current[0]!, current[1]!, midX, midY)
+  }
+  path.closePath()
+  return path
+}
+
+function drawFreedraw(
+  ctx: CanvasRenderingContext2D,
+  element: VueDrawFreedrawElement,
+  dark: boolean,
+): void {
+  if (element.points.length === 0) {
+    return
+  }
+  ctx.fillStyle = themeColor(element.strokeColor, dark)
+  ctx.fill(getFreedrawPath(element))
+}
+
+// ---------------------------------------------------------------------------
+// Text
+// ---------------------------------------------------------------------------
+
+function drawText(ctx: CanvasRenderingContext2D, element: VueDrawTextElement, dark: boolean): void {
+  ctx.font = fontCss(element.fontFamily, element.fontSize)
+  ctx.fillStyle = themeColor(element.strokeColor, dark)
+  ctx.textAlign = element.textAlign
+  ctx.textBaseline = 'alphabetic'
+  const anchorX =
+    element.textAlign === 'center'
+      ? element.width / 2
+      : element.textAlign === 'right'
+        ? element.width
+        : 0
+  const lineStep = element.fontSize * element.lineHeight
+  const lines = textLines(element.text)
+  for (let i = 0; i < lines.length; i++) {
+    // Ascender-approximated baseline: full font size below the line top.
+    ctx.fillText(lines[i]!, anchorX, i * lineStep + element.fontSize)
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Element drawing
+// ---------------------------------------------------------------------------
+
+/**
+ * Draws one element at its scene position: translate to the element origin,
+ * rotate around the element center, then render in element-local space.
+ */
+function drawElement(
+  ctx: CanvasRenderingContext2D,
+  rc: ReturnType<typeof rough.canvas>,
+  element: VueDrawElement,
+  dark: boolean,
+): void {
+  ctx.save()
+  ctx.translate(element.x, element.y)
+  if (element.angle !== 0) {
+    const cx = element.width / 2
+    const cy = element.height / 2
+    ctx.translate(cx, cy)
+    ctx.rotate(element.angle)
+    ctx.translate(-cx, -cy)
+  }
+  ctx.lineJoin = 'round'
+  ctx.lineCap = 'round'
+  ctx.globalAlpha = element.opacity / 100
+  switch (element.type) {
+    case 'rectangle':
+    case 'diamond':
+    case 'ellipse':
+    case 'line':
+    case 'arrow': {
+      for (const drawable of getShape(element, dark)) {
+        // rough.js resets some ctx state per opset — re-apply alpha so
+        // multi-drawable elements (arrowheads) stay uniformly faded.
+        ctx.globalAlpha = element.opacity / 100
+        rc.draw(drawable)
+      }
+      break
+    }
+    case 'freedraw':
+      drawFreedraw(ctx, element, dark)
+      break
+    case 'text':
+      drawText(ctx, element, dark)
+      break
+  }
+  ctx.restore()
+}
+
+// ---------------------------------------------------------------------------
+// Scene rendering
+// ---------------------------------------------------------------------------
+
+/** The scene-space rectangle the viewport currently shows. */
+function visibleSceneRect(canvasSize: CanvasSize, viewport: Viewport) {
+  const topLeft = screenToScene({ x: 0, y: 0 }, viewport)
+  const bottomRight = screenToScene(
+    { x: canvasSize.width, y: canvasSize.height },
+    viewport,
+  )
+  return { x1: topLeft.x, y1: topLeft.y, x2: bottomRight.x, y2: bottomRight.y }
+}
+
+/** Beyond this many grid lines the grid is visual noise — skip the frame's cost. */
+const MAX_GRID_LINES = 10_000
+
+function drawGrid(
+  ctx: CanvasRenderingContext2D,
+  viewport: Viewport,
+  visible: { x1: number; y1: number; x2: number; y2: number },
+  gridSize: number,
+  dark: boolean,
+): void {
+  const firstX = Math.ceil(visible.x1 / gridSize)
+  const lastX = Math.floor(visible.x2 / gridSize)
+  const firstY = Math.ceil(visible.y1 / gridSize)
+  const lastY = Math.floor(visible.y2 / gridSize)
+  if (lastX - firstX + lastY - firstY > MAX_GRID_LINES) {
+    return
+  }
+  ctx.save()
+  ctx.strokeStyle = dark ? UI.grid.dark : UI.grid.light
+  ctx.lineWidth = 1 / viewport.zoom
+  ctx.beginPath()
+  for (let ix = firstX; ix <= lastX; ix++) {
+    const x = ix * gridSize
+    ctx.moveTo(x, visible.y1)
+    ctx.lineTo(x, visible.y2)
+  }
+  for (let iy = firstY; iy <= lastY; iy++) {
+    const y = iy * gridSize
+    ctx.moveTo(visible.x1, y)
+    ctx.lineTo(visible.x2, y)
+  }
+  ctx.stroke()
+  ctx.restore()
+}
+
+export function renderScene(ctx: CanvasRenderingContext2D, input: SceneRenderInput): void {
+  const { elements, appState, canvasSize, dpr } = input
+  const { theme, viewBackgroundColor, viewport, gridSize } = appState
+  const dark = theme === 'dark'
+  ctx.save()
+  applyViewportTransform(ctx, viewport, dpr)
+  const visible = visibleSceneRect(canvasSize, viewport)
+  // The canvas background is user data — it is never dark-filtered.
+  ctx.fillStyle = viewBackgroundColor
+  ctx.fillRect(visible.x1, visible.y1, visible.x2 - visible.x1, visible.y2 - visible.y1)
+  if (gridSize !== null && gridSize > 0) {
+    drawGrid(ctx, viewport, visible, gridSize, dark)
+  }
+  // One RoughCanvas per render call; drawables come from the shared generator.
+  const rc = rough.canvas(ctx.canvas)
+  for (const element of elements) {
+    drawElement(ctx, rc, element, dark)
+  }
+  ctx.restore()
+}
+
+// ---------------------------------------------------------------------------
+// Standalone element drawing (no viewport involved)
+// ---------------------------------------------------------------------------
+
+/**
+ * Draws a single element as-is — assumes `ctx` already carries whatever
+ * transform the caller wants (identity for exports, viewport for previews).
+ */
+export function renderElementShape(
+  ctx: CanvasRenderingContext2D,
+  element: VueDrawElement,
+  dark: boolean,
+): void {
+  drawElement(ctx, rough.canvas(ctx.canvas), element, dark)
+}
+
+/**
+ * Convenience wrapper for export paths: draws a single element with no
+ * viewport transform applied. `renderElementShape` is already viewport-free
+ * (the viewport is owned by `renderScene`), so this exists as the semantic
+ * entry point for exporters.
+ */
+export function exportElementShape(
+  ctx: CanvasRenderingContext2D,
+  element: VueDrawElement,
+  dark: boolean,
+): void {
+  renderElementShape(ctx, element, dark)
+}
