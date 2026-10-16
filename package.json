@@ -9,8 +9,8 @@
   "scripts": {
     "build": "pnpm --filter @vuedraw/core build && pnpm --filter vuedraw build",
     "dev:prepare": "pnpm --filter @vuedraw/core build && pnpm --filter vuedraw dev:prepare",
-    "dev": "pnpm dev:prepare && pnpm --filter playground dev",
-    "build:playground": "pnpm --filter playground build",
+    "dev": "pnpm dev:prepare && pnpm --filter vuedraw-playground dev",
+    "build:playground": "pnpm --filter vuedraw-playground build",
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck"
   },

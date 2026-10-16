@@ -21,7 +21,7 @@ patterns proven there, not a port.
 pnpm -r test          # core vitest suite (111 tests)
 pnpm build            # core + nuxt package builds
 pnpm --filter vuedraw exec vue-tsc --noEmit   # module typecheck gate
-pnpm --filter playground dev                  # playground at :3000
+pnpm dev                                      # playground at :3000
 ```
 
 module build uses `nuxt-module-build` (from `@nuxt/module-builder`) — the

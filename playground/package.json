@@ -11,8 +11,13 @@
   "dependencies": {
     "@vuedraw/core": "workspace:*",
     "nuxt": "^4.6.2",
-    "vuedraw": "workspace:*",
     "vue": "^3.5.44",
-    "vue-router": "^4.5.0"
+    "vue-router": "^4.5.0",
+    "vuedraw": "workspace:*"
+  },
+  "devDependencies": {
+    "lucide-vue-next": "^1.0.0",
+    "perfect-freehand": "^1.2.3",
+    "roughjs": "^4.6.6"
   }
 }

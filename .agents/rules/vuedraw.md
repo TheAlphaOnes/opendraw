@@ -76,5 +76,5 @@ before declaring any change done:
 - `pnpm --filter vuedraw exec vue-tsc --noEmit` clean.
 - `pnpm build` emits for both packages.
 - canvas-behavior changes get a live check in the playground
-  (`pnpm --filter playground dev`), not just unit tests — the text
+  (`pnpm dev`), not just unit tests — the text
   reversal bug passed every unit test and only reproduced in the browser.
