@@ -13,7 +13,7 @@ import type { Bounds, VueDrawAppState, VueDrawElement } from '../types.js'
 import { applyViewportTransform } from '../viewport.js'
 import type { CanvasSize } from './renderScene.js'
 import { renderElementShape } from './renderScene.js'
-import { themeColor, UI } from './theme.js'
+import { UI } from './theme.js'
 
 export interface OverlayRenderInput {
   /** The committed selection. Empty when nothing is selected. */
@@ -45,6 +45,17 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
   const { theme, viewport, editingId } = appState
   const zoom = viewport.zoom
   const dark = theme === 'dark'
+
+  // The overlay is transparent by design and nothing else wipes it, so each
+  // frame starts by clearing the whole bitmap — under the identity transform,
+  // in device pixels. Without this, moving chrome (selection borders, handles,
+  // the marquee) trails behind the pointer and a deselect leaves its last
+  // paint on the canvas forever.
+  ctx.save()
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+  ctx.restore()
+
   ctx.save()
   applyViewportTransform(ctx, viewport, input.dpr)
   // No background fill: the overlay canvas is transparent by design.
@@ -61,12 +72,13 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
   if (selectedElements.length > 0 && !isEditingText) {
     const frame = selectionFrameOf(selectedElements)
     if (frame) {
-      const accent = themeColor(
+      // Chrome colors are theme-stable by design: they are not element user
+      // data, so they skip the dark filter (which would sink a light green
+      // into the dark canvas).
+      const accent =
         selectedElements.length === 1 && selectedElements[0]!.locked
           ? UI.locked
-          : UI.selection,
-        dark,
-      )
+          : UI.selection
       if (selectedElements.length === 1) {
         drawSingleBorder(ctx, frame, accent, zoom)
       } else {
@@ -77,7 +89,7 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
   }
 
   if (marquee) {
-    drawMarquee(ctx, marquee, themeColor(UI.selection, dark), zoom)
+    drawMarquee(ctx, marquee, UI.selection, zoom)
   }
   ctx.restore()
 }

@@ -38,7 +38,7 @@ function onSelect(ids: string[]) {
 }
 
 .page__link {
-  color: #6965db;
+  color: #2f9e44;
   text-decoration: none;
 }
 

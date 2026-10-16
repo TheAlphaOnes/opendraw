@@ -25,8 +25,8 @@
   --vd-border: rgba(30, 30, 30, 0.12);
 
   /* Accents & intents */
-  --vd-accent: #6965db;
-  --vd-accent-soft: rgba(105, 101, 219, 0.12);
+  --vd-accent: #2f9e44;
+  --vd-accent-soft: rgba(47, 158, 68, 0.12);
   --vd-danger: #e03131;
   --vd-danger-soft: rgba(224, 49, 49, 0.1);
   --vd-hover: rgba(30, 30, 30, 0.06);

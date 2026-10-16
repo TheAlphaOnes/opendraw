@@ -16,8 +16,13 @@ export interface RenderTheme {
 
 /** Chrome colors used by the overlay renderer — not element user data. */
 export const UI = {
-  /** Accent for selection borders, handles and the marquee. */
-  selection: '#6965db',
+  /**
+   * Accent for selection borders, handles and the marquee — the deep Vue
+   * green: strong enough to read on the white canvas yet alive on the dark
+   * default. Chrome colors are consumed as-is in both themes (like `grid`),
+   * never through the element dark filter.
+   */
+  selection: '#2f9e44',
   /** De-emphasized accent for locked selections. */
   locked: '#ced4da',
   /** Scene grid ink per theme — low contrast so content stays in focus. */

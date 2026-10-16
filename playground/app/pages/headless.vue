@@ -134,7 +134,7 @@ const TOOLS: Array<{ id: ToolId; label: string }> = [
 }
 
 .dock__btn--active {
-  background: #6965db;
+  background: #2f9e44;
   color: #ffffff;
 }
 
