@@ -9,12 +9,25 @@
 </template>
 
 <script setup lang="ts">
-function onChange(detail: { elements: unknown[] }) {
+/**
+ * E2E mirror: the Playwright suite reads document state through these same
+ * public events (mirrored onto `window.__vuedraw`) instead of poking Vue
+ * internals. The hook lives in the playground, never in the library.
+ */
+declare global {
+  interface Window {
+    __vuedraw?: { elements: unknown[]; selection: string[] }
+  }
+}
+
+function onChange(detail: { elements: unknown[] }): void {
+  window.__vuedraw = { elements: detail.elements, selection: window.__vuedraw?.selection ?? [] }
   // eslint-disable-next-line no-console
   console.debug('[vuedraw] change', detail.elements.length)
 }
 
-function onSelect(ids: string[]) {
+function onSelect(ids: string[]): void {
+  window.__vuedraw = { elements: window.__vuedraw?.elements ?? [], selection: ids }
   // eslint-disable-next-line no-console
   console.debug('[vuedraw] select', ids)
 }
@@ -38,7 +51,7 @@ function onSelect(ids: string[]) {
 }
 
 .page__link {
-  color: #2f9e44;
+  color: #0c8599;
   text-decoration: none;
 }
 

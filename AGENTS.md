@@ -653,6 +653,7 @@ The full project doc lives in `.agents/project.md`. The project rules live in `.
 
 Laws that bear repeating:
 
+* **Excalidraw parity is the behavior contract.** vuedraw must look and behave like Excalidraw. When any behavior is ambiguous, match Excalidraw: the reference codebase is vendored at `.context/excalidraw/` — read it before inventing behavior. Selection semantics, binding, history granularity, transforms: parity over invention.
 * All document mutations go through `VueDrawDocument.mutate()`. There is no other write path.
 * Vue derivations of document state read through the injected context: `ctx.state`, `ctx.elements`, `ctx.rev`. Plain document fields never invalidate a computed.
 * `<TextEditor>` mounts per editing session. The textarea is uncontrolled while typing and keeps a stable layout box for the session.
@@ -665,5 +666,6 @@ Laws that bear repeating:
 * `pnpm dev` — prepare workspace packages, then run the playground
 * `pnpm build` — build `@vuedraw/core` and the `vuedraw` module
 * `pnpm test` — run the test suites
-* `pnpm typecheck` — typecheck every package
+* `pnpm typecheck` — typecheck every package (the playground included: two vue-tsc passes, with the e2e specs covered by their own strict `tsconfig.e2e.json`)
+* `pnpm e2e` — Playwright e2e suite against the playground (boots the dev server itself)
 * `pnpm build:playground` — production build of the playground

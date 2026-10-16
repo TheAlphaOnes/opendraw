@@ -12,7 +12,8 @@
     "dev": "pnpm dev:prepare && pnpm --filter vuedraw-playground dev",
     "build:playground": "pnpm --filter vuedraw-playground build",
     "test": "pnpm -r --if-present test",
-    "typecheck": "pnpm -r --if-present typecheck"
+    "typecheck": "pnpm -r --if-present typecheck",
+    "e2e": "pnpm --filter vuedraw-playground e2e"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

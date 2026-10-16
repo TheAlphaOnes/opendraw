@@ -8,6 +8,10 @@ dist/
 .data/
 coverage/
 
+# playwright
+test-results/
+playwright-report/
+
 # env & secrets
 .env
 .env.*
