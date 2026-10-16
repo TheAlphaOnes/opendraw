@@ -1,0 +1,367 @@
+import { computed, inject, provide, shallowRef, type ComputedRef, type InjectionKey, type ShallowRef } from 'vue'
+
+import {
+  DEFAULT_APP_STATE,
+  VueDrawDocument,
+  duplicateElement,
+  exportToDataURL,
+  getCommonBounds,
+  type ElementPatch,
+  type ElementStyle,
+  type ReorderAction,
+  type TextLayout,
+  type TextStyle,
+  type ThemeName,
+  type ToolId,
+  type VueDrawAppState,
+  type VueDrawElement,
+  type VueDrawFile,
+  type VueDrawState,
+  layoutText,
+  zoomViewport,
+  DEFAULT_VIEWPORT,
+  MAX_ZOOM,
+  MIN_ZOOM,
+  screenToSceneLength,
+  type Point,
+} from '@vuedraw/core'
+
+import { isTextElement } from '@vuedraw/core'
+
+/**
+ * VueDrawContext — the reactive wrapper around a VueDrawDocument.
+ *
+ * Every component in the editor (canvas, toolbar, panels, menus) consumes
+ * this one context through provide/inject. It is also the public
+ * extension point: embed <VueDrawCanvas ui="none" /> and build your own
+ * chrome from useVueDraw().
+ */
+
+export interface VueDrawChangeDetail {
+  elements: readonly VueDrawElement[]
+  appState: Readonly<VueDrawAppState>
+}
+
+/** The reactive editor context shared by all vuedraw components. */
+export interface VueDrawContext {
+  /** The raw document — escape hatch for advanced use. */
+  doc: VueDrawDocument
+
+  /** Reactive mirror of the document state (shallow: element objects are immutable). */
+  state: ShallowRef<VueDrawState>
+  elements: ComputedRef<readonly VueDrawElement[]>
+  appState: ComputedRef<Readonly<VueDrawAppState>>
+  selectedElements: ComputedRef<readonly VueDrawElement[]>
+
+  // tools & theme
+  activeTool: ComputedRef<ToolId>
+  setActiveTool: (tool: ToolId) => void
+  theme: ComputedRef<ThemeName>
+  setTheme: (theme: ThemeName) => void
+  toggleTheme: () => void
+
+  // selection
+  select: (ids: string | readonly string[] | null, mode?: 'replace' | 'toggle') => void
+  selectAll: () => void
+  isIdSelected: (id: string) => boolean
+
+  // element actions
+  updateElement: (id: string, patch: ElementPatch | ((el: VueDrawElement) => ElementPatch)) => void
+  deleteSelection: () => void
+  duplicateSelection: () => void
+  reorderSelection: (action: ReorderAction) => void
+  toggleSelectionLock: () => void
+  copySelection: () => void
+  cutSelection: () => void
+  paste: (at?: Point) => void
+  clipboardSize: ComputedRef<number>
+
+  // style
+  changeStyle: (style: Partial<ElementStyle>) => void
+  changeTextStyle: (style: Partial<TextStyle>) => void
+
+  // history
+  undo: () => boolean
+  redo: () => boolean
+  canUndo: ComputedRef<boolean>
+  canRedo: ComputedRef<boolean>
+
+  // viewport
+  zoomAt: (screenPoint: Point, zoom: number) => void
+  zoomIn: (screenPoint: Point) => void
+  zoomOut: (screenPoint: Point) => void
+  resetZoom: () => void
+  panBy: (dxScreen: number, dyScreen: number) => void
+  viewport: ComputedRef<{ scrollX: number; scrollY: number; zoom: number }>
+
+  // files & export
+  serialize: () => VueDrawFile
+  toJSON: () => string
+  loadFile: (file: VueDrawFile) => void
+  loadJSON: (text: string) => void
+  exportPNG: (filename?: string) => void
+  exportDataURL: () => string
+
+  // editing (text)
+  setEditing: (id: string | null) => void
+  editingId: ComputedRef<string | null>
+
+  // grid
+  gridSize: ComputedRef<number | null>
+  setGridSize: (size: number | null) => void
+}
+
+export interface CreateVueDrawOptions {
+  elements?: readonly VueDrawElement[]
+  appState?: Partial<VueDrawAppState>
+}
+
+export const VUEDRAW_INJECTION_KEY: InjectionKey<VueDrawContext> = Symbol('vuedraw')
+
+const ZOOM_STEP = 1.25
+
+export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDrawContext {
+  const doc = new VueDrawDocument({
+    elements: options.elements,
+    appState: options.appState,
+  })
+
+  /** In-app clipboard: plain element copies; ids are regenerated on paste. */
+  let clipboard: VueDrawElement[] = []
+
+  const state = shallowRef<VueDrawState>(doc.getState())
+
+  doc.subscribe((next) => {
+    state.value = next
+  })
+
+  const appState = computed(() => state.value.appState)
+  const elements = computed(() => state.value.elements)
+
+  /**
+   * Excalidraw parity: switching themes swaps the DEFAULT canvas background
+   * with it (light keeps #ffffff, dark gets #121212). The dark theme
+   * dark-filters element strokes, so a dark theme left over the white
+   * default renders near-white strokes on a white canvas — invisible. A
+   * background the user customized is kept untouched.
+   */
+  function themeBackgroundPatch(theme: 'light' | 'dark'): { theme: 'light' | 'dark'; viewBackgroundColor?: string } {
+    const current = appState.value.viewBackgroundColor.toLowerCase()
+    const isThemeDefault = current === '#ffffff' || current === '#121212'
+    if (!isThemeDefault) {
+      return { theme }
+    }
+    return {
+      theme,
+      viewBackgroundColor: theme === 'dark' ? '#121212' : '#ffffff',
+    }
+  }
+
+  const context: VueDrawContext = {
+    doc,
+    state,
+    elements,
+    appState,
+
+    activeTool: computed(() => appState.value.activeTool),
+    setActiveTool: (tool) => doc.setAppState({ activeTool: tool }),
+
+    theme: computed(() => appState.value.theme),
+
+    setTheme: (theme) => doc.setAppState(themeBackgroundPatch(theme)),
+    toggleTheme: () => {
+      const next = appState.value.theme === 'dark' ? 'light' : 'dark'
+      doc.setAppState(themeBackgroundPatch(next))
+    },
+
+    select: (ids, mode) => doc.select(ids, mode),
+    selectAll: () => doc.selectAll(),
+    isIdSelected: (id) => doc.isIdSelected(id),
+
+    // Derive from the reactive state — the document's own fields are plain
+    // JS, so reading them directly inside a computed would never invalidate.
+    selectedElements: computed(() => {
+      const { elements, appState } = state.value
+      const selected = appState.selectedIds
+      if (!selected || Object.keys(selected).length === 0) {
+        return []
+      }
+      return elements.filter((el) => selected[el.id] === true)
+    }),
+
+    updateElement: (id, patch) => {
+      doc.updateElement(id, (el) => {
+        const resolved = typeof patch === 'function' ? patch(el) : patch
+        // text geometry follows content/style automatically
+        if (isTextElement(el) && touchesText(resolved, el)) {
+          return withTextMetrics(resolved, el)
+        }
+        return resolved
+      })
+    },
+
+    deleteSelection: () => {
+      doc.deleteSelectedElements()
+    },
+    duplicateSelection: () => doc.duplicateSelection(),
+    reorderSelection: (action) => doc.reorderSelection(action),
+    toggleSelectionLock: () => {
+      const selected = doc.getSelectedElements()
+      if (selected.length === 0) {
+        return
+      }
+      const lock = !selected.every((el) => el.locked)
+      doc.updateElements(
+        selected.map((el) => el.id),
+        { locked: lock },
+      )
+    },
+
+    copySelection: () => {
+      clipboard = doc.getSelectedElements().map((el) => ({ ...el }))
+    },
+    cutSelection: () => {
+      const selected = doc.getSelectedElements()
+      if (selected.length === 0) {
+        return
+      }
+      clipboard = selected.map((el) => ({ ...el }))
+      doc.deleteSelectedElements()
+    },
+    paste: (at) => {
+      if (clipboard.length === 0) {
+        return
+      }
+      const offset = at ? centerOffsetFor(clipboard, at) : { x: 10, y: 10 }
+      doc.beginStep()
+      for (const el of clipboard) {
+        doc.addElement(duplicateElement(el, { x: el.x + offset.x, y: el.y + offset.y }))
+      }
+      doc.endStep()
+    },
+    clipboardSize: computed(() => {
+      void state.value.rev
+      return clipboard.length
+    }),
+
+    changeStyle: (style) => doc.changeStyle(style),
+    changeTextStyle: (style) => doc.changeTextStyle(style),
+
+    undo: () => doc.undo(),
+    redo: () => doc.redo(),
+    // Tie to the reactive revision so these flags refresh after every change.
+    canUndo: computed(() => {
+      void state.value.rev
+      return doc.canUndo
+    }),
+    canRedo: computed(() => {
+      void state.value.rev
+      return doc.canRedo
+    }),
+
+    viewport: computed(() => appState.value.viewport),
+    zoomAt: (screenPoint, zoom) => {
+      doc.setViewport(zoomViewport(appState.value.viewport, { at: screenPoint, zoom }))
+    },
+    zoomIn: (screenPoint) => {
+      context.zoomAt(screenPoint, appState.value.viewport.zoom * ZOOM_STEP)
+    },
+    zoomOut: (screenPoint) => {
+      context.zoomAt(screenPoint, appState.value.viewport.zoom / ZOOM_STEP)
+    },
+    resetZoom: () => doc.setViewport({ ...DEFAULT_VIEWPORT }),
+    panBy: (dx, dy) => {
+      const vp = appState.value.viewport
+      doc.setViewport({
+        ...vp,
+        scrollX: vp.scrollX + screenToSceneLength(dx, vp.zoom),
+        scrollY: vp.scrollY + screenToSceneLength(dy, vp.zoom),
+      })
+    },
+
+    serialize: () => doc.serialize(),
+    toJSON: () => JSON.stringify(doc.serialize(), null, 2),
+    loadFile: (file) => doc.loadFile(file),
+    loadJSON: (text) => doc.loadFile(JSON.parse(text)),
+    exportPNG: (filename = 'vuedraw') => {
+      const url = exportToDataURL(doc.getElements(), appState.value.viewBackgroundColor, {
+        theme: appState.value.theme,
+      })
+      downloadDataURL(url, `${filename}.png`)
+    },
+    exportDataURL: () =>
+      exportToDataURL(doc.getElements(), appState.value.viewBackgroundColor, {
+        theme: appState.value.theme,
+      }),
+
+    setEditing: (id) => doc.setAppState({ editingId: id }),
+    editingId: computed(() => appState.value.editingId),
+
+    gridSize: computed(() => appState.value.gridSize),
+    setGridSize: (size) => doc.setAppState({ gridSize: size }),
+  }
+
+  return context
+}
+
+/** Injects the enclosing editor's context, creating one when standalone. */
+export function useVueDraw(options: CreateVueDrawOptions = {}): VueDrawContext {
+  const existing = inject(VUEDRAW_INJECTION_KEY, null)
+  if (existing && !options.elements && !options.appState) {
+    return existing
+  }
+  const context = existing ?? createVueDrawContext(options)
+  provide(VUEDRAW_INJECTION_KEY, context)
+  return context
+}
+
+/** Provides a context for child components (used by the shell). */
+export function provideVueDraw(context: VueDrawContext): void {
+  provide(VUEDRAW_INJECTION_KEY, context)
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function touchesText(patch: ElementPatch, element: VueDrawElement): boolean {
+  const keys = Object.keys(patch)
+  if (keys.length === 0) {
+    return false
+  }
+  const textKeys = ['text', 'fontSize', 'fontFamily']
+  const relevant = keys.some((key) => textKeys.includes(key))
+  return relevant && isTextElement(element)
+}
+
+function withTextMetrics(patch: ElementPatch, element: VueDrawElement): ElementPatch {
+  if (!isTextElement(element)) {
+    return patch
+  }
+  const next = {
+    ...element,
+    ...(patch as Partial<typeof element>),
+  }
+  const layout: TextLayout = layoutText(next.text, next.fontFamily, next.fontSize)
+  return { ...patch, width: layout.width, height: layout.height }
+}
+
+function downloadDataURL(url: string, filename: string): void {
+  if (typeof document === 'undefined') {
+    return
+  }
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+}
+
+/** Offset that centers the clipboard content's bounds at the target point. */
+function centerOffsetFor(clipboard: readonly VueDrawElement[], at: Point): { x: number; y: number } {
+  const bounds = getCommonBounds(clipboard)
+  const cx = (bounds.x1 + bounds.x2) / 2
+  const cy = (bounds.y1 + bounds.y2) / 2
+  return { x: at.x - cx, y: at.y - cy }
+}
+
+export { DEFAULT_APP_STATE, MIN_ZOOM, MAX_ZOOM }

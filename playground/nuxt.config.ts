@@ -11,6 +11,9 @@ export default defineNuxtConfig({
         '@vuedraw/core': '../packages/core/src/index.ts',
       },
     },
+    optimizeDeps: {
+      include: ['lucide-vue-next', 'perfect-freehand', 'roughjs'],
+    },
   },
 
   devtools: { enabled: false },

@@ -18,9 +18,9 @@
   },
   "files": ["dist"],
   "scripts": {
-    "build": "nuxt-module-builder build",
-    "dev:prepare": "nuxt-module-builder build --stub",
-    "typecheck": "nuxt-module-builder typecheck"
+    "build": "nuxt-module-build build",
+    "dev:prepare": "nuxt-module-build build --stub",
+    "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@nuxt/kit": "^4.0.0",
@@ -29,8 +29,10 @@
   },
   "devDependencies": {
     "@nuxt/module-builder": "^1.0.3",
+    "@nuxt/schema": "^4.0.0",
     "nuxt": "^4.6.2",
-    "vue": "^3.5.44"
+    "vue": "^3.5.44",
+    "vue-tsc": "^2.1.0"
   },
   "peerDependencies": {
     "nuxt": "^4.0.0"

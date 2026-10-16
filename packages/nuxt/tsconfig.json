@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "noEmit": true,
+    "types": [],
+    "paths": {
+      "@vuedraw/core": ["../core/src/index.ts"]
+    }
+  },
+  "include": ["src"]
+}
