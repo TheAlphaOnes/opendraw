@@ -123,6 +123,29 @@ describe('VueDrawDocument — history', () => {
     expect(doc.getElement(el.id)!.x).toBe(0)
   })
 
+  it('never records appState-only changes as undo entries', () => {
+    const doc = new VueDrawDocument()
+    const el = rect()
+    doc.addElement(el, { select: true })
+
+    // Intent, not history: selection and tool changes record nothing.
+    doc.select(null)
+    doc.select(el.id)
+    doc.setAppState({ activeTool: 'rectangle' })
+
+    // One undo press reverts exactly the scene change: the shape itself.
+    expect(doc.undo()).toBe(true)
+    expect(doc.getElements()).toHaveLength(0)
+    expect(doc.canUndo).toBe(false)
+  })
+
+  it('does not record tool switches on a fresh scene', () => {
+    const doc = new VueDrawDocument()
+    doc.setAppState({ activeTool: 'rectangle' })
+    doc.setAppState({ activeTool: 'arrow' })
+    expect(doc.canUndo).toBe(false)
+  })
+
   it('clears redo only on element changes, not selection changes', () => {
     const doc = new VueDrawDocument()
     const a = rect()

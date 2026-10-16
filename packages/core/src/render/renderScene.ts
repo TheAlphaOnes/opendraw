@@ -25,8 +25,10 @@ import type {
   Size,
   Viewport,
   VueDrawAppState,
+  VueDrawArrowElement,
   VueDrawElement,
   VueDrawFreedrawElement,
+  VueDrawLineElement,
   VueDrawLinearElement,
   VueDrawTextElement,
 } from '../types.js'
@@ -83,7 +85,9 @@ function isBoxLike(element: VueDrawElement): element is BoxElement {
   return element.type === 'rectangle' || element.type === 'diamond' || element.type === 'ellipse'
 }
 
-function isLinearType(element: VueDrawElement): element is VueDrawLinearElement {
+function isLinearType(
+  element: VueDrawElement,
+): element is VueDrawLineElement | VueDrawArrowElement {
   return element.type === 'line' || element.type === 'arrow'
 }
 
@@ -262,7 +266,10 @@ function buildArrowhead(element: VueDrawLinearElement, options: Options): Drawab
   return drawables
 }
 
-function buildLinearShape(element: VueDrawLinearElement, dark: boolean): Drawable[] {
+function buildLinearShape(
+  element: VueDrawLineElement | VueDrawArrowElement,
+  dark: boolean,
+): Drawable[] {
   const points = toRoughPoints(element.points)
   if (isClosedLoop(element.points)) {
     // Only closed loops take a fill; the polygon closes the path.

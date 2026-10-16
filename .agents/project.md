@@ -14,6 +14,16 @@ patterns proven there, not a port.
 | `packages/core`   | `@vuedraw/core`  | the engine: element model, geometry, scene store, hit testing, transforms, rough.js renderer, export. zero vue/nuxt imports — runs in node (tests) and the browser alike. |
 | `packages/nuxt`   | `vuedraw`        | the module: `<VueDraw>` shell + `<VueDrawCanvas>` headless core + `useVueDraw()` composable + the central ui kit. registers components and auto-imports. |
 | `playground/`     | —                | nuxt 4 app for manual verification: `/` full editor, `/headless` canvas-only with custom chrome. |
+| `.context/excalidraw/` | —           | the reference codebase. excalidraw parity is the behavior contract: when anything is ambiguous, read this and match it. |
+
+## behavioral contract
+
+vuedraw is an excalidraw clone for the nuxt ecosystem. that is the product:
+same look, same feel, same interactions. `.context/excalidraw/` is the
+source of truth for behavior — selection semantics, arrow binding, history
+granularity (one undo = one gesture, never a tool switch), transforms, text
+editing. before implementing or changing an interaction, read how excalidraw
+does it and cite the file when you deviate.
 
 ## commands
 

@@ -6,8 +6,9 @@
  * elements are immutable copy-on-write records, so a snapshot is just two
  * cheap references, and correctness is trivial to reason about.
  *
- * One Excalidraw nuance is kept: an appState-only change (selection,
- * background color) does NOT clear the redo stack — only element changes do.
+ * Parity law: only scene (element) changes become entries, so every push
+ * clears the redo stack. AppState-only changes (selection, tool, style)
+ * are never recorded at all — the redo stack survives them trivially.
  */
 
 import type { VueDrawAppState, VueDrawElement } from '../types.js'
@@ -36,11 +37,8 @@ export class SceneHistory {
     return this.redoStack.length > 0
   }
 
-  /**
-   * Records a completed change. `affectsElements` controls whether the
-   * redo stack is cleared (element changes) or preserved (appState-only).
-   */
-  push(entry: HistoryEntry, affectsElements: boolean): void {
+  /** Records a completed scene change; clears the redo stack. */
+  push(entry: HistoryEntry): void {
     if (entry.before === entry.after) {
       return
     }
@@ -48,9 +46,7 @@ export class SceneHistory {
     if (this.undoStack.length > MAX_HISTORY) {
       this.undoStack.shift()
     }
-    if (affectsElements) {
-      this.redoStack.length = 0
-    }
+    this.redoStack.length = 0
   }
 
   /** Pops the last entry for undo — the entry moves to the redo stack. */

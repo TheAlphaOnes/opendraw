@@ -95,12 +95,25 @@ export interface VueDrawLinearElement extends VueDrawElementBase {
   points: Point[]
 }
 
+/**
+ * A bound arrow tip: the tip docks onto the shape's edge and follows the
+ * shape around (Excalidraw's `startBinding`/`endBinding`).
+ */
+export interface VueDrawArrowBinding {
+  /** Id of the shape the tip is docked to. */
+  elementId: string
+}
+
 export interface VueDrawLineElement extends VueDrawLinearElement {
   type: 'line'
 }
 
 export interface VueDrawArrowElement extends VueDrawLinearElement {
   type: 'arrow'
+  /** Shape the start tip is docked to, or null when loose. */
+  startBinding: VueDrawArrowBinding | null
+  /** Shape the end tip is docked to, or null when loose. */
+  endBinding: VueDrawArrowBinding | null
 }
 
 /** Freedraw strokes store `[x, y, pressure]` triples in local space. */

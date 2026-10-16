@@ -130,6 +130,7 @@ export function newLinearElement(
   return {
     ...baseElement(type, opts),
     points: opts.points ?? [{ x: 0, y: 0 }],
+    ...(type === 'arrow' ? { startBinding: null, endBinding: null } : {}),
   } as VueDrawLineElement | VueDrawArrowElement
 }
 
@@ -228,10 +229,16 @@ export function duplicateElement<T extends VueDrawElement>(
   }
 }
 
-/** Type predicate helpers used across the codebase. */
+/**
+ * Type predicate helpers used across the codebase.
+ *
+ * `isLinearElement` narrows to the CONCRETE line/arrow members, not the
+ * shared base: only those stay assignable to the element union now that
+ * arrows carry `startBinding`/`endBinding`.
+ */
 export function isLinearElement(
   element: VueDrawElement,
-): element is VueDrawLinearElement {
+): element is VueDrawLineElement | VueDrawArrowElement {
   return element.type === 'line' || element.type === 'arrow'
 }
 
@@ -243,4 +250,12 @@ export function isFreedrawElement(
 
 export function isTextElement(element: VueDrawElement): element is VueDrawTextElement {
   return element.type === 'text'
+}
+
+/**
+ * Narrow to the arrow element — the only linear type that carries
+ * `startBinding`/`endBinding` (binding logic relies on this).
+ */
+export function isArrowElement(element: VueDrawElement): element is VueDrawArrowElement {
+  return element.type === 'arrow'
 }

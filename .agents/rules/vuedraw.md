@@ -3,6 +3,22 @@
 project-specific law for this repo. the root `AGENTS.md` still applies in
 full; this file adds the contracts that keep a canvas engine correct.
 
+## behavioral parity
+
+- vuedraw must look and behave like excalidraw. this is the contract, not an
+  aspiration: when any behavior is ambiguous, match excalidraw instead of
+  inventing something.
+- the reference codebase is vendored at `.context/excalidraw/`. read it
+  before implementing or changing any interaction semantics (selection,
+  binding, history granularity, transforms, text editing). cite what excalidraw
+  does in the change's reasoning.
+- undo entries are scene changes only. app-state-only changes (active tool,
+  selection, style, grid, theme) never create history entries — excalidraw's
+  undo steps a gesture, never a tool switch.
+- one undo press reverts exactly one user gesture: a shape created, a drag
+  moved, a text committed. if a tester needs three presses to undo one shape,
+  the granularity is wrong.
+
 ## boundaries
 
 - `packages/core` imports nothing from vue or nuxt. if a change needs vue

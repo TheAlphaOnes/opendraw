@@ -15,6 +15,7 @@ import type {
   StrokeStyle,
   StrokeWidth,
   TextAlign,
+  VueDrawArrowBinding,
   VueDrawElement,
   VueDrawFile,
 } from '../types.js'
@@ -58,6 +59,14 @@ function freedrawPoints(value: unknown): number[][] {
     .map((p) => [num(p[0], 0), num(p[1], 0), num(p[2], 0.5)])
 }
 
+/** Coerces an arrow tip binding: a record with a string elementId, else null. */
+function arrowBinding(value: unknown): VueDrawArrowBinding | null {
+  if (!isRecord(value) || typeof value.elementId !== 'string') {
+    return null
+  }
+  return { elementId: value.elementId }
+}
+
 /**
  * Coerces unknown data into a valid element, or null when it isn't one.
  * Unknown props are dropped; invalid values fall back to defaults.
@@ -87,8 +96,17 @@ export function coerceElement(input: unknown): VueDrawElement | null {
     versionNonce: str(input.versionNonce, ''),
     locked: input.locked === true,
   }
-  if (type === 'line' || type === 'arrow') {
+  if (type === 'line') {
     return { ...base, type, points: points(input.points) }
+  }
+  if (type === 'arrow') {
+    return {
+      ...base,
+      type,
+      points: points(input.points),
+      startBinding: arrowBinding(input.startBinding),
+      endBinding: arrowBinding(input.endBinding),
+    }
   }
   if (type === 'freedraw') {
     return { ...base, type, points: freedrawPoints(input.points), simulatePressure: input.simulatePressure !== false }

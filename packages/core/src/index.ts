@@ -23,6 +23,7 @@ export * from './elements/defaults.js'
 export * from './elements/factories.js'
 export * from './elements/mutate.js'
 export * from './elements/hitTest.js'
+export * from './elements/binding.js'
 
 export * from './viewport.js'
 

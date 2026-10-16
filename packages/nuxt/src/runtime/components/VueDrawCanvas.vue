@@ -9,6 +9,8 @@ import type {
   VueDrawElement,
 } from '@vuedraw/core'
 import {
+  arrowFollowPatches,
+  computeArrowBindings,
   draftLinePoints,
   draftShapeRect,
   elementsInBounds,
@@ -17,7 +19,9 @@ import {
   getHandleLayout,
   handleAt,
   hitThreshold,
+  isArrowElement,
   isFreedrawElement,
+  maxBindingDistance,
   moveElements,
   newElement,
   newFreedrawElement,
@@ -207,7 +211,14 @@ type Interaction =
   | { kind: 'marquee'; originScene: Point; baseIds: string[] }
   | { kind: 'creating'; elementId: string; originScene: Point }
   | { kind: 'freedrawing'; elementId: string }
-  | { kind: 'moving'; originScene: Point; originals: readonly VueDrawElement[] }
+  | {
+      kind: 'moving'
+      originScene: Point
+      originals: readonly VueDrawElement[]
+      /** Element to narrow the selection to on a no-drag pointerup, or null. */
+      hitId: string | null
+      didDrag: boolean
+    }
   | { kind: 'resizing'; handle: HandleDirection; originals: readonly VueDrawElement[] }
   | {
       kind: 'rotating'
@@ -326,9 +337,10 @@ function onPointerDown(event: PointerEvent) {
   const threshold = hitThreshold(ctx.viewport.value.zoom)
   const hit = findElementAt(ctx.elements.value, scenePoint, threshold)
   if (hit) {
+    const wasSelected = ctx.isIdSelected(hit.id)
     if (event.shiftKey) {
       ctx.select(hit.id, 'toggle')
-    } else if (!ctx.isIdSelected(hit.id)) {
+    } else if (!wasSelected) {
       ctx.select(hit.id)
     }
     // Locked elements stay selectable but immovable.
@@ -336,10 +348,15 @@ function onPointerDown(event: PointerEvent) {
       interaction.value = { kind: 'none' }
       return
     }
+    // Excalidraw parity: pointerdown on an element inside a multi-selection
+    // keeps the group so a drag moves it together; a no-drag click narrows
+    // the selection to the hit on pointerup instead.
     interaction.value = {
       kind: 'moving',
       originScene: scenePoint,
       originals: snapshotSelection(),
+      hitId: !event.shiftKey && wasSelected ? hit.id : null,
+      didDrag: false,
     }
     ctx.doc.beginStep()
     return
@@ -355,6 +372,21 @@ function onPointerDown(event: PointerEvent) {
     ctx.select(null)
   }
   marquee.value = null
+}
+
+/**
+ * Suppress the mousedown default (focus move) for presses on the host
+ * itself. Focus is managed explicitly in `onPointerDown`, and the default
+ * steals focus from a text editor mounted mid-press: pointerdown creates
+ * the element, the editor mounts and focuses on the microtask checkpoint,
+ * and the trailing mousedown would then blur it — committing the empty
+ * draft and rolling the whole step back. Presses on child elements (the
+ * text editor's textarea) keep their native behavior.
+ */
+function onMouseDown(event: MouseEvent): void {
+  if (hostRef.value !== null && event.target === hostRef.value) {
+    event.preventDefault()
+  }
 }
 
 function onPointerMove(event: PointerEvent) {
@@ -420,10 +452,14 @@ function onPointerMove(event: PointerEvent) {
         x: scenePoint.x - current.originScene.x,
         y: scenePoint.y - current.originScene.y,
       }
+      if (delta.x !== 0 || delta.y !== 0) {
+        current.didDrag = true
+      }
       const patches = moveElements(current.originals, delta, ctx.gridSize.value)
       for (const { id, patch } of patches) {
         ctx.doc.forceUpdateElement(id, patch)
       }
+      followBindings(current.originals)
       return
     }
     case 'resizing': {
@@ -433,6 +469,7 @@ function onPointerMove(event: PointerEvent) {
           : null
       if (patch && current.originals.length === 1) {
         ctx.doc.forceUpdateElement(current.originals[0]!.id, patch)
+        followBindings(current.originals)
         return
       }
       const patches = resizeMultipleElements(
@@ -444,6 +481,7 @@ function onPointerMove(event: PointerEvent) {
       for (const { id, patch: p } of patches) {
         ctx.doc.forceUpdateElement(id, p)
       }
+      followBindings(current.originals)
       return
     }
     case 'rotating': {
@@ -457,6 +495,7 @@ function onPointerMove(event: PointerEvent) {
       for (const { id, patch } of patches) {
         ctx.doc.forceUpdateElement(id, patch)
       }
+      followBindings(current.originals)
       return
     }
     case 'erasing': {
@@ -490,6 +529,18 @@ function onPointerUp(event: PointerEvent) {
           ctx.doc.cancelStep()
           return
         }
+        if (isArrowElement(el)) {
+          // Tips dropped over (or near) a shape dock onto it before the
+          // creation step closes — the bind is part of the draw's undo entry.
+          const binding = computeArrowBindings(
+            el,
+            ctx.elements.value,
+            maxBindingDistance(ctx.viewport.value.zoom),
+          )
+          if (binding) {
+            ctx.doc.updateElement(el.id, binding)
+          }
+        }
         ctx.doc.endStep()
         ctx.select(el.id)
         ctx.setActiveTool('selection')
@@ -506,6 +557,15 @@ function onPointerUp(event: PointerEvent) {
       ctx.setActiveTool('selection')
       return
     }
+    case 'moving': {
+      ctx.doc.endStep()
+      // A no-drag click on an element inside a multi-selection narrows the
+      // selection to it; a drag moved the whole group instead.
+      if (!current.didDrag && current.hitId) {
+        ctx.select(current.hitId)
+      }
+      return
+    }
     case 'resizing':
     case 'rotating': {
       ctx.doc.endStep()
@@ -517,6 +577,18 @@ function onPointerUp(event: PointerEvent) {
     }
     default:
       return
+  }
+}
+
+/**
+ * Binding follow-through after a drag: arrows bound to any of the just-moved
+ * elements re-dock their tips onto the new geometry, and moved arrows glide
+ * along the edges of the shapes they are bound to.
+ */
+function followBindings(originals: readonly VueDrawElement[]): void {
+  const movedIds = new Set(originals.map((el) => el.id))
+  for (const [id, patch] of arrowFollowPatches(movedIds, ctx.elements.value)) {
+    ctx.doc.updateElement(id, patch)
   }
 }
 
@@ -789,6 +861,7 @@ const cursor = computed(() => {
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
     @pointercancel="onPointerUp"
+    @mousedown="onMouseDown"
     @wheel="onWheel"
     @dblclick="onDoubleClick"
     @keydown="onKeyDown"

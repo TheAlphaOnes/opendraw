@@ -8,11 +8,13 @@
  * Mutation discipline (Excalidraw's funnel pattern):
  * - every write funnels through `replaceElements` / `commitAppState`
  * - a write inside an open step (drag, text edit) is coalesced into that
- *   step's single history entry; outside a step each write is its own entry
+ *   step's single history entry; outside a step each element write is its
+ *   own entry — appState-only writes record nothing (parity law)
  * - no-op patches keep the same element reference and record nothing
  */
 
 import { duplicateElement, isTextElement } from '../elements/factories.js'
+import { orphanBindingPatches } from '../elements/binding.js'
 import type { ElementPatch } from '../elements/mutate.js'
 import { forcePatchElement, patchElement } from '../elements/mutate.js'
 import { DEFAULT_ELEMENT_STYLE, DEFAULT_TEXT_STYLE } from '../elements/defaults.js'
@@ -164,12 +166,16 @@ export class VueDrawDocument {
     this.emit()
   }
 
+  /**
+   * Records a completed change. Parity law: undo entries are scene changes
+   * only — a write that touched nothing but appState (tool switch,
+   * selection, style) is user intent, never history.
+   */
   private record(before: HistorySnapshot, after: HistorySnapshot): void {
-    if (before.elements === after.elements && before.appState === after.appState) {
+    if (before.elements === after.elements) {
       return
     }
-    const affectsElements = before.elements !== after.elements
-    this.history.push({ before, after }, affectsElements)
+    this.history.push({ before, after })
   }
 
   undo(): boolean {
@@ -231,16 +237,16 @@ export class VueDrawDocument {
     this.emit()
   }
 
+  /**
+   * App state is intent, not history: tool, selection, style and theme
+   * changes never create undo entries (parity law in .agents/rules).
+   */
   private commitAppState(next: VueDrawAppState): void {
     if (next === this.appState) {
       return
     }
-    const before: HistorySnapshot | null = this.captureBefore()
     this.appState = next
     this.emit()
-    if (!this.openStep && before) {
-      this.record(before, { elements: this.elements, appState: next })
-    }
   }
 
   /** The `before` side of a history entry: the open step's snapshot, or the
@@ -353,6 +359,11 @@ export class VueDrawDocument {
       const next = current.filter((el) => !idSet.has(el.id))
       return next.length === current.length ? null : next
     })
+    // Arrows bound to deleted shapes lose those bindings — inside the same
+    // undo step, so undo resurrects shape and binding together.
+    for (const [id, patch] of orphanBindingPatches(idSet, this.elements)) {
+      this.updateElement(id, patch)
+    }
     // Drop dangling selection.
     const selected = this.appState.selectedIds
     const dangling = Object.keys(selected).filter((id) => idSet.has(id))
