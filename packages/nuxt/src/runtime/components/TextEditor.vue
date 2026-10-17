@@ -110,7 +110,7 @@ function onInput(event: Event) {
   }
   const text = (event.target as HTMLTextAreaElement).value
   // The composable re-measures text elements automatically on update.
-  ctx.updateElement(el.id, { text } as never)
+  ctx.updateElement(el.id, { text })
 }
 
 /** Finalizes editing: empty text deletes the element, everything else commits. */
@@ -206,7 +206,9 @@ onMounted(() => {
     const screenTop = sceneToScreen({ x: el.x, y: el.y }, ctx.viewport.value).y
     sessionWidth.value = Math.max(MIN_SESSION_WIDTH, hostWidth - screenLeft)
     sessionHeight.value = Math.max(MIN_SESSION_HEIGHT, hostHeight - screenTop)
-    ta.focus()
+    // preventScroll keeps the session's screen-anchored layout box honest —
+    // a focus scroll would drift the editor against the canvas mid-session.
+    ta.focus({ preventScroll: true })
     // Cursor at the end, like Excalidraw's editor.
     ta.setSelectionRange(ta.value.length, ta.value.length)
   }

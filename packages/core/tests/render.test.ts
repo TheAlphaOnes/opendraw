@@ -17,6 +17,7 @@ import {
   adjustRoughness,
   getDashArrayDashed,
   getDashArrayDotted,
+  renderableElements,
 } from '../src/render/renderScene.js'
 import { themeColor } from '../src/render/theme.js'
 
@@ -152,5 +153,20 @@ describe('adjustRoughness', () => {
       ],
     })
     expect(adjustRoughness(short)).toBeCloseTo(1 / 3)
+  })
+})
+
+describe('renderableElements', () => {
+  it('passes every element through when nothing is being edited', () => {
+    const a = newRectangleElement({ x: 0, y: 0, width: 10, height: 10 })
+    const b = newRectangleElement({ x: 20, y: 20, width: 10, height: 10 })
+    expect(renderableElements([a, b], null)).toEqual([a, b])
+  })
+
+  it('drops only the element being edited', () => {
+    const a = newRectangleElement({ id: 'a', x: 0, y: 0, width: 10, height: 10 })
+    const b = newRectangleElement({ id: 'b', x: 20, y: 20, width: 10, height: 10 })
+    expect(renderableElements([a, b], 'a')).toEqual([b])
+    expect(renderableElements([a, b], 'missing')).toEqual([a, b])
   })
 })

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { newRectangleElement, newTextElement, newLinearElement, isTextElement } from '../src/elements/factories.js'
 import { VueDrawDocument } from '../src/scene/document.js'
 import { buildFile, parseFile } from '../src/export/serialize.js'
+import type { VueDrawRectangleElement } from '../src/types.js'
 
 function rect(x = 0, y = 0, w = 10, h = 10) {
   return newRectangleElement({ x, y, width: w, height: h })
@@ -299,5 +300,28 @@ describe('VueDrawDocument — serialization', () => {
     doc.loadFile(buildFile([rect(50, 50)], '#ffffff'))
     expect(doc.canUndo).toBe(false)
     expect(doc.getElements()).toHaveLength(1)
+  })
+})
+
+describe('changeRoundness', () => {
+  it('rounds the selected rectangles and diamonds in one undoable step', () => {
+    const doc = new VueDrawDocument()
+    const el = rect()
+    doc.addElement(el)
+    doc.select(el.id)
+
+    doc.changeRoundness('round')
+    expect((doc.getElement(el.id) as VueDrawRectangleElement).roundness).toBe('round')
+
+    doc.undo()
+    expect((doc.getElement(el.id) as VueDrawRectangleElement).roundness).toBeNull()
+  })
+
+  it('falls back to the new-shape default when no shape is selected', () => {
+    const doc = new VueDrawDocument()
+    doc.changeRoundness('round')
+    expect(doc.getAppState().shapeRoundness).toBe('round')
+    // appState-only: no history entry for a default change.
+    expect(doc.canUndo).toBe(false)
   })
 })

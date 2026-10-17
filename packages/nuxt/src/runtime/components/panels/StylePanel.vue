@@ -55,6 +55,21 @@ const firstText = computed(
   () => ctx.selectedElements.value.find((el): el is VueDrawTextElement => el.type === 'text') ?? null,
 )
 
+/** Corners apply to rectangles and diamonds only. */
+const cornersVisible = computed(() => {
+  const el = firstSelected.value
+  return el === null || el.type === 'rectangle' || el.type === 'diamond'
+})
+
+/** Corner treatment of the first selected rect/diamond, else the new-shape default. */
+const currentRoundness = computed(() => {
+  const el = firstSelected.value
+  if (el && (el.type === 'rectangle' || el.type === 'diamond')) {
+    return el.roundness === 'round' ? 'round' : 'sharp'
+  }
+  return ctx.appState.value.shapeRoundness === 'round' ? 'round' : 'sharp'
+})
+
 /** Text controls appear while editing defaults (no selection) or when a text element is selected. */
 const textSectionVisible = computed(
   () => ctx.selectedElements.value.length === 0 || firstText.value !== null,
@@ -103,6 +118,11 @@ const opacityOptions: UiSegmentedOption[] = [
   { value: '25', label: '25% opacity' },
 ]
 
+const cornerOptions: UiSegmentedOption[] = [
+  { value: 'sharp', label: 'Sharp corners', icon: 'cornerSharp' },
+  { value: 'round', label: 'Rounded corners', icon: 'cornerRound' },
+]
+
 const fontFamilyOptions: UiSegmentedOption[] = [
   { value: 'hand', label: 'Hand-drawn font' },
   { value: 'normal', label: 'Normal font' },
@@ -131,6 +151,7 @@ const setOpacity = (value: string): void => ctx.changeStyle({ opacity: Number(va
 const setFontFamily = (value: string): void => ctx.changeTextStyle({ fontFamily: value as FontFamily })
 const setFontSize = (value: string): void => ctx.changeTextStyle({ fontSize: Number(value) })
 const setTextAlign = (value: string): void => ctx.changeTextStyle({ textAlign: value as TextAlign })
+const setRoundness = (value: string): void => ctx.changeRoundness(value === 'round' ? 'round' : null)
 
 /** One descriptor per segmented section so the template stays a single loop. */
 interface StyleSegment {
@@ -183,6 +204,16 @@ const textSegments = computed<StyleSegment[]>(() => {
           :model-value="currentStyle.backgroundColor"
           ariaLabel="Background color"
           @update:model-value="setBackgroundColor"
+        />
+      </section>
+
+      <section v-if="cornersVisible" class="style-section">
+        <span class="style-section__label">Corners</span>
+        <UiSegmented
+          :options="cornerOptions"
+          :model-value="currentRoundness"
+          ariaLabel="Corner style"
+          @update:model-value="setRoundness"
         />
       </section>
 

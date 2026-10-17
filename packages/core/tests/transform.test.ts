@@ -10,6 +10,7 @@ import {
   rotateElements,
   startRotationAngle,
 } from '../src/interaction/transform.js'
+import { selectionFrameOf } from '../src/interaction/handles.js'
 import { rotatePoint } from '../src/geometry/points.js'
 import { newLinearElement, newRectangleElement } from '../src/elements/factories.js'
 import type { VueDrawRectangleElement } from '../src/types.js'
@@ -185,5 +186,51 @@ describe('rotation', () => {
     // Float-safe: the angle must be a whole number of 15° steps.
     const steps = patch.angle / (Math.PI / 12)
     expect(steps).toBeCloseTo(Math.round(steps), 3)
+  })
+})
+
+describe('selectionFrameOf', () => {
+  it('frames a line drawn up-left around its true bounds, not the drag origin', () => {
+    const line = newLinearElement('line', {
+      id: 'l',
+      x: 150,
+      y: 480,
+      points: [
+        { x: 0, y: 0 },
+        { x: 128, y: -156 },
+      ],
+    })
+    expect(selectionFrameOf([line])).toEqual({ x: 150, y: 324, width: 128, height: 156, angle: 0 })
+  })
+
+  it('frames an unrotated rectangle identically to its own box', () => {
+    const rect = newRectangleElement({ id: 'r', x: 10, y: 20, width: 40, height: 30 })
+    expect(selectionFrameOf([rect])).toEqual({ x: 10, y: 20, width: 40, height: 30, angle: 0 })
+  })
+
+  it('keeps the rotation pivot box for rotated elements', () => {
+    const rect = newRectangleElement({
+      id: 'r',
+      x: 10,
+      y: 20,
+      width: 40,
+      height: 30,
+      angle: Math.PI / 4,
+    })
+    expect(selectionFrameOf([rect])).toEqual({ x: 10, y: 20, width: 40, height: 30, angle: Math.PI / 4 })
+  })
+
+  it('unions true bounds for multi-selections', () => {
+    const rect = newRectangleElement({ id: 'r', x: 0, y: 0, width: 50, height: 50 })
+    const line = newLinearElement('line', {
+      id: 'l',
+      x: 100,
+      y: 100,
+      points: [
+        { x: 0, y: 0 },
+        { x: 20, y: -40 },
+      ],
+    })
+    expect(selectionFrameOf([rect, line])).toEqual({ x: 0, y: 0, width: 120, height: 100, angle: 0 })
   })
 })

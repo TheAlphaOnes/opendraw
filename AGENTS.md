@@ -654,6 +654,7 @@ The full project doc lives in `.agents/project.md`. The project rules live in `.
 Laws that bear repeating:
 
 * **Excalidraw parity is the behavior contract.** vuedraw must look and behave like Excalidraw. When any behavior is ambiguous, match Excalidraw: the reference codebase is vendored at `.context/excalidraw/` — read it before inventing behavior. Selection semantics, binding, history granularity, transforms: parity over invention.
+* Lines and arrows bind identically. `startBinding`/`endBinding` live on the shared linear type and a docked tip follows its shape for both tools — there is no arrow-only binding.
 * All document mutations go through `VueDrawDocument.mutate()`. There is no other write path.
 * Vue derivations of document state read through the injected context: `ctx.state`, `ctx.elements`, `ctx.rev`. Plain document fields never invalidate a computed.
 * `<TextEditor>` mounts per editing session. The textarea is uncontrolled while typing and keeps a stable layout box for the session.

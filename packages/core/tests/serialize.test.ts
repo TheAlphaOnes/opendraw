@@ -16,6 +16,7 @@ import {
   newRectangleElement,
   newTextElement,
 } from '../src/elements/factories.js'
+import type { VueDrawDiamondElement, VueDrawRectangleElement } from '../src/types.js'
 
 describe('coerceElement', () => {
   it('rejects non-elements', () => {
@@ -141,5 +142,58 @@ describe('file format', () => {
   it('survives a missing appState', () => {
     const file = parseFile({ type: 'vuedraw', version: 1, elements: [] })
     expect(file.appState.viewBackgroundColor).toBe('#ffffff')
+  })
+})
+
+describe('corner roundness', () => {
+  it('round-trips rounded rectangles and diamonds', () => {
+    const round = coerceElement({
+      id: 'r1',
+      type: 'rectangle',
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
+      roundness: 'round',
+    })
+    expect(round).not.toBeNull()
+    expect((round as VueDrawRectangleElement).roundness).toBe('round')
+
+    const diamond = coerceElement({
+      id: 'd1',
+      type: 'diamond',
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
+      roundness: 'round',
+    })
+    expect((diamond as VueDrawDiamondElement).roundness).toBe('round')
+  })
+
+  it('coerces unknown roundness values back to sharp', () => {
+    const el = coerceElement({
+      id: 'r2',
+      type: 'rectangle',
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
+      roundness: 'wavy',
+    })
+    expect((el as VueDrawRectangleElement).roundness).toBeNull()
+  })
+
+  it('keeps roundness off the ellipse, which is round by nature', () => {
+    const el = coerceElement({
+      id: 'e1',
+      type: 'ellipse',
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
+      roundness: 'round',
+    })
+    expect('roundness' in el!).toBe(false)
   })
 })

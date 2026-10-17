@@ -7,12 +7,14 @@
  * where) belongs to `../interaction/handles.js`; this module only paints.
  */
 
+import type { VueDrawBindableShape } from '../elements/binding.js'
+import { clamp } from '../geometry/points.js'
 import type { HandleBox, PointerKind, SelectionFrame } from '../interaction/handles.js'
 import { getHandleLayout, selectionFrameOf } from '../interaction/handles.js'
 import type { Bounds, VueDrawAppState, VueDrawElement } from '../types.js'
 import { applyViewportTransform } from '../viewport.js'
 import type { CanvasSize } from './renderScene.js'
-import { renderElementShape } from './renderScene.js'
+import { PROPORTIONAL_RADIUS, renderElementShape } from './renderScene.js'
 import { UI } from './theme.js'
 
 export interface OverlayRenderInput {
@@ -26,6 +28,8 @@ export interface OverlayRenderInput {
   marquee: Bounds | null
   /** Elements being created/dragged right now, drawn before the chrome. */
   previewElements: readonly VueDrawElement[]
+  /** Bindable shape a line/arrow tip would dock onto right now, or null. */
+  bindingCandidate: VueDrawBindableShape | null
   canvasSize: CanvasSize
   dpr: number
 }
@@ -41,7 +45,7 @@ const HANDLE_RADIUS_PX = 2
 const MARQUEE_FILL_ALPHA = 0.06
 
 export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRenderInput): void {
-  const { selectedElements, appState, pointer, marquee, previewElements } = input
+  const { selectedElements, appState, pointer, marquee, previewElements, bindingCandidate } = input
   const { theme, viewport, editingId } = appState
   const zoom = viewport.zoom
   const dark = theme === 'dark'
@@ -62,6 +66,13 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
 
   for (const element of previewElements) {
     renderElementShape(ctx, element, dark)
+  }
+
+  // Connect feedback: outline the shape an in-flight line/arrow tip would
+  // dock onto, before the selection chrome (a highlight never reads as a
+  // selection).
+  if (bindingCandidate) {
+    drawBindingHighlight(ctx, bindingCandidate, UI.selection, zoom)
   }
 
   // While a text element is being edited the DOM editor draws its own
@@ -207,5 +218,71 @@ function drawMarquee(
   ctx.lineWidth = 1 / zoom
   ctx.setLineDash([6 / zoom, 4 / zoom])
   ctx.strokeRect(x1, y1, x2 - x1, y2 - y1)
+  ctx.restore()
+}
+
+// ---------------------------------------------------------------------------
+// Binding highlight
+// ---------------------------------------------------------------------------
+
+/**
+ * A clean (non-rough) outline over the shape an in-flight line/arrow tip
+ * would dock onto, tracing its own geometry — rounded corners included —
+ * and rotating with it. The stroke clamps against the shape's own width so
+ * thin outlines stay readable, mirroring Excalidraw's
+ * `renderBindingHighlightForBindableElement`.
+ */
+function drawBindingHighlight(
+  ctx: CanvasRenderingContext2D,
+  shape: VueDrawBindableShape,
+  color: string,
+  zoom: number,
+): void {
+  const { width, height } = shape
+  ctx.save()
+  ctx.translate(shape.x, shape.y)
+  if (shape.angle !== 0) {
+    const cx = width / 2
+    const cy = height / 2
+    ctx.translate(cx, cy)
+    ctx.rotate(shape.angle)
+    ctx.translate(-cx, -cy)
+  }
+  ctx.lineWidth = clamp(1.75, shape.strokeWidth, 4) / Math.max(0.25, zoom)
+  ctx.strokeStyle = color
+  ctx.setLineDash([])
+  ctx.beginPath()
+  if (shape.type === 'ellipse') {
+    ctx.ellipse(width / 2, height / 2, width / 2, height / 2, 0, 0, Math.PI * 2)
+  } else if (shape.type === 'diamond') {
+    if (shape.roundness === 'round') {
+      // Same cubic corners the renderer's rounded diamond draws.
+      const vr = (width / 2) * PROPORTIONAL_RADIUS
+      const hr = (height / 2) * PROPORTIONAL_RADIUS
+      const topX = width / 2
+      const rightY = height / 2
+      ctx.moveTo(topX + vr, hr)
+      ctx.lineTo(width - vr, rightY - hr)
+      ctx.bezierCurveTo(width, rightY, width, rightY, width - vr, rightY + hr)
+      ctx.lineTo(topX + vr, height - hr)
+      ctx.bezierCurveTo(topX, height, topX, height, topX - vr, height - hr)
+      ctx.lineTo(vr, rightY + hr)
+      ctx.bezierCurveTo(0, rightY, 0, rightY, vr, rightY - hr)
+      ctx.lineTo(topX - vr, hr)
+      ctx.bezierCurveTo(topX, 0, topX, 0, topX + vr, hr)
+    } else {
+      ctx.moveTo(width / 2, 0)
+      ctx.lineTo(width, height / 2)
+      ctx.lineTo(width / 2, height)
+      ctx.lineTo(0, height / 2)
+      ctx.closePath()
+    }
+  } else if (shape.type === 'rectangle' && shape.roundness === 'round') {
+    appendRoundRect(ctx, 0, 0, width, height, Math.min(width, height) * PROPORTIONAL_RADIUS)
+  } else {
+    // Sharp rectangle, or the text element's frame box.
+    ctx.rect(0, 0, width, height)
+  }
+  ctx.stroke()
   ctx.restore()
 }

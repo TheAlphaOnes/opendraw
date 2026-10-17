@@ -34,7 +34,13 @@ export * from './scene/history.js'
 export * from './scene/document.js'
 
 export * from './render/theme.js'
-export { renderScene, renderElementShape, exportElementShape } from './render/renderScene.js'
+export {
+  exportElementShape,
+  PROPORTIONAL_RADIUS,
+  renderElementShape,
+  renderScene,
+  renderableElements,
+} from './render/renderScene.js'
 export type { SceneRenderInput, CanvasSize } from './render/renderScene.js'
 export { renderOverlay } from './render/overlay.js'
 export type { OverlayRenderInput } from './render/overlay.js'

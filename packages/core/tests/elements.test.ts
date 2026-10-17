@@ -9,6 +9,8 @@ import {
 import {
   duplicateElement,
   isElementType,
+  newDiamondElement,
+  newEllipseElement,
   newTextElement,
   newFreedrawElement,
   newLinearElement,
@@ -146,5 +148,26 @@ describe('patchElement (copy-on-write)', () => {
     const patched = forcePatchElement(el, { x: 0 })
     expect(patched).not.toBe(el)
     expect(patched.version).toBe(el.version + 1)
+  })
+})
+
+describe('corner roundness', () => {
+  it('defaults rectangles and diamonds to sharp corners', () => {
+    expect(newRectangleElement({ x: 0, y: 0, width: 10, height: 10 }).roundness).toBeNull()
+    expect(newDiamondElement({ x: 0, y: 0, width: 10, height: 10 }).roundness).toBeNull()
+  })
+
+  it('passes an explicit rounded corner through to shapes', () => {
+    expect(
+      newRectangleElement({ x: 0, y: 0, width: 10, height: 10, roundness: 'round' }).roundness,
+    ).toBe('round')
+    expect(
+      newDiamondElement({ x: 0, y: 0, width: 10, height: 10, roundness: 'round' }).roundness,
+    ).toBe('round')
+  })
+
+  it('leaves the roundness-less ellipse untouched', () => {
+    const el = newEllipseElement({ x: 0, y: 0, width: 10, height: 10, roundness: 'round' })
+    expect('roundness' in el).toBe(false)
   })
 })

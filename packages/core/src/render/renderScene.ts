@@ -194,19 +194,77 @@ function toRoughPoints(points: readonly Point[]): [number, number][] {
   return points.map((p) => [p.x, p.y] as [number, number])
 }
 
+/**
+ * Excalidraw's proportional corner radius: 25% of the element's shorter
+ * side (their `DEFAULT_PROPORTIONAL_RADIUS`). Shared with the overlay's
+ * highlight so the chrome traces the same corners the renderer draws.
+ */
+export const PROPORTIONAL_RADIUS = 0.25
+
+/** Rounded-rectangle outline as an SVG path — Q curves at each corner. */
+function roundedRectPath(width: number, height: number, radius: number): string {
+  const r = Math.min(radius, width / 2, height / 2)
+  return [
+    `M ${r} 0`,
+    `L ${width - r} 0`,
+    `Q ${width} 0, ${width} ${r}`,
+    `L ${width} ${height - r}`,
+    `Q ${width} ${height}, ${width - r} ${height}`,
+    `L ${r} ${height}`,
+    `Q 0 ${height}, 0 ${height - r}`,
+    `L 0 ${r}`,
+    `Q 0 0, ${r} 0`,
+  ].join(' ')
+}
+
+/**
+ * Rounded-diamond outline: straight apex-to-apex edges with C-curve corners,
+ * each corner scaled by the distance to its apexes (Excalidraw's math).
+ */
+function roundedDiamondPath(
+  width: number,
+  height: number,
+  vRadius: number,
+  hRadius: number,
+): string {
+  const topX = width / 2
+  const rightY = height / 2
+  return [
+    `M ${topX + vRadius} ${hRadius}`,
+    `L ${width - vRadius} ${rightY - hRadius}`,
+    `C ${width} ${rightY}, ${width} ${rightY}, ${width - vRadius} ${rightY + hRadius}`,
+    `L ${topX + vRadius} ${height - hRadius}`,
+    `C ${topX} ${height}, ${topX} ${height}, ${topX - vRadius} ${height - hRadius}`,
+    `L ${vRadius} ${rightY + hRadius}`,
+    `C 0 ${rightY}, 0 ${rightY}, ${vRadius} ${rightY - hRadius}`,
+    `L ${topX - vRadius} ${hRadius}`,
+    `C ${topX} 0, ${topX} 0, ${topX + vRadius} ${hRadius}`,
+  ].join(' ')
+}
+
 function buildBoxShape(element: BoxElement, dark: boolean): Drawable[] {
   const options = buildRoughOptions(element, dark)
+  const { width, height } = element
   switch (element.type) {
     case 'rectangle':
-      return [generator.rectangle(0, 0, element.width, element.height, options)]
+      if (element.roundness === 'round') {
+        const radius = Math.min(width, height) * PROPORTIONAL_RADIUS
+        return [generator.path(roundedRectPath(width, height, radius), options)]
+      }
+      return [generator.rectangle(0, 0, width, height, options)]
     case 'diamond':
+      if (element.roundness === 'round') {
+        const vRadius = (width / 2) * PROPORTIONAL_RADIUS
+        const hRadius = (height / 2) * PROPORTIONAL_RADIUS
+        return [generator.path(roundedDiamondPath(width, height, vRadius, hRadius), options)]
+      }
       return [
         generator.polygon(
           [
-            [element.width / 2, 0],
-            [element.width, element.height / 2],
-            [element.width / 2, element.height],
-            [0, element.height / 2],
+            [width / 2, 0],
+            [width, height / 2],
+            [width / 2, height],
+            [0, height / 2],
           ],
           options,
         ),
@@ -214,10 +272,10 @@ function buildBoxShape(element: BoxElement, dark: boolean): Drawable[] {
     case 'ellipse':
       return [
         generator.ellipse(
-          element.width / 2,
-          element.height / 2,
-          element.width,
-          element.height,
+          width / 2,
+          height / 2,
+          width,
+          height,
           { ...options, curveFitting: 1 },
         ),
       ]
@@ -451,6 +509,19 @@ function visibleSceneRect(canvasSize: CanvasSize, viewport: Viewport) {
   return { x1: topLeft.x, y1: topLeft.y, x2: bottomRight.x, y2: bottomRight.y }
 }
 
+/**
+ * Elements a scene render paints: everything except the one being edited.
+ * The wysiwyg editor is the only visible copy while editing — it mirrors the
+ * live text through a transparent textarea, so painting the canvas copy too
+ * would double every glyph under the caret.
+ */
+export function renderableElements(
+  elements: readonly VueDrawElement[],
+  editingId: string | null,
+): readonly VueDrawElement[] {
+  return editingId === null ? elements : elements.filter((el) => el.id !== editingId)
+}
+
 /** Beyond this many grid lines the grid is visual noise — skip the frame's cost. */
 const MAX_GRID_LINES = 10_000
 
@@ -488,7 +559,7 @@ function drawGrid(
 
 export function renderScene(ctx: CanvasRenderingContext2D, input: SceneRenderInput): void {
   const { elements, appState, canvasSize, dpr } = input
-  const { theme, viewBackgroundColor, viewport, gridSize } = appState
+  const { theme, viewBackgroundColor, viewport, gridSize, editingId } = appState
   const dark = theme === 'dark'
   ctx.save()
   applyViewportTransform(ctx, viewport, dpr)
@@ -501,7 +572,7 @@ export function renderScene(ctx: CanvasRenderingContext2D, input: SceneRenderInp
   }
   // One RoughCanvas per render call; drawables come from the shared generator.
   const rc = rough.canvas(ctx.canvas)
-  for (const element of elements) {
+  for (const element of renderableElements(elements, editingId)) {
     drawElement(ctx, rc, element, dark)
   }
   ctx.restore()

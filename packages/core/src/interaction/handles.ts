@@ -5,7 +5,7 @@
  * finger-constant at any zoom level, exactly as Excalidraw does.
  */
 
-import { boundsCenter } from '../geometry/bounds.js'
+import { boundsCenter, getCommonBounds, getElementBounds } from '../geometry/bounds.js'
 import { rotatePoint } from '../geometry/points.js'
 import type { Bounds, Point, ResizeHandle, VueDrawElement } from '../types.js'
 
@@ -49,19 +49,19 @@ export function selectionFrameOf(elements: readonly VueDrawElement[]): Selection
   }
   if (elements.length === 1) {
     const el = elements[0]!
+    // Linear and freedraw geometry lives in `points` relative to (x, y), and
+    // points go negative when drawn up-left — so (x, y, width, height) is the
+    // drag origin plus extents, NOT the shape's box. Unrotated elements frame
+    // their true AABB; rotated ones keep (x, y, width, height) because that
+    // box is the rotation pivot the renderer and transforms already share.
+    if (el.angle === 0) {
+      const bounds = getElementBounds(el)
+      return { x: bounds.x1, y: bounds.y1, width: bounds.x2 - bounds.x1, height: bounds.y2 - bounds.y1, angle: 0 }
+    }
     return { x: el.x, y: el.y, width: el.width, height: el.height, angle: el.angle }
   }
-  let x1 = Number.POSITIVE_INFINITY
-  let y1 = Number.POSITIVE_INFINITY
-  let x2 = Number.NEGATIVE_INFINITY
-  let y2 = Number.NEGATIVE_INFINITY
-  for (const el of elements) {
-    x1 = Math.min(x1, el.x)
-    y1 = Math.min(y1, el.y)
-    x2 = Math.max(x2, el.x + el.width)
-    y2 = Math.max(y2, el.y + el.height)
-  }
-  return { x: x1, y: y1, width: x2 - x1, height: y2 - y1, angle: 0 }
+  const bounds = getCommonBounds(elements)
+  return { x: bounds.x1, y: bounds.y1, width: bounds.x2 - bounds.x1, height: bounds.y2 - bounds.y1, angle: 0 }
 }
 
 export interface HandleLayoutOptions {

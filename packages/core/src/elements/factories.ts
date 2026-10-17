@@ -10,6 +10,7 @@ import type {
   ElementOf,
   ElementStyle,
   Point,
+  Roundness,
   TextStyle,
   VueDrawElement,
   VueDrawElementBase,
@@ -54,6 +55,8 @@ export interface NewElementOptions {
   seed?: number
   version?: number
   locked?: boolean
+  /** Corner treatment — consumed by the rectangle and diamond factories. */
+  roundness?: Roundness | null
 }
 
 export interface NewLinearElementOptions extends NewElementOptions {
@@ -108,12 +111,14 @@ function baseElement<T extends VueDrawElementType>(
 export function newRectangleElement(opts: NewElementOptions): ElementOf<'rectangle'> {
   return {
     ...baseElement('rectangle', opts),
+    roundness: opts.roundness ?? null,
   } as ElementOf<'rectangle'>
 }
 
 export function newDiamondElement(opts: NewElementOptions): ElementOf<'diamond'> {
   return {
     ...baseElement('diamond', opts),
+    roundness: opts.roundness ?? null,
   } as ElementOf<'diamond'>
 }
 
@@ -130,7 +135,9 @@ export function newLinearElement(
   return {
     ...baseElement(type, opts),
     points: opts.points ?? [{ x: 0, y: 0 }],
-    ...(type === 'arrow' ? { startBinding: null, endBinding: null } : {}),
+    // Lines and arrows bind alike (Excalidraw's LinearElement).
+    startBinding: null,
+    endBinding: null,
   } as VueDrawLineElement | VueDrawArrowElement
 }
 

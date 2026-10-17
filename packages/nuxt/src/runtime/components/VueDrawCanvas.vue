@@ -6,11 +6,13 @@ import type {
   HandleDirection,
   Point,
   ResizeHandle,
+  VueDrawBindableShape,
   VueDrawElement,
 } from '@vuedraw/core'
 import {
-  arrowFollowPatches,
-  computeArrowBindings,
+  bindableShapeAt,
+  bindingFollowPatches,
+  computeLinearBindings,
   draftLinePoints,
   draftShapeRect,
   elementsInBounds,
@@ -19,8 +21,8 @@ import {
   getHandleLayout,
   handleAt,
   hitThreshold,
-  isArrowElement,
   isFreedrawElement,
+  isLinearElement,
   maxBindingDistance,
   moveElements,
   newElement,
@@ -162,6 +164,7 @@ function renderAll() {
     pointer: 'mouse',
     marquee: marquee.value,
     previewElements: [],
+    bindingCandidate: bindingCandidate.value,
     canvasSize: size,
     dpr: dpr.value,
   })
@@ -230,6 +233,8 @@ type Interaction =
 
 const interaction = shallowRef<Interaction>({ kind: 'none' })
 const modifiers = shallowRef({ shift: false })
+/** Shape an in-flight line/arrow tip would dock onto — outlined on the overlay. */
+const bindingCandidate = shallowRef<VueDrawBindableShape | null>(null)
 
 function setModifiers(event: PointerEvent | MouseEvent | KeyboardEvent) {
   modifiers.value = { shift: event.shiftKey }
@@ -255,7 +260,11 @@ function onPointerDown(event: PointerEvent) {
   if (!host) {
     return
   }
-  host.focus()
+  // preventScroll: a focus-induced scroll would move the host rect between
+  // this call and toScene(), silently offsetting every scene coordinate by
+  // the scroll delta. Bites on any page where the canvas is partly
+  // offscreen — the host is focused on every gesture start.
+  host.focus({ preventScroll: true })
   // Untrusted/synthetic pointer events carry no active pointer entry, so
   // capture is best-effort: an automation or test event stream must not
   // abort the interaction state machine mid-handler.
@@ -265,6 +274,9 @@ function onPointerDown(event: PointerEvent) {
     // No active pointer with this id — continue without capture.
   }
   setModifiers(event)
+  // A new gesture starts from a clean slate — a stale highlight must not
+  // survive into the next interaction.
+  bindingCandidate.value = null
 
   const scenePoint = toScene(event)
   const tool = ctx.activeTool.value
@@ -429,6 +441,15 @@ function onPointerMove(event: PointerEvent) {
       if (el.type === 'line' || el.type === 'arrow') {
         const points = draftLinePoints(current.originScene, scenePoint, modifiers.value)
         ctx.doc.forceUpdateElement(el.id, { points })
+        // Connect feedback: outline the shape the drafted tip would dock onto.
+        // The draft is never rotated, so scene position is origin + point.
+        const tip = points[points.length - 1]!
+        bindingCandidate.value = bindableShapeAt(
+          ctx.elements.value,
+          { x: el.x + tip.x, y: el.y + tip.y },
+          maxBindingDistance(ctx.viewport.value.zoom),
+          el.id,
+        )
       } else {
         const rect = draftShapeRect(current.originScene, scenePoint, modifiers.value)
         ctx.doc.forceUpdateElement(el.id, rect)
@@ -509,6 +530,7 @@ function onPointerUp(event: PointerEvent) {
   const current = interaction.value
   interaction.value = { kind: 'none' }
   marquee.value = null
+  bindingCandidate.value = null
   const host = hostRef.value
   if (host?.hasPointerCapture(event.pointerId)) {
     host.releasePointerCapture(event.pointerId)
@@ -529,10 +551,10 @@ function onPointerUp(event: PointerEvent) {
           ctx.doc.cancelStep()
           return
         }
-        if (isArrowElement(el)) {
+        if (isLinearElement(el)) {
           // Tips dropped over (or near) a shape dock onto it before the
           // creation step closes — the bind is part of the draw's undo entry.
-          const binding = computeArrowBindings(
+          const binding = computeLinearBindings(
             el,
             ctx.elements.value,
             maxBindingDistance(ctx.viewport.value.zoom),
@@ -581,13 +603,13 @@ function onPointerUp(event: PointerEvent) {
 }
 
 /**
- * Binding follow-through after a drag: arrows bound to any of the just-moved
- * elements re-dock their tips onto the new geometry, and moved arrows glide
- * along the edges of the shapes they are bound to.
+ * Binding follow-through after a drag: lines and arrows bound to any of the
+ * just-moved elements re-dock their tips onto the new geometry, and moved
+ * linear elements glide along the edges of the shapes they are bound to.
  */
 function followBindings(originals: readonly VueDrawElement[]): void {
   const movedIds = new Set(originals.map((el) => el.id))
-  for (const [id, patch] of arrowFollowPatches(movedIds, ctx.elements.value)) {
+  for (const [id, patch] of bindingFollowPatches(movedIds, ctx.elements.value)) {
     ctx.doc.updateElement(id, patch)
   }
 }
@@ -614,6 +636,7 @@ function draftElement(tool: string, at: Point): VueDrawElement {
     x: at.x,
     y: at.y,
     style: ctx.appState.value.style,
+    roundness: ctx.appState.value.shapeRoundness,
   })
 }
 
@@ -794,7 +817,8 @@ function onKeyDown(event: KeyboardEvent) {
     const delta = { x: arrow.x * step, y: arrow.y * step }
     const patches = moveElements(ctx.selectedElements.value, delta)
     for (const { id, patch } of patches) {
-      ctx.doc.updateElement(id, patch)
+      // The selection mixes element kinds, so patches are base-union typed.
+      ctx.doc.updateElement<VueDrawElement>(id, patch)
     }
     return
   }

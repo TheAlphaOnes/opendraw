@@ -15,7 +15,7 @@ import type {
   StrokeStyle,
   StrokeWidth,
   TextAlign,
-  VueDrawArrowBinding,
+  VueDrawBinding,
   VueDrawElement,
   VueDrawFile,
 } from '../types.js'
@@ -59,8 +59,8 @@ function freedrawPoints(value: unknown): number[][] {
     .map((p) => [num(p[0], 0), num(p[1], 0), num(p[2], 0.5)])
 }
 
-/** Coerces an arrow tip binding: a record with a string elementId, else null. */
-function arrowBinding(value: unknown): VueDrawArrowBinding | null {
+/** Coerces a linear tip binding: a record with a string elementId, else null. */
+function linearBinding(value: unknown): VueDrawBinding | null {
   if (!isRecord(value) || typeof value.elementId !== 'string') {
     return null
   }
@@ -96,16 +96,13 @@ export function coerceElement(input: unknown): VueDrawElement | null {
     versionNonce: str(input.versionNonce, ''),
     locked: input.locked === true,
   }
-  if (type === 'line') {
-    return { ...base, type, points: points(input.points) }
-  }
-  if (type === 'arrow') {
+  if (type === 'line' || type === 'arrow') {
     return {
       ...base,
       type,
       points: points(input.points),
-      startBinding: arrowBinding(input.startBinding),
-      endBinding: arrowBinding(input.endBinding),
+      startBinding: linearBinding(input.startBinding),
+      endBinding: linearBinding(input.endBinding),
     }
   }
   if (type === 'freedraw') {
@@ -123,7 +120,10 @@ export function coerceElement(input: unknown): VueDrawElement | null {
       lineHeight: num(input.lineHeight, 1.25),
     }
   }
-  return { ...base, type: type as 'rectangle' | 'diamond' | 'ellipse' }
+  if (type === 'rectangle' || type === 'diamond') {
+    return { ...base, type, roundness: input.roundness === 'round' ? 'round' : null }
+  }
+  return { ...base, type: 'ellipse' }
 }
 
 /** Builds a scene file from elements (+ document background). */

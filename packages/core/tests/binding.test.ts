@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import {
   BASE_BINDING_GAP,
-  arrowFollowPatches,
+  bindingFollowPatches,
   bindableShapeAt,
   bindingGap,
-  computeArrowBindings,
+  computeLinearBindings,
   dockPoint,
   isBindableShape,
   maxBindingDistance,
@@ -20,7 +20,12 @@ import {
 } from '../src/elements/factories.js'
 import { coerceElement } from '../src/export/serialize.js'
 import type { NewLinearElementOptions } from '../src/elements/factories.js'
-import type { VueDrawArrowBinding, VueDrawArrowElement, VueDrawElement } from '../src/types.js'
+import type {
+  VueDrawArrowElement,
+  VueDrawBinding,
+  VueDrawElement,
+  VueDrawLineElement,
+} from '../src/types.js'
 
 // ---------------------------------------------------------------------------
 // Fixtures — rect A sits at (100,100) sized 100x80 (bounds 100,100–200,180,
@@ -38,7 +43,7 @@ function makeArrow(
   id: string,
   start: [number, number],
   end: [number, number],
-  bindings: { start?: VueDrawArrowBinding | null; end?: VueDrawArrowBinding | null } = {},
+  bindings: { start?: VueDrawBinding | null; end?: VueDrawBinding | null } = {},
 ): VueDrawArrowElement {
   const opts: NewLinearElementOptions = {
     id,
@@ -54,6 +59,28 @@ function makeArrow(
     startBinding: bindings.start ?? null,
     endBinding: bindings.end ?? null,
   } as VueDrawArrowElement
+}
+
+function makeLine(
+  id: string,
+  start: [number, number],
+  end: [number, number],
+  bindings: { start?: VueDrawBinding | null; end?: VueDrawBinding | null } = {},
+): VueDrawLineElement {
+  const opts: NewLinearElementOptions = {
+    id,
+    x: start[0],
+    y: start[1],
+    points: [
+      { x: 0, y: 0 },
+      { x: end[0] - start[0], y: end[1] - start[1] },
+    ],
+  }
+  return {
+    ...newLinearElement('line', opts),
+    startBinding: bindings.start ?? null,
+    endBinding: bindings.end ?? null,
+  } as VueDrawLineElement
 }
 
 describe('binding targets', () => {
@@ -120,17 +147,17 @@ describe('dockPoint', () => {
   })
 })
 
-describe('computeArrowBindings (create-time)', () => {
+describe('computeLinearBindings (create-time)', () => {
   const rectA = rect('a', 100, 100)
 
   it('returns null when neither tip is near a shape', () => {
     const far = makeArrow('ar', [0, 0], [10, 10])
-    expect(computeArrowBindings(far, [rectA], 15)).toBeNull()
+    expect(computeLinearBindings(far, [rectA], 15)).toBeNull()
   })
 
   it('binds an end dropped over a shape and docks it on the edge', () => {
     const arrow = makeArrow('ar', [0, 140], [150, 140])
-    const patch = computeArrowBindings(arrow, [rectA], 15)
+    const patch = computeLinearBindings(arrow, [rectA], 15)
 
     expect(patch).not.toBeNull()
     expect(patch!.startBinding).toBeNull()
@@ -144,7 +171,7 @@ describe('computeArrowBindings (create-time)', () => {
   it('binds both tips across two shapes, keeping the tips on the facing edges', () => {
     const rectB = rect('b', 400, 100)
     const arrow = makeArrow('ar', [150, 140], [450, 140])
-    const patch = computeArrowBindings(arrow, [rectA, rectB], 15)
+    const patch = computeLinearBindings(arrow, [rectA, rectB], 15)
 
     expect(patch!.startBinding).toEqual({ elementId: 'a' })
     expect(patch!.endBinding).toEqual({ elementId: 'b' })
@@ -155,13 +182,23 @@ describe('computeArrowBindings (create-time)', () => {
 
   it('spreads a self-loop onto different edges instead of collapsing', () => {
     const arrow = makeArrow('ar', [130, 120], [170, 160])
-    const patch = computeArrowBindings(arrow, [rectA], 15)
+    const patch = computeLinearBindings(arrow, [rectA], 15)
 
     expect(patch!.startBinding).toEqual({ elementId: 'a' })
     expect(patch!.endBinding).toEqual({ elementId: 'a' })
     // Start snaps to the top dilated edge, end to the bottom one.
     expect(patch!.points![0]).toEqual({ x: 0, y: -26 })
     expect(patch!.points![1]).toEqual({ x: 40, y: 66 })
+  })
+
+  it('binds a line tip exactly like an arrow', () => {
+    const line = makeLine('ln', [0, 140], [150, 140])
+    const patch = computeLinearBindings(line, [rectA], 15)
+
+    expect(patch).not.toBeNull()
+    expect(patch!.startBinding).toBeNull()
+    expect(patch!.endBinding).toEqual({ elementId: 'a' })
+    expect(patch!.points![1]).toEqual({ x: 94, y: 0 })
   })
 
   it('keeps intermediate points fixed when a tip docks', () => {
@@ -173,7 +210,7 @@ describe('computeArrowBindings (create-time)', () => {
         { x: 110, y: 0 },
       ],
     } as VueDrawArrowElement
-    const patch = computeArrowBindings(arrow, [rectA], 15)
+    const patch = computeLinearBindings(arrow, [rectA], 15)
 
     expect(patch!.points![0]).toEqual({ x: 0, y: 0 })
     expect(patch!.points![1]).toEqual({ x: 40, y: 0 }) // untouched middle point
@@ -181,10 +218,10 @@ describe('computeArrowBindings (create-time)', () => {
   })
 })
 
-describe('arrowFollowPatches (move/resize follow-through)', () => {
+describe('bindingFollowPatches (move/resize follow-through)', () => {
   function boundArrow(
-    startBinding: VueDrawArrowBinding | null,
-    endBinding: VueDrawArrowBinding | null,
+    startBinding: VueDrawBinding | null,
+    endBinding: VueDrawBinding | null,
   ): VueDrawArrowElement {
     // Start tip docked at (94,140) — A's left dilated edge; loose end at (40,140).
     return makeArrow('ar', [94, 140], [40, 140], { start: startBinding, end: endBinding })
@@ -193,7 +230,7 @@ describe('arrowFollowPatches (move/resize follow-through)', () => {
   it('re-docks a tip when its shape moves', () => {
     const movedA = rect('a', 130, 120) // A moved by (30,20)
     const arrow = boundArrow({ elementId: 'a' }, null)
-    const patches = arrowFollowPatches(new Set(['a']), [movedA, arrow])
+    const patches = bindingFollowPatches(new Set(['a']), [movedA, arrow])
 
     const patch = patches.get('ar')
     expect(patch).toBeDefined()
@@ -202,10 +239,24 @@ describe('arrowFollowPatches (move/resize follow-through)', () => {
     expect(patch!.points![1]).toEqual({ x: -54, y: 0 }) // loose end never moves
   })
 
+  it('re-docks a bound line tip the same way', () => {
+    const movedA = rect('a', 130, 120) // A moved by (30,20)
+    const line = makeLine('ln', [94, 140], [150, 140], { end: { elementId: 'a' } })
+    const patches = bindingFollowPatches(new Set(['a']), [movedA, line])
+
+    const patch = patches.get('ln')
+    expect(patch).toBeDefined()
+    // Follow-through rewrites geometry only — never the bindings themselves.
+    expect(patch!.endBinding).toBeUndefined()
+    expect(patch!.points![0]).toEqual({ x: 0, y: 0 }) // loose start never moves
+    expect(patch!.points![1]!.x).toBeCloseTo(30, 5)
+    expect(patch!.points![1]!.y).toBeCloseTo(6.9767, 3)
+  })
+
   it('keeps a moved arrow glued to its stationary shape', () => {
     const rectA = rect('a', 100, 100)
     const arrow = boundArrow({ elementId: 'a' }, null)
-    const patches = arrowFollowPatches(new Set(['ar']), [rectA, arrow])
+    const patches = bindingFollowPatches(new Set(['ar']), [rectA, arrow])
 
     const patch = patches.get('ar')
     expect(patch).toBeDefined()
@@ -222,7 +273,7 @@ describe('arrowFollowPatches (move/resize follow-through)', () => {
       startBinding: { elementId: 'a' },
       endBinding: { elementId: 'b' },
     } as VueDrawArrowElement
-    const patches = arrowFollowPatches(new Set(['b']), [rectA, movedB, arrow])
+    const patches = bindingFollowPatches(new Set(['b']), [rectA, movedB, arrow])
 
     const patch = patches.get('ar')
     expect(patch).toBeDefined()
@@ -233,13 +284,13 @@ describe('arrowFollowPatches (move/resize follow-through)', () => {
   it('ignores moves that no bound arrow cares about', () => {
     const rectA = rect('a', 100, 100)
     const arrow = boundArrow({ elementId: 'a' }, null)
-    const patches = arrowFollowPatches(new Set(['unrelated']), [rectA, arrow])
+    const patches = bindingFollowPatches(new Set(['unrelated']), [rectA, arrow])
     expect(patches.size).toBe(0)
   })
 
   it('leaves dangling bindings alone (deletion owns that cleanup)', () => {
     const arrow = boundArrow({ elementId: 'ghost' }, null)
-    const patches = arrowFollowPatches(new Set(['ghost']), [arrow])
+    const patches = bindingFollowPatches(new Set(['ghost']), [arrow])
     expect(patches.size).toBe(0)
   })
 })
@@ -297,14 +348,16 @@ describe('binding coercion on restore', () => {
     expect(el!.endBinding).toBeNull()
   })
 
-  it('does not attach bindings to lines', () => {
+  it('binds lines exactly like arrows: valid kept, malformed coerced to null', () => {
     const el = coerceElement({
       id: 'ln',
       type: 'line',
       points: [{ x: 0, y: 0 }, { x: 5, y: 5 }],
-      startBinding: { elementId: 'x' },
-    })
+      startBinding: { elementId: 'shape-a' },
+      endBinding: 'not-a-binding',
+    }) as VueDrawLineElement | null
     expect(el).not.toBeNull()
-    expect('startBinding' in el!).toBe(false)
+    expect(el!.startBinding).toEqual({ elementId: 'shape-a' })
+    expect(el!.endBinding).toBeNull()
   })
 })

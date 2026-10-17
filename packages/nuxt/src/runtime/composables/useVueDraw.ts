@@ -9,6 +9,7 @@ import {
   type ElementPatch,
   type ElementStyle,
   type ReorderAction,
+  type Roundness,
   type TextLayout,
   type TextStyle,
   type ThemeName,
@@ -79,6 +80,8 @@ export interface VueDrawContext {
   // style
   changeStyle: (style: Partial<ElementStyle>) => void
   changeTextStyle: (style: Partial<TextStyle>) => void
+  /** Corner treatment for the selected rectangles/diamonds, else new-shape default. */
+  changeRoundness: (roundness: Roundness | null) => void
 
   // history
   undo: () => boolean
@@ -246,6 +249,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
 
     changeStyle: (style) => doc.changeStyle(style),
     changeTextStyle: (style) => doc.changeTextStyle(style),
+    changeRoundness: (roundness) => doc.changeRoundness(roundness),
 
     undo: () => doc.undo(),
     redo: () => doc.redo(),

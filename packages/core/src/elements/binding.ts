@@ -1,9 +1,9 @@
 /**
- * Arrow bindings — Excalidraw-style magnetic connections.
+ * Linear bindings — Excalidraw-style magnetic connections for lines and arrows.
  *
- * A bound arrow tip records the id of the shape it docks onto
- * (`startBinding` / `endBinding` on the arrow, nothing on the shape) and
- * follows that shape around. The reverse lookup is a scene scan, which is
+ * A bound tip records the id of the shape it docks onto
+ * (`startBinding` / `endBinding` on the linear element, nothing on the shape)
+ * and follows that shape around. The reverse lookup is a scene scan, which is
  * cheap for canvas-scale scenes and keeps the base element model untouched.
  *
  * Behavioral reference: .context/excalidraw/packages/element/src/binding.ts
@@ -15,16 +15,16 @@
 
 import { getElementBounds, pointInBounds } from '../geometry/bounds.js'
 import { rotatePoint, unrotatePoint } from '../geometry/points.js'
-import { isArrowElement } from './factories.js'
+import { isLinearElement } from './factories.js'
 import type { ElementPatch } from './mutate.js'
 import type {
   Bounds,
   Point,
-  VueDrawArrowBinding,
-  VueDrawArrowElement,
+  VueDrawBinding,
   VueDrawDiamondElement,
   VueDrawEllipseElement,
   VueDrawElement,
+  VueDrawLinearElement,
   VueDrawRectangleElement,
   VueDrawTextElement,
 } from '../types.js'
@@ -204,33 +204,33 @@ function localPointOf(element: VueDrawElement, scene: Point): Point {
   return { x: base.x - element.x, y: base.y - element.y }
 }
 
-/** Scene-space positions of the arrow's first and last tip. */
-function tipScenes(arrow: VueDrawArrowElement): { start: Point; end: Point } {
-  const points = arrow.points
+/** Scene-space positions of the element's first and last tip. */
+function tipScenes(element: VueDrawLinearElement): { start: Point; end: Point } {
+  const points = element.points
   return {
-    start: scenePointOf(arrow, points[0]!),
-    end: scenePointOf(arrow, points[points.length - 1]!),
+    start: scenePointOf(element, points[0]!),
+    end: scenePointOf(element, points[points.length - 1]!),
   }
 }
 
 /**
  * Rewrite only the given tips, keeping every other point fixed in scene
- * space. Size fields follow the new points while the arrow is unrotated —
+ * space. Size fields follow the new points while the element is unrotated —
  * with an angle they are the rotation pivot and must stay untouched.
  */
 function retipPatch(
-  arrow: VueDrawArrowElement,
+  element: VueDrawLinearElement,
   tips: { start?: Point; end?: Point },
-): ElementPatch<VueDrawArrowElement> {
-  const points = arrow.points.map((point) => ({ ...point }))
+): ElementPatch<VueDrawLinearElement> {
+  const points = element.points.map((point) => ({ ...point }))
   if (tips.start) {
-    points[0] = localPointOf(arrow, tips.start)
+    points[0] = localPointOf(element, tips.start)
   }
   if (tips.end) {
-    points[points.length - 1] = localPointOf(arrow, tips.end)
+    points[points.length - 1] = localPointOf(element, tips.end)
   }
-  const patch: ElementPatch<VueDrawArrowElement> = { points }
-  if (arrow.angle === 0) {
+  const patch: ElementPatch<VueDrawLinearElement> = { points }
+  if (element.angle === 0) {
     const xs = points.map((point) => point.x)
     const ys = points.map((point) => point.y)
     patch.width = Math.max(...xs) - Math.min(...xs)
@@ -244,19 +244,19 @@ function retipPatch(
 // ---------------------------------------------------------------------------
 
 /**
- * Create-time binding for a freshly drawn arrow: any tip that ends over (or
- * within `threshold` of) a bindable shape docks onto it. Both tips re-dock
- * while intermediate points stay fixed. Returns null when neither tip is
- * near a shape.
+ * Create-time binding for a freshly drawn line or arrow: any tip that ends
+ * over (or within `threshold` of) a bindable shape docks onto it. Both tips
+ * re-dock while intermediate points stay fixed. Returns null when neither tip
+ * is near a shape.
  */
-export function computeArrowBindings(
-  arrow: VueDrawArrowElement,
+export function computeLinearBindings(
+  element: VueDrawLinearElement,
   elements: readonly VueDrawElement[],
   threshold: number,
-): ElementPatch<VueDrawArrowElement> | null {
-  const { start, end } = tipScenes(arrow)
-  const startShape = bindableShapeAt(elements, start, threshold, arrow.id)
-  const endShape = bindableShapeAt(elements, end, threshold, arrow.id)
+): ElementPatch<VueDrawLinearElement> | null {
+  const { start, end } = tipScenes(element)
+  const startShape = bindableShapeAt(elements, start, threshold, element.id)
+  const endShape = bindableShapeAt(elements, end, threshold, element.id)
   if (!startShape && !endShape) {
     return null
   }
@@ -267,7 +267,7 @@ export function computeArrowBindings(
   const newStart = startShape ? dockPoint(startShape, selfLoop ? mid : end, start) : start
   const newEnd = endShape ? dockPoint(endShape, selfLoop ? mid : start, end) : end
   return {
-    ...retipPatch(arrow, { start: newStart, end: newEnd }),
+    ...retipPatch(element, { start: newStart, end: newEnd }),
     startBinding: startShape ? { elementId: startShape.id } : null,
     endBinding: endShape ? { elementId: endShape.id } : null,
   }
@@ -278,7 +278,7 @@ export function computeArrowBindings(
  * (a hand-edited file can bind anything) count as unbound.
  */
 function boundShape(
-  binding: VueDrawArrowBinding | null,
+  binding: VueDrawBinding | null,
   byId: Map<string, VueDrawElement>,
 ): VueDrawBindableShape | undefined {
   if (!binding) {
@@ -290,37 +290,37 @@ function boundShape(
 
 /**
  * Patches after elements move or resize:
- *   — an arrow bound to a moved shape re-docks that tip;
- *   — a moved arrow re-docks its own bound tips onto the stationary shapes,
- *     so the tip glides along the shape's edge.
+ *   — a linear element bound to a moved shape re-docks that tip;
+ *   — a moved linear element re-docks its own bound tips onto the
+ *     stationary shapes, so the tip glides along the shape's edge.
  * Loose ends and intermediate points never move.
  */
-export function arrowFollowPatches(
+export function bindingFollowPatches(
   movedIds: ReadonlySet<string>,
   elements: readonly VueDrawElement[],
-): Map<string, ElementPatch<VueDrawArrowElement>> {
-  const patches = new Map<string, ElementPatch<VueDrawArrowElement>>()
+): Map<string, ElementPatch<VueDrawLinearElement>> {
+  const patches = new Map<string, ElementPatch<VueDrawLinearElement>>()
   const byId = new Map(elements.map((element) => [element.id, element]))
   for (const element of elements) {
-    if (!isArrowElement(element)) {
+    if (!isLinearElement(element)) {
       continue
     }
     const startShape = boundShape(element.startBinding, byId)
     const endShape = boundShape(element.endBinding, byId)
     const startMoved = startShape !== undefined && movedIds.has(startShape.id)
     const endMoved = endShape !== undefined && movedIds.has(endShape.id)
-    const arrowMoved = movedIds.has(element.id)
-    if (!arrowMoved && !startMoved && !endMoved) {
+    const elementMoved = movedIds.has(element.id)
+    if (!elementMoved && !startMoved && !endMoved) {
       continue
     }
     const { start, end } = tipScenes(element)
     const mid = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 }
     const selfLoop = startShape !== undefined && startShape.id === endShape?.id
     const tips: { start?: Point; end?: Point } = {}
-    if (startShape && (startMoved || arrowMoved)) {
+    if (startShape && (startMoved || elementMoved)) {
       tips.start = dockPoint(startShape, selfLoop ? mid : end, start)
     }
-    if (endShape && (endMoved || arrowMoved)) {
+    if (endShape && (endMoved || elementMoved)) {
       tips.end = dockPoint(endShape, selfLoop ? mid : start, end)
     }
     patches.set(element.id, retipPatch(element, tips))
@@ -330,15 +330,15 @@ export function arrowFollowPatches(
 
 /**
  * Patches nulling out bindings whose target was deleted — applied inside the
- * deletion's own undo step so the arrow and the cleanup revert together.
+ * deletion's own undo step so the element and the cleanup revert together.
  */
 export function orphanBindingPatches(
   deletedIds: ReadonlySet<string>,
   elements: readonly VueDrawElement[],
-): Map<string, ElementPatch<VueDrawArrowElement>> {
-  const patches = new Map<string, ElementPatch<VueDrawArrowElement>>()
+): Map<string, ElementPatch<VueDrawLinearElement>> {
+  const patches = new Map<string, ElementPatch<VueDrawLinearElement>>()
   for (const element of elements) {
-    if (!isArrowElement(element)) {
+    if (!isLinearElement(element)) {
       continue
     }
     const startOrphaned =

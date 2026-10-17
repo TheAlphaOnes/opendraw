@@ -36,6 +36,8 @@ import {
   Pen,
   Pencil,
   PenLine,
+  Radius,
+  RectangleHorizontal,
   Redo2,
   Scan,
   Scissors,
@@ -97,6 +99,8 @@ export type IconName =
   | 'strokeThin'
   | 'strokeMedium'
   | 'strokeBold'
+  | 'cornerSharp'
+  | 'cornerRound'
   | 'alignLeft'
   | 'alignCenter'
   | 'alignRight'
@@ -149,6 +153,8 @@ export const iconRegistry: Record<IconName, Component> = {
   strokeThin: PenLine,
   strokeMedium: Pen,
   strokeBold: Brush,
+  cornerSharp: RectangleHorizontal,
+  cornerRound: Radius,
   alignLeft: AlignLeft,
   alignCenter: AlignCenter,
   alignRight: AlignRight,

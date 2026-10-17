@@ -16,11 +16,11 @@
  */
 declare global {
   interface Window {
-    __vuedraw?: { elements: unknown[]; selection: string[] }
+    __vuedraw?: { elements: readonly unknown[]; selection: string[] }
   }
 }
 
-function onChange(detail: { elements: unknown[] }): void {
+function onChange(detail: { elements: readonly unknown[] }): void {
   window.__vuedraw = { elements: detail.elements, selection: window.__vuedraw?.selection ?? [] }
   // eslint-disable-next-line no-console
   console.debug('[vuedraw] change', detail.elements.length)

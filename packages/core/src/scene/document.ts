@@ -21,10 +21,12 @@ import { DEFAULT_ELEMENT_STYLE, DEFAULT_TEXT_STYLE } from '../elements/defaults.
 import type {
   ElementStyle,
   ReorderAction,
+  Roundness,
   TextStyle,
   VueDrawAppState,
   VueDrawElement,
   VueDrawFile,
+  VueDrawLinearElement,
   VueDrawState,
   VueDrawStateListener,
 } from '../types.js'
@@ -47,6 +49,7 @@ export const DEFAULT_APP_STATE: VueDrawAppState = {
   gridSize: null,
   style: { ...DEFAULT_ELEMENT_STYLE },
   textStyle: { ...DEFAULT_TEXT_STYLE },
+  shapeRoundness: null,
 }
 
 export class VueDrawDocument {
@@ -302,13 +305,16 @@ export class VueDrawDocument {
     }
   }
 
-  updateElement(id: string, patch: ElementPatch | ((element: VueDrawElement) => ElementPatch)): void {
-    this.updateElements([id], patch)
+  updateElement<T extends VueDrawElement>(
+    id: string,
+    patch: ElementPatch<T> | ((element: T) => ElementPatch<T>),
+  ): void {
+    this.updateElements<T>([id], patch)
   }
 
-  updateElements(
+  updateElements<T extends VueDrawElement>(
     ids: readonly string[],
-    patch: ElementPatch | ((element: VueDrawElement) => ElementPatch),
+    patch: ElementPatch<T> | ((element: T) => ElementPatch<T>),
   ): void {
     const idSet = new Set(ids)
     this.mutate((current) => {
@@ -317,8 +323,11 @@ export class VueDrawDocument {
         if (!idSet.has(element.id)) {
           return element
         }
-        const resolved = typeof patch === 'function' ? patch(element) : patch
-        const patched = patchElement(element, resolved)
+        // Ids are trusted to name T-shaped elements — the runtime contract
+        // the pre-generic signature already relied on.
+        const target = element as T
+        const resolved = typeof patch === 'function' ? patch(target) : patch
+        const patched = patchElement(target, resolved)
         if (patched !== element) {
           changed = true
         }
@@ -329,7 +338,7 @@ export class VueDrawDocument {
   }
 
   /** Forces an update bypassing no-op detection (live drag geometry). */
-  forceUpdateElement(id: string, patch: ElementPatch): void {
+  forceUpdateElement<T extends VueDrawElement>(id: string, patch: ElementPatch<T>): void {
     const idSet = new Set([id])
     this.mutate((current) => {
       let changed = false
@@ -338,7 +347,7 @@ export class VueDrawDocument {
           return element
         }
         changed = true
-        return forcePatchElement(element, patch)
+        return forcePatchElement(element as T, patch)
       })
       return changed ? next : null
     })
@@ -359,10 +368,10 @@ export class VueDrawDocument {
       const next = current.filter((el) => !idSet.has(el.id))
       return next.length === current.length ? null : next
     })
-    // Arrows bound to deleted shapes lose those bindings — inside the same
-    // undo step, so undo resurrects shape and binding together.
+    // Lines and arrows bound to deleted shapes lose those bindings — inside
+    // the same undo step, so undo resurrects shape and binding together.
     for (const [id, patch] of orphanBindingPatches(idSet, this.elements)) {
-      this.updateElement(id, patch)
+      this.updateElement<VueDrawLinearElement>(id, patch)
     }
     // Drop dangling selection.
     const selected = this.appState.selectedIds
@@ -546,6 +555,23 @@ export class VueDrawDocument {
         height: layout.height,
       }
     })
+    this.endStep()
+  }
+
+  /**
+   * Applies corner roundness to the selected rectangles and diamonds. With no
+   * such element selected it becomes the default for future shapes instead.
+   */
+  changeRoundness(roundness: Roundness | null): void {
+    const ids = this.getSelectedElements()
+      .filter((el) => el.type === 'rectangle' || el.type === 'diamond')
+      .map((el) => el.id)
+    if (ids.length === 0) {
+      this.commitAppState({ ...this.appState, shapeRoundness: roundness })
+      return
+    }
+    this.beginStep()
+    this.updateElements(ids, (): ElementPatch => ({ roundness }))
     this.endStep()
   }
 

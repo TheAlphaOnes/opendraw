@@ -55,6 +55,9 @@ export type TextAlign = 'left' | 'center' | 'right'
 
 export type VerticalAlign = 'top' | 'middle' | 'bottom'
 
+/** Corner treatment for rectangles and diamonds. */
+export type Roundness = 'round'
+
 // ---------------------------------------------------------------------------
 // Elements
 // ---------------------------------------------------------------------------
@@ -93,13 +96,18 @@ export interface VueDrawElementBase {
 export interface VueDrawLinearElement extends VueDrawElementBase {
   type: 'line' | 'arrow'
   points: Point[]
+  /** Shape the start tip is docked to, or null when loose. */
+  startBinding: VueDrawBinding | null
+  /** Shape the end tip is docked to, or null when loose. */
+  endBinding: VueDrawBinding | null
 }
 
 /**
- * A bound arrow tip: the tip docks onto the shape's edge and follows the
- * shape around (Excalidraw's `startBinding`/`endBinding`).
+ * A bound linear tip: the tip docks onto the shape's edge and follows the
+ * shape around (Excalidraw's `startBinding`/`endBinding` — lines and arrows
+ * both bind).
  */
-export interface VueDrawArrowBinding {
+export interface VueDrawBinding {
   /** Id of the shape the tip is docked to. */
   elementId: string
 }
@@ -110,10 +118,6 @@ export interface VueDrawLineElement extends VueDrawLinearElement {
 
 export interface VueDrawArrowElement extends VueDrawLinearElement {
   type: 'arrow'
-  /** Shape the start tip is docked to, or null when loose. */
-  startBinding: VueDrawArrowBinding | null
-  /** Shape the end tip is docked to, or null when loose. */
-  endBinding: VueDrawArrowBinding | null
 }
 
 /** Freedraw strokes store `[x, y, pressure]` triples in local space. */
@@ -136,10 +140,14 @@ export interface VueDrawTextElement extends VueDrawElementBase {
 
 export interface VueDrawRectangleElement extends VueDrawElementBase {
   type: 'rectangle'
+  /** 'round' renders curved corners; null (or absent) keeps them sharp. */
+  roundness?: Roundness | null
 }
 
 export interface VueDrawDiamondElement extends VueDrawElementBase {
   type: 'diamond'
+  /** 'round' renders curved corners; null (or absent) keeps them sharp. */
+  roundness?: Roundness | null
 }
 
 export interface VueDrawEllipseElement extends VueDrawElementBase {
@@ -216,6 +224,8 @@ export interface VueDrawAppState {
   /** Style applied to newly created elements. */
   style: ElementStyle
   textStyle: TextStyle
+  /** Corner style applied to newly created rectangles and diamonds. */
+  shapeRoundness: Roundness | null
 }
 
 // ---------------------------------------------------------------------------
