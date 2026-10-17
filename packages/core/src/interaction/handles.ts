@@ -5,9 +5,17 @@
  * finger-constant at any zoom level, exactly as Excalidraw does.
  */
 
+import { scenePointOf } from '../elements/binding.js'
 import { boundsCenter, getCommonBounds, getElementBounds } from '../geometry/bounds.js'
 import { rotatePoint, unrotatePoint } from '../geometry/points.js'
-import type { Bounds, HandleDirection, Point, ResizeHandle, VueDrawElement } from '../types.js'
+import type {
+  Bounds,
+  HandleDirection,
+  Point,
+  ResizeHandle,
+  VueDrawElement,
+  VueDrawLinearElement,
+} from '../types.js'
 
 export type PointerKind = 'mouse' | 'pen' | 'touch'
 
@@ -263,4 +271,64 @@ export function resizeCursorFor(handle: ResizeHandle, angle = 0): string {
   const rotated =
     RESIZE_CURSOR_BASES[(((index + shift) % 4) + 4) % 4] ?? base
   return `${rotated}-resize`
+}
+
+// ---------------------------------------------------------------------------
+// Linear point handles
+// ---------------------------------------------------------------------------
+
+/** Visual radius of a linear point handle (screen px) — Excalidraw's
+ * POINT_HANDLE_SIZE / 2. */
+export const POINT_HANDLE_RADIUS = 5
+
+/** Grab radius around a point handle (screen px) — Excalidraw's
+ * POINT_HANDLE_SIZE + 1, which adds slack for the outline stroke. */
+export const POINT_HANDLE_HIT_RADIUS = 11
+
+export interface LinearHandle {
+  /** Point index — for the midpoint handle, the insertion index. */
+  index: number
+  /** Handle center in scene space. */
+  at: Point
+}
+
+/** Scene positions of a linear element's point handles, in point order. */
+export function linearPointHandles(element: VueDrawLinearElement): LinearHandle[] {
+  return element.points.map((point, index) => ({ index, at: scenePointOf(element, point) }))
+}
+
+/**
+ * The segment-midpoint handle of a two-point linear — the small circle
+ * Excalidraw renders on a selected two-point line, whose press inserts a
+ * point there and drags it. Longer polylines only grow midpoints in the
+ * point editor, which vuedraw does not have.
+ */
+export function linearMidpointHandle(element: VueDrawLinearElement): LinearHandle | null {
+  if (element.points.length !== 2) {
+    return null
+  }
+  const a = scenePointOf(element, element.points[0]!)
+  const b = scenePointOf(element, element.points[1]!)
+  return { index: 1, at: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } }
+}
+
+/**
+ * The handle under `point`, or null. Later handles win on overlap — they
+ * render on top, matching Excalidraw's right-to-left scan in
+ * `getPointIndexUnderCursor`.
+ */
+export function linearHandleAt(
+  handles: readonly LinearHandle[],
+  point: Point,
+  zoom: number,
+): LinearHandle | null {
+  for (let i = handles.length - 1; i >= 0; i--) {
+    const handle = handles[i]!
+    const dx = point.x - handle.at.x
+    const dy = point.y - handle.at.y
+    if (Math.hypot(dx, dy) * zoom < POINT_HANDLE_HIT_RADIUS) {
+      return handle
+    }
+  }
+  return null
 }

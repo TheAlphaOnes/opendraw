@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, reactive, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 
 import type { VueDrawElement } from '@vuedraw/core'
 
@@ -8,11 +8,17 @@ import {
   provideVueDraw,
   type VueDrawChangeDetail,
 } from '../composables/useVueDraw.js'
+import { useScenePersistence } from '../composables/useScenePersistence.js'
+import { DEFAULT_SCENE_STORAGE_KEY } from '../persistence/persistedScene.js'
+import { resolveThemeDefault, type ThemeDefault } from '../persistence/systemTheme.js'
 import VueDrawCanvas from './VueDrawCanvas.vue'
 import ToolDock from './toolbar/ToolDock.vue'
 import StylePanel from './panels/StylePanel.vue'
 import ActionsPanel from './panels/ActionsPanel.vue'
+import ZoomControls from './panels/ZoomControls.vue'
 import ContextMenu from './menus/ContextMenu.vue'
+import ShortcutsDialog from './ui/ShortcutsDialog.vue'
+import WelcomeScreen from './ui/WelcomeScreen.vue'
 
 /**
  * VueDraw — the full editor, ready to drop into any page:
@@ -24,17 +30,29 @@ import ContextMenu from './menus/ContextMenu.vue'
  * building your own UI with useVueDraw().
  */
 export interface VueDrawProps {
-  theme?: 'light' | 'dark'
+  /**
+   * Starting theme. `"system"` (the default) follows the browser color
+   * scheme, matching Excalidraw's first-load detection; a persisted
+   * theme always wins over it.
+   */
+  theme?: ThemeDefault
   ui?: 'full' | 'minimal' | 'none'
   grid?: boolean | number
   initialElements?: VueDrawElement[]
+  /**
+   * Automatic localStorage persistence (Excalidraw parity). `true` (default)
+   * saves the scene under the shared key; a string saves under that key;
+   * `false` disables persistence.
+   */
+  persist?: boolean | string
 }
 
 const props = withDefaults(defineProps<VueDrawProps>(), {
-  theme: 'light',
+  theme: 'system',
   ui: 'full',
   grid: false,
   initialElements: () => [],
+  persist: true,
 })
 
 const emit = defineEmits<{
@@ -42,16 +60,26 @@ const emit = defineEmits<{
   (e: 'select', ids: string[]): void
 }>()
 
+// The context always holds a concrete theme: an explicit prop maps straight
+// onto it. `'system'` starts as light on the server AND the hydration
+// render (both must agree — the media query only exists after mount), then
+// the persisted restore runs first and, when a theme was saved, wins; a
+// fresh scene resolves the system scheme on mount.
 const ctx = createVueDrawContext({
   elements: props.initialElements,
-  appState: { theme: props.theme },
+  appState: { theme: props.theme === 'system' ? 'light' : resolveThemeDefault(props.theme) },
 })
 provideVueDraw(ctx)
 
-// Prop → context sync.
+// Prop → context sync. `'system'` is a first-load default, not a live state
+// to push — after mount the editor owns the theme (and persists it).
 watch(
   () => props.theme,
-  (theme) => ctx.setTheme(theme),
+  (theme) => {
+    if (theme !== 'system') {
+      ctx.setTheme(theme)
+    }
+  },
 )
 watch(
   () => props.grid,
@@ -67,6 +95,19 @@ watch(
   () => ctx.selectedElements.value.map((el) => el.id),
   (ids) => emit('select', [...ids]),
 )
+
+// Automatic save/restore. Registered after the change-event wiring above so
+// the restored scene is announced to consumers through the public event.
+if (props.persist !== false) {
+  useScenePersistence(ctx, {
+    storageKey: props.persist === true ? DEFAULT_SCENE_STORAGE_KEY : props.persist,
+    themeDefault: props.theme,
+  })
+} else if (props.theme === 'system') {
+  // Without persistence there is no saved theme to prefer, so the system
+  // color scheme decides the first-load theme (Excalidraw parity).
+  onMounted(() => ctx.setTheme(resolveThemeDefault('system')))
+}
 
 onBeforeUnmount(() => {
   unsubscribe()
@@ -94,6 +135,7 @@ const themeAttr = computed(() => ctx.theme.value)
     <ToolDock v-if="ui !== 'none'" />
     <StylePanel v-if="ui === 'full'" />
     <ActionsPanel v-if="ui !== 'none'" />
+    <ZoomControls v-if="ui !== 'none'" />
     <ContextMenu
       v-if="ui === 'full'"
       :x="menu.x"
@@ -101,6 +143,8 @@ const themeAttr = computed(() => ctx.theme.value)
       :visible="menu.visible"
       @close="closeMenu"
     />
+    <ShortcutsDialog v-if="ui !== 'none'" />
+    <WelcomeScreen v-if="ui === 'full'" />
   </div>
 </template>
 

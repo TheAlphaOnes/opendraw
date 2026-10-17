@@ -20,6 +20,7 @@
   "scripts": {
     "build": "nuxt-module-build build",
     "dev:prepare": "nuxt-module-build build --stub",
+    "test": "vitest run",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {

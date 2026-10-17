@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import type { Point } from '@vuedraw/core'
-
 import { useVueDraw } from '../../composables/useVueDraw.js'
 import UiIconButton from '../ui/UiIconButton.vue'
 import UiPanel from '../ui/UiPanel.vue'
@@ -14,30 +12,12 @@ const anyLocked = computed(() => ctx.selectedElements.value.some((el) => el.lock
 const gridActive = computed(() => ctx.gridSize.value !== null)
 const isDark = computed(() => ctx.theme.value === 'dark')
 
-// ---------------------------------------------------------------------------
-// View — zoom anchors at this panel's own center, falling back to the
-// window center (guarded for SSR).
-// ---------------------------------------------------------------------------
-
-const rootEl = ref<HTMLElement | null>(null)
-
-function zoomAnchor(): Point {
-  if (typeof window === 'undefined') {
-    return { x: 0, y: 0 }
-  }
-  const rect = rootEl.value?.getBoundingClientRect()
-  if (rect) {
-    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
-  }
-  return { x: window.innerWidth / 2, y: window.innerHeight / 2 }
-}
-
 function toggleGrid(): void {
   ctx.setGridSize(ctx.gridSize.value !== null ? null : 20)
 }
 
 // ---------------------------------------------------------------------------
-// File — PNG export, JSON download, JSON import through a hidden input.
+// File — PNG/SVG export, JSON download, JSON import through a hidden input.
 // ---------------------------------------------------------------------------
 
 function saveJSON(): void {
@@ -88,16 +68,13 @@ function clearCanvas(): void {
 
 <template>
   <UiPanel position="right">
-    <div ref="rootEl" class="actions-panel">
+    <div class="actions-panel">
       <div class="actions-panel__group">
         <UiIconButton icon="undo" label="Undo (Ctrl+Z)" :disabled="!ctx.canUndo.value" @click="ctx.undo()" />
         <UiIconButton icon="redo" label="Redo (Ctrl+Shift+Z)" :disabled="!ctx.canRedo.value" @click="ctx.redo()" />
       </div>
 
       <div class="actions-panel__group">
-        <UiIconButton icon="zoomIn" label="Zoom in" @click="ctx.zoomIn(zoomAnchor())" />
-        <UiIconButton icon="zoomOut" label="Zoom out" @click="ctx.zoomOut(zoomAnchor())" />
-        <UiIconButton icon="resetZoom" label="Reset zoom" @click="ctx.resetZoom()" />
         <UiIconButton icon="grid" label="Toggle grid" :active="gridActive" @click="toggleGrid" />
       </div>
 
@@ -132,6 +109,7 @@ function clearCanvas(): void {
 
       <div class="actions-panel__group">
         <UiIconButton icon="image" label="Export PNG" @click="ctx.exportPNG()" />
+        <UiIconButton icon="svg" label="Export SVG" @click="ctx.exportSVG()" />
         <UiIconButton icon="save" label="Save as JSON" @click="saveJSON" />
         <UiIconButton icon="load" label="Load JSON file" @click="fileInput?.click()" />
       </div>

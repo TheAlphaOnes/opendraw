@@ -22,11 +22,15 @@ import {
   Diamond,
   Eraser,
   FileDown,
+  FileType,
   FileUp,
+  Frame,
   Grid2x2,
   Grid3x3,
   Hand,
   ImageDown,
+  ImagePlus,
+  Flashlight,
   Lock,
   LockOpen,
   Minus,
@@ -65,7 +69,10 @@ export type IconName =
   | 'line'
   | 'freedraw'
   | 'text'
+  | 'imageTool'
   | 'eraser'
+  | 'frameTool'
+  | 'laserTool'
   // history & object actions
   | 'undo'
   | 'redo'
@@ -82,6 +89,7 @@ export type IconName =
   | 'duplicate'
   // view & file
   | 'image'
+  | 'svg'
   | 'save'
   | 'load'
   | 'grid'
@@ -116,7 +124,10 @@ export const iconRegistry: Record<IconName, Component> = {
   line: Minus,
   freedraw: Pencil,
   text: Type,
+  imageTool: ImagePlus,
   eraser: Eraser,
+  frameTool: Frame,
+  laserTool: Flashlight,
 
   // history & object actions
   undo: Undo2,
@@ -135,6 +146,7 @@ export const iconRegistry: Record<IconName, Component> = {
 
   // view & file
   image: ImageDown,
+  svg: FileType,
   save: FileDown,
   load: FileUp,
   grid: Grid3x3,

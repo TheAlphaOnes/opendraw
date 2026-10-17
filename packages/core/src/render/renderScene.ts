@@ -27,7 +27,9 @@ import type {
   VueDrawAppState,
   VueDrawArrowElement,
   VueDrawElement,
+  VueDrawFrameElement,
   VueDrawFreedrawElement,
+  VueDrawImageElement,
   VueDrawLineElement,
   VueDrawLinearElement,
   VueDrawTextElement,
@@ -61,7 +63,20 @@ export interface SceneRenderInput {
   canvasSize: CanvasSize
   /** devicePixelRatio — fold into the transform so callers stay CSS-px. */
   dpr: number
+  /**
+   * Supplies a decoded bitmap for an image element, or null when it is not
+   * (yet) available — core never decodes itself, keeping the package
+   * environment-agnostic. Missing bitmaps render a placeholder instead.
+   */
+  resolveImage?: SceneImageResolver
 }
+
+/**
+ * Maps an image element to a drawable bitmap source. Implemented in the host
+ * (nuxt) layer on top of a decoded-bitmap cache so panning and zooming never
+ * re-decode.
+ */
+export type SceneImageResolver = (element: VueDrawImageElement) => CanvasImageSource | null
 
 // ---------------------------------------------------------------------------
 // Stroke dash arrays — shared with tests
@@ -362,6 +377,18 @@ function getShape(element: VueDrawElement, dark: boolean): readonly Drawable[] {
   return drawables
 }
 
+/**
+ * The cached rough.js drawables an element renders with. The SVG exporter
+ * consumes the same drawables (same seed, same jitter) so vector output is
+ * faithful to the canvas instead of a re-generated approximation.
+ */
+export function getElementDrawables(
+  element: VueDrawElement,
+  dark: boolean,
+): readonly Drawable[] {
+  return getShape(element, dark)
+}
+
 // ---------------------------------------------------------------------------
 // Freedraw — perfect-freehand outline filled as one smoothed path
 // ---------------------------------------------------------------------------
@@ -371,12 +398,9 @@ const FREEDRAW_SIZE_FACTOR = 4.25
 
 const freedrawPathCache = new WeakMap<VueDrawFreedrawElement, Path2D>()
 
-function getFreedrawPath(element: VueDrawFreedrawElement): Path2D {
-  const cached = freedrawPathCache.get(element)
-  if (cached) {
-    return cached
-  }
-  const outline = getStroke(element.points, {
+/** The perfect-freehand outline of a freedraw stroke, in local space. */
+export function getFreedrawOutline(element: VueDrawFreedrawElement): number[][] {
+  return getStroke(element.points, {
     simulatePressure: element.simulatePressure,
     size: element.strokeWidth * FREEDRAW_SIZE_FACTOR,
     thinning: 0.6,
@@ -385,26 +409,61 @@ function getFreedrawPath(element: VueDrawFreedrawElement): Path2D {
     easing: (t: number) => Math.sin((t * Math.PI) / 2),
     last: true,
   })
-  const path = outlineToPath(outline)
+}
+
+/**
+ * Quadratic-midpoint smoothing as pure commands, so the canvas renderer
+ * (Path2D) and the SVG exporter (path data) walk the exact same geometry.
+ */
+export type PathCommand = { kind: 'M' | 'Q'; values: readonly number[] }
+
+export function outlineCommands(outline: readonly (readonly number[])[]): readonly PathCommand[] {
+  const commands: PathCommand[] = []
+  const count = outline.length
+  if (count === 0) {
+    return commands
+  }
+  commands.push({ kind: 'M', values: outline[0]! })
+  for (let i = 0; i < count; i++) {
+    const current = outline[i]!
+    const next = outline[(i + 1) % count]!
+    commands.push({
+      kind: 'Q',
+      values: [
+        current[0]!,
+        current[1]!,
+        (current[0]! + next[0]!) / 2,
+        (current[1]! + next[1]!) / 2,
+      ],
+    })
+  }
+  return commands
+}
+
+function getFreedrawPath(element: VueDrawFreedrawElement): Path2D {
+  const cached = freedrawPathCache.get(element)
+  if (cached) {
+    return cached
+  }
+  const path = outlineToPath(getFreedrawOutline(element))
   freedrawPathCache.set(element, path)
   return path
 }
 
-/** Quadratic-midpoint smoothing: M to the first point, Q through the rest. */
+/** Replays the smoothed outline commands into a fillable canvas path. */
 function outlineToPath(outline: readonly (readonly number[])[]): Path2D {
   const path = new Path2D()
-  const count = outline.length
-  if (count === 0) {
-    return path
-  }
-  const [startX, startY] = outline[0]!
-  path.moveTo(startX!, startY!)
-  for (let i = 0; i < count; i++) {
-    const current = outline[i]!
-    const next = outline[(i + 1) % count]!
-    const midX = (current[0]! + next[0]!) / 2
-    const midY = (current[1]! + next[1]!) / 2
-    path.quadraticCurveTo(current[0]!, current[1]!, midX, midY)
+  for (const command of outlineCommands(outline)) {
+    if (command.kind === 'M') {
+      path.moveTo(command.values[0]!, command.values[1]!)
+    } else {
+      path.quadraticCurveTo(
+        command.values[0]!,
+        command.values[1]!,
+        command.values[2]!,
+        command.values[3]!,
+      )
+    }
   }
   path.closePath()
   return path
@@ -458,6 +517,7 @@ function drawElement(
   rc: ReturnType<typeof rough.canvas>,
   element: VueDrawElement,
   dark: boolean,
+  resolveImage?: SceneImageResolver,
 ): void {
   ctx.save()
   ctx.translate(element.x, element.y)
@@ -491,8 +551,92 @@ function drawElement(
     case 'text':
       drawText(ctx, element, dark)
       break
+    case 'image':
+      drawImageElement(ctx, element, dark, resolveImage)
+      break
+    case 'frame':
+      drawFrame(ctx, element, dark)
+      break
   }
   ctx.restore()
+}
+
+// ---------------------------------------------------------------------------
+// Images & frames — box-like, never hand-drawn
+// ---------------------------------------------------------------------------
+
+/** Placeholder ink per theme — chrome color, never the dark element filter. */
+const IMAGE_PLACEHOLDER = { fill: '#ececec', stroke: '#b3b3b3' } as const
+const IMAGE_PLACEHOLDER_DARK = { fill: '#2a2a2a', stroke: '#525252' } as const
+
+/**
+ * Draws an image at its scene rect. A decoded bitmap is composited as-is —
+ * images are user content and are never color-inverted in dark mode. Without
+ * a bitmap (not yet decoded, or a broken data URL) a neutral placeholder
+ * renders so the canvas never breaks.
+ */
+function drawImageElement(
+  ctx: CanvasRenderingContext2D,
+  element: VueDrawImageElement,
+  dark: boolean,
+  resolveImage?: SceneImageResolver,
+): void {
+  const source = resolveImage?.(element) ?? null
+  if (source) {
+    try {
+      ctx.drawImage(source, 0, 0, element.width, element.height)
+    } catch {
+      drawImagePlaceholder(ctx, element, dark)
+    }
+    return
+  }
+  drawImagePlaceholder(ctx, element, dark)
+}
+
+function drawImagePlaceholder(
+  ctx: CanvasRenderingContext2D,
+  element: VueDrawImageElement,
+  dark: boolean,
+): void {
+  const ink = dark ? IMAGE_PLACEHOLDER_DARK : IMAGE_PLACEHOLDER
+  ctx.fillStyle = ink.fill
+  ctx.fillRect(0, 0, element.width, element.height)
+  ctx.strokeStyle = ink.stroke
+  ctx.lineWidth = 1
+  ctx.setLineDash([])
+  ctx.strokeRect(0.5, 0.5, Math.max(0, element.width - 1), Math.max(0, element.height - 1))
+  // A small "broken image" glyph: mountain + sun, the universal icon.
+  const cx = element.width / 2
+  const cy = element.height / 2
+  const r = Math.max(4, Math.min(element.width, element.height) / 4)
+  ctx.beginPath()
+  ctx.moveTo(cx - r, cy + r / 2)
+  ctx.lineTo(cx - r / 3, cy - r / 2)
+  ctx.lineTo(cx + r / 6, cy + r / 6)
+  ctx.lineTo(cx + r / 3, cy - r / 6)
+  ctx.lineTo(cx + r, cy + r / 2)
+  ctx.closePath()
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.arc(cx - r / 2, cy - r / 3, Math.max(1.5, r / 5), 0, Math.PI * 2)
+  ctx.stroke()
+}
+
+/** Frame chrome ink per theme — muted, so contents stay the focus. */
+const FRAME_INK = { light: '#a0a0a0', dark: '#5c5c5c' } as const
+const FRAME_NAME_INK = { light: '#8a8a8a', dark: '#777777' } as const
+
+/** Frames: dashed box + name above the top-left corner (Excalidraw parity). */
+function drawFrame(ctx: CanvasRenderingContext2D, element: VueDrawFrameElement, dark: boolean): void {
+  ctx.strokeStyle = dark ? FRAME_INK.dark : FRAME_INK.light
+  ctx.lineWidth = 1
+  ctx.setLineDash([8, 6])
+  ctx.strokeRect(0.5, 0.5, Math.max(0, element.width - 1), Math.max(0, element.height - 1))
+  ctx.setLineDash([])
+  ctx.fillStyle = dark ? FRAME_NAME_INK.dark : FRAME_NAME_INK.light
+  ctx.font = '12px sans-serif'
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillText(element.name, 0, -6)
 }
 
 // ---------------------------------------------------------------------------
@@ -573,7 +717,7 @@ export function renderScene(ctx: CanvasRenderingContext2D, input: SceneRenderInp
   // One RoughCanvas per render call; drawables come from the shared generator.
   const rc = rough.canvas(ctx.canvas)
   for (const element of renderableElements(elements, editingId)) {
-    drawElement(ctx, rc, element, dark)
+    drawElement(ctx, rc, element, dark, input.resolveImage)
   }
   ctx.restore()
 }
@@ -590,8 +734,9 @@ export function renderElementShape(
   ctx: CanvasRenderingContext2D,
   element: VueDrawElement,
   dark: boolean,
+  resolveImage?: SceneImageResolver,
 ): void {
-  drawElement(ctx, rough.canvas(ctx.canvas), element, dark)
+  drawElement(ctx, rough.canvas(ctx.canvas), element, dark, resolveImage)
 }
 
 /**
@@ -604,6 +749,7 @@ export function exportElementShape(
   ctx: CanvasRenderingContext2D,
   element: VueDrawElement,
   dark: boolean,
+  resolveImage?: SceneImageResolver,
 ): void {
-  renderElementShape(ctx, element, dark)
+  renderElementShape(ctx, element, dark, resolveImage)
 }

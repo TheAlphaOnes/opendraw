@@ -5,7 +5,9 @@ import {
   VueDrawDocument,
   duplicateElement,
   exportToDataURL,
+  exportToSvg,
   getCommonBounds,
+  screenToScene,
   type ElementPatch,
   type ElementStyle,
   type ReorderAction,
@@ -14,6 +16,7 @@ import {
   type TextStyle,
   type ThemeName,
   type ToolId,
+  type Viewport,
   type VueDrawAppState,
   type VueDrawElement,
   type VueDrawFile,
@@ -28,6 +31,13 @@ import {
 } from '@vuedraw/core'
 
 import { isTextElement } from '@vuedraw/core'
+
+import {
+  imageElementFromPrepared,
+  imageResolver,
+  isImageFile,
+  prepareImageFile,
+} from '../services/image.service.js'
 
 /**
  * VueDrawContext — the reactive wrapper around a VueDrawDocument.
@@ -103,11 +113,18 @@ export interface VueDrawContext {
   loadFile: (file: VueDrawFile) => void
   loadJSON: (text: string) => void
   exportPNG: (filename?: string) => void
+  exportSVG: (filename?: string) => void
   exportDataURL: () => string
 
   // editing (text)
   setEditing: (id: string | null) => void
   editingId: ComputedRef<string | null>
+
+  // images
+  /** Inserts image files at a scene point (viewport center by default). */
+  insertImageFiles: (files: readonly File[] | FileList, at?: Point) => void
+  /** Opens the toolbar file picker (the image tool's only entry gesture). */
+  openImagePicker: () => void
 
   // grid
   gridSize: ComputedRef<number | null>
@@ -290,16 +307,80 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
     exportPNG: (filename = 'vuedraw') => {
       const url = exportToDataURL(doc.getElements(), appState.value.viewBackgroundColor, {
         theme: appState.value.theme,
+        // Composite decoded bitmaps; undecoded ones fall back to the placeholder.
+        resolveImage: imageResolver,
       })
       downloadDataURL(url, `${filename}.png`)
+    },
+    exportSVG: (filename = 'vuedraw') => {
+      if (typeof document === 'undefined') {
+        return
+      }
+      const svg = exportToSvg(doc.getElements(), appState.value.viewBackgroundColor, {
+        theme: appState.value.theme,
+      })
+      const blob = new Blob([svg], { type: 'image/svg+xml' })
+      const url = URL.createObjectURL(blob)
+      downloadDataURL(url, `${filename}.svg`)
+      URL.revokeObjectURL(url)
     },
     exportDataURL: () =>
       exportToDataURL(doc.getElements(), appState.value.viewBackgroundColor, {
         theme: appState.value.theme,
+        resolveImage: imageResolver,
       }),
 
     setEditing: (id) => doc.setAppState({ editingId: id }),
     editingId: computed(() => appState.value.editingId),
+
+    insertImageFiles: (files, at) => {
+      const list = Array.from(files).filter(isImageFile)
+      if (list.length === 0) {
+        return
+      }
+      const center: Point =
+        at ?? centerOfViewport(appState.value.viewport, typeof window === 'undefined' ? null : window)
+      doc.beginStep()
+      void (async () => {
+        let lastId: string | null = null
+        for (const file of list) {
+          const prepared = await prepareImageFile(file)
+          const element = imageElementFromPrepared(prepared, center)
+          doc.addElement(element)
+          lastId = element.id
+        }
+        doc.endStep()
+        if (lastId) {
+          context.select(lastId)
+        }
+        context.setActiveTool('selection')
+      })().catch((error: unknown) => {
+        // A read failure must not strand the open step or crash the editor.
+        doc.cancelStep()
+        console.error('[vuedraw] failed to insert image', error)
+      })
+    },
+    openImagePicker: () => {
+      if (typeof document === 'undefined') {
+        return
+      }
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.multiple = true
+      input.style.display = 'none'
+      input.addEventListener('change', () => {
+        if (input.files && input.files.length > 0) {
+          context.insertImageFiles(input.files)
+        }
+        input.remove()
+      })
+      document.body.appendChild(input)
+      input.click()
+      // A picker dialog dismissed without a choice leaves no `change`
+      // event — remove the stray input on the next tick regardless.
+      window.setTimeout(() => input.remove(), 60_000)
+    },
 
     gridSize: computed(() => appState.value.gridSize),
     setGridSize: (size) => doc.setAppState({ gridSize: size }),
@@ -366,6 +447,17 @@ function centerOffsetFor(clipboard: readonly VueDrawElement[], at: Point): { x: 
   const cx = (bounds.x1 + bounds.x2) / 2
   const cy = (bounds.y1 + bounds.y2) / 2
   return { x: at.x - cx, y: at.y - cy }
+}
+
+/**
+ * Scene point at the center of the visible viewport — the default drop
+ * position for image insertions that have no pointer position (picker,
+ * clipboard).
+ */
+function centerOfViewport(viewport: Viewport, win: Window | null): Point {
+  const width = win?.innerWidth ?? 800
+  const height = win?.innerHeight ?? 600
+  return screenToScene({ x: width / 2, y: height / 2 }, viewport)
 }
 
 export { DEFAULT_APP_STATE, MIN_ZOOM, MAX_ZOOM }

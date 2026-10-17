@@ -375,12 +375,14 @@ function pivotOf(element: VueDrawElement): Point {
   return { x: element.x + element.width / 2, y: element.y + element.height / 2 }
 }
 
-function scenePointOf(element: VueDrawElement, point: Point): Point {
+/** Scene-space position of an element-local point, rotated about the pivot. */
+export function scenePointOf(element: VueDrawElement, point: Point): Point {
   const base = { x: element.x + point.x, y: element.y + point.y }
   return element.angle === 0 ? base : rotatePoint(base, pivotOf(element), element.angle)
 }
 
-function localPointOf(element: VueDrawElement, scene: Point): Point {
+/** Element-local position of a scene point, un-rotated about the pivot. */
+export function localPointOf(element: VueDrawElement, scene: Point): Point {
   const base = element.angle === 0 ? scene : unrotatePoint(scene, pivotOf(element), element.angle)
   return { x: base.x - element.x, y: base.y - element.y }
 }
@@ -395,9 +397,28 @@ function tipScenes(element: VueDrawLinearElement): { start: Point; end: Point } 
 }
 
 /**
+ * Points patch with size fields re-synced — unrotated elements carry the
+ * points' extents in width/height; with an angle those fields are the
+ * rotation pivot and must stay untouched. Every linear points write in
+ * the app goes through here so the size fields never go stale.
+ */
+export function pointsPatch(
+  element: VueDrawLinearElement,
+  points: Point[],
+): ElementPatch<VueDrawLinearElement> {
+  const patch: ElementPatch<VueDrawLinearElement> = { points }
+  if (element.angle === 0) {
+    const xs = points.map((point) => point.x)
+    const ys = points.map((point) => point.y)
+    patch.width = Math.max(...xs) - Math.min(...xs)
+    patch.height = Math.max(...ys) - Math.min(...ys)
+  }
+  return patch
+}
+
+/**
  * Rewrite only the given tips, keeping every other point fixed in scene
- * space. Size fields follow the new points while the element is unrotated —
- * with an angle they are the rotation pivot and must stay untouched.
+ * space.
  */
 function retipPatch(
   element: VueDrawLinearElement,
@@ -410,14 +431,23 @@ function retipPatch(
   if (tips.end) {
     points[points.length - 1] = localPointOf(element, tips.end)
   }
-  const patch: ElementPatch<VueDrawLinearElement> = { points }
-  if (element.angle === 0) {
-    const xs = points.map((point) => point.x)
-    const ys = points.map((point) => point.y)
-    patch.width = Math.max(...xs) - Math.min(...xs)
-    patch.height = Math.max(...ys) - Math.min(...ys)
-  }
-  return patch
+  return pointsPatch(element, points)
+}
+
+/**
+ * Move one point of a linear element to a scene position, keeping every
+ * other point fixed. This is the endpoint/midpoint drag: the point follows
+ * the pointer exactly, and any re-docking happens on release via
+ * {@link computeTipBinding}.
+ */
+export function moveLinearPoint(
+  element: VueDrawLinearElement,
+  index: number,
+  scene: Point,
+): ElementPatch<VueDrawLinearElement> {
+  const points = element.points.map((point) => ({ ...point }))
+  points[index] = localPointOf(element, scene)
+  return pointsPatch(element, points)
 }
 
 // ---------------------------------------------------------------------------
@@ -467,6 +497,39 @@ function boundShape(
   }
   const target = byId.get(binding.elementId)
   return target !== undefined && isBindableShape(target) ? target : undefined
+}
+
+/**
+ * Re-dock one tip after it was dragged: the tip docks onto the bindable
+ * shape under (or within `threshold` of) it, or its binding clears when it
+ * landed loose. Intermediate points and the opposite tip never move —
+ * this is the release-time commit of an endpoint drag.
+ */
+export function computeTipBinding(
+  element: VueDrawLinearElement,
+  end: 'start' | 'end',
+  elements: readonly VueDrawElement[],
+  threshold: number,
+): ElementPatch<VueDrawLinearElement> {
+  const { start, end: endTip } = tipScenes(element)
+  const tip = end === 'start' ? start : endTip
+  const opposite = end === 'start' ? endTip : start
+  const shape = bindableShapeAt(elements, tip, threshold, element.id)
+  const patch: ElementPatch<VueDrawLinearElement> = {}
+  if (shape) {
+    // The opposite tip drives the dock; a self-loop spreads the two tips
+    // onto different edges of the same shape.
+    const byId = new Map(elements.map((el) => [el.id, el]))
+    const otherEnd =
+      end === 'start' ? boundShape(element.endBinding, byId) : boundShape(element.startBinding, byId)
+    const mid = { x: (start.x + endTip.x) / 2, y: (start.y + endTip.y) / 2 }
+    const selfLoop = otherEnd !== undefined && otherEnd.id === shape.id
+    const dock = dockPoint(shape, selfLoop ? mid : opposite, tip)
+    Object.assign(patch, retipPatch(element, end === 'start' ? { start: dock } : { end: dock }))
+  }
+  patch.startBinding = end === 'start' ? (shape ? { elementId: shape.id } : null) : element.startBinding
+  patch.endBinding = end === 'end' ? (shape ? { elementId: shape.id } : null) : element.endBinding
+  return patch
 }
 
 /**

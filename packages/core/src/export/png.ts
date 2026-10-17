@@ -5,7 +5,7 @@
  */
 
 import { getCommonBounds, inflateBounds, boundsWidth, boundsHeight } from '../geometry/bounds.js'
-import { renderScene } from '../render/renderScene.js'
+import { renderScene, type SceneImageResolver } from '../render/renderScene.js'
 import type { ThemeName, VueDrawElement } from '../types.js'
 
 export interface ExportOptions {
@@ -16,6 +16,8 @@ export interface ExportOptions {
   /** Background color; defaults to the app background. 'transparent' supported. */
   background?: string
   theme?: ThemeName
+  /** Decoded-bitmap supply for image elements — required to composite them. */
+  resolveImage?: SceneImageResolver
 }
 
 function requireDocument(): Document {
@@ -67,6 +69,7 @@ export function exportToCanvas(
     },
     canvasSize: { width, height },
     dpr: 1,
+    resolveImage: options.resolveImage,
   })
   return canvas
 }

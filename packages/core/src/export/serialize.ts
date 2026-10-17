@@ -123,6 +123,15 @@ export function coerceElement(input: unknown): VueDrawElement | null {
   if (type === 'rectangle' || type === 'diamond') {
     return { ...base, type, roundness: input.roundness === 'round' ? 'round' : null }
   }
+  if (type === 'image') {
+    // Only self-contained data-image URLs survive: anything else would break
+    // rendering and export with no way to refetch it.
+    const dataUrl = str(input.dataUrl, '')
+    return { ...base, type, dataUrl: dataUrl.startsWith('data:image/') ? dataUrl : '' }
+  }
+  if (type === 'frame') {
+    return { ...base, type, name: str(input.name, 'Frame') }
+  }
   return { ...base, type: 'ellipse' }
 }
 

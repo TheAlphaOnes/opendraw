@@ -15,6 +15,8 @@ import type {
   VueDrawElement,
   VueDrawElementBase,
   VueDrawFreedrawElement,
+  VueDrawFrameElement,
+  VueDrawImageElement,
   VueDrawLinearElement,
   VueDrawTextElement,
 } from '../types.js'
@@ -31,6 +33,8 @@ export const ELEMENT_TYPES = [
   'line',
   'freedraw',
   'text',
+  'image',
+  'frame',
 ] as const
 
 export type VueDrawElementType = (typeof ELEMENT_TYPES)[number]
@@ -73,6 +77,19 @@ export interface NewTextOptions extends NewElementOptions {
   textStyle?: Partial<TextStyle>
   /** Optional layout override — pass your own measurement context. */
   layout?: TextLayout
+}
+
+export interface NewImageOptions extends NewElementOptions {
+  /** Self-contained `data:image/...;base64,` payload. */
+  dataUrl: string
+  /** Intrinsic pixel size — required, images are never born with zero extent. */
+  width: number
+  height: number
+}
+
+export interface NewFrameOptions extends NewElementOptions {
+  /** Label rendered above the frame's top-left corner. */
+  name?: string
 }
 
 /** The base fields every element carries, with the literal type plugged in. */
@@ -168,7 +185,7 @@ export function newTextElement(opts: NewTextOptions): VueDrawTextElement {
 /** Generic dispatcher — the Vue layer stores the active tool, not a factory. */
 export function newElement<T extends VueDrawElementType>(
   type: T,
-  opts: NewElementOptions & { text?: string },
+  opts: NewElementOptions & { text?: string; dataUrl?: string },
 ): ElementOf<T> {
   switch (type) {
     case 'rectangle':
@@ -187,6 +204,18 @@ export function newElement<T extends VueDrawElementType>(
         throw new Error('newElement("text") requires opts.text')
       }
       return newTextElement({ ...opts, text: opts.text }) as ElementOf<T>
+    case 'image':
+      if (opts.dataUrl === undefined || opts.width === undefined || opts.height === undefined) {
+        throw new Error('newElement("image") requires opts.dataUrl, opts.width and opts.height')
+      }
+      return newImageElement({
+        ...opts,
+        dataUrl: opts.dataUrl,
+        width: opts.width,
+        height: opts.height,
+      }) as ElementOf<T>
+    case 'frame':
+      return newFrameElement(opts) as ElementOf<T>
   }
   // Unreachable for the closed VueDrawElementType union; the guard keeps the
   // generic dispatcher total without lying about its return type.
@@ -196,6 +225,33 @@ export function newElement<T extends VueDrawElementType>(
 // ---------------------------------------------------------------------------
 // Derived helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Images carry their bitmap inline as a data URL (single-document model) and
+ * behave box-like for all geometry. Decoding is deliberately NOT done here —
+ * core stays environment-agnostic; the host injects a bitmap resolver at
+ * render/export time.
+ */
+export function newImageElement(opts: NewImageOptions): ElementOf<'image'> {
+  if (!opts.dataUrl.startsWith('data:image/')) {
+    throw new Error('newImageElement requires a data: image URL')
+  }
+  if (opts.width <= 0 || opts.height <= 0) {
+    throw new Error('newImageElement requires positive intrinsic dimensions')
+  }
+  return {
+    ...baseElement('image', opts),
+    dataUrl: opts.dataUrl,
+  } as ElementOf<'image'>
+}
+
+/** Frames render a dashed, named outline; membership is visual, not stored. */
+export function newFrameElement(opts: NewFrameOptions): ElementOf<'frame'> {
+  return {
+    ...baseElement('frame', opts),
+    name: opts.name ?? 'Frame',
+  } as ElementOf<'frame'>
+}
 
 /** The style payload a selection panel reads back from an element. */
 export function elementStyleOf(element: VueDrawElement): ElementStyle {
@@ -257,6 +313,14 @@ export function isFreedrawElement(
 
 export function isTextElement(element: VueDrawElement): element is VueDrawTextElement {
   return element.type === 'text'
+}
+
+export function isImageElement(element: VueDrawElement): element is VueDrawImageElement {
+  return element.type === 'image'
+}
+
+export function isFrameElement(element: VueDrawElement): element is VueDrawFrameElement {
+  return element.type === 'frame'
 }
 
 /**

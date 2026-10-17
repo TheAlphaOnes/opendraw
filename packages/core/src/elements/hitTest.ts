@@ -114,6 +114,8 @@ function pointInsideShape(element: VueDrawElement, local: Point): boolean {
   switch (element.type) {
     case 'rectangle':
     case 'text':
+    case 'image':
+    case 'frame':
       return local.x >= x && local.x <= x + width && local.y >= y && local.y <= y + height
     case 'ellipse': {
       const rx = width / 2
@@ -144,6 +146,8 @@ function outlineDistance(element: VueDrawElement, local: Point): number {
   switch (element.type) {
     case 'rectangle':
     case 'text':
+    case 'image':
+    case 'frame':
       return distanceToRectOutline(local, x, y, width, height)
     case 'diamond': {
       const pts = diamondPoints(x, y, width, height)
@@ -203,6 +207,8 @@ export function hitTestElement(
 
   const testInside =
     element.type === 'text' ||
+    element.type === 'image' ||
+    element.type === 'frame' ||
     (hasOpaqueBackground(element) && element.type !== 'line' && element.type !== 'arrow')
   if (testInside && pointInsideShape(element, local)) {
     return true
@@ -244,14 +250,49 @@ export function elementsInBounds(
   return elements.filter((element) => boundsIntersect(getElementBounds(element), bounds))
 }
 
-/** Elements intersected by the eraser dot (generous threshold). */
+/**
+ * Elements swept by an eraser stroke from `from` to `to` (scene points).
+ *
+ * Excalidraw tests the whole segment between consecutive pointer samples
+ * (eraser/index.ts), so a fast drag cannot jump over an element between
+ * events. We get equivalent coverage by sampling the segment at
+ * sub-threshold spacing and reusing the point hit test: anything the stroke
+ * passes within `threshold - step/2` of is always caught, and the "inside"
+ * tests (opaque shapes, text) come along for free.
+ */
 export function elementsUnderEraser(
   elements: readonly VueDrawElement[],
-  point: Point,
+  from: Point,
+  to: Point,
   zoom: number,
 ): VueDrawElement[] {
   const threshold = hitThreshold(zoom) + 4 / zoom
-  return elements.filter((element) => hitTestElement(element, point, threshold))
+  // Fast reject: anything outside the stroke's padded bounds is skipped
+  // before the per-sample work.
+  const sweepBounds: Bounds = {
+    x1: Math.min(from.x, to.x) - threshold,
+    y1: Math.min(from.y, to.y) - threshold,
+    x2: Math.max(from.x, to.x) + threshold,
+    y2: Math.max(from.y, to.y) + threshold,
+  }
+  const length = Math.hypot(to.x - from.x, to.y - from.y)
+  const samples = length === 0 ? 0 : Math.ceil(length / (threshold / 2))
+  return elements.filter((element) => {
+    if (!boundsIntersect(getElementBounds(element), sweepBounds)) {
+      return false
+    }
+    for (let i = 0; i <= samples; i++) {
+      const t = i / samples
+      const point = {
+        x: from.x + (to.x - from.x) * t,
+        y: from.y + (to.y - from.y) * t,
+      }
+      if (hitTestElement(element, point, threshold)) {
+        return true
+      }
+    }
+    return false
+  })
 }
 
 /** Utility re-exports for consumers reasoning about element shapes. */

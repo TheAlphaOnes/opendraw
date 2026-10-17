@@ -8,10 +8,17 @@
  */
 
 import type { VueDrawBindableShape } from '../elements/binding.js'
+import { isLinearElement } from '../elements/factories.js'
 import { clamp } from '../geometry/points.js'
-import type { HandleBox, PointerKind, SelectionFrame } from '../interaction/handles.js'
-import { getHandleLayout, selectionFrameOf } from '../interaction/handles.js'
-import type { Bounds, VueDrawAppState, VueDrawElement } from '../types.js'
+import type { HandleBox, LinearHandle, PointerKind, SelectionFrame } from '../interaction/handles.js'
+import {
+  getHandleLayout,
+  linearMidpointHandle,
+  linearPointHandles,
+  POINT_HANDLE_RADIUS,
+  selectionFrameOf,
+} from '../interaction/handles.js'
+import type { Bounds, VueDrawAppState, VueDrawElement, VueDrawLinearElement } from '../types.js'
 import { applyViewportTransform } from '../viewport.js'
 import type { CanvasSize } from './renderScene.js'
 import { PROPORTIONAL_RADIUS, renderElementShape } from './renderScene.js'
@@ -100,6 +107,13 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
         drawGroupBorder(ctx, frame, accent, zoom)
       }
       drawHandles(ctx, getHandleLayout(frame, { zoom, pointer }), accent, zoom, dark)
+      // A lone selected line/arrow also shows its point handles: filled
+      // endpoint circles that drag tips, plus the hollow midpoint that
+      // inserts a point — Excalidraw's selected-linear affordance.
+      const only = selectedElements.length === 1 ? selectedElements[0]! : null
+      if (only && isLinearElement(only)) {
+        drawLinearPointHandles(ctx, only, accent, zoom, dark)
+      }
     }
   }
 
@@ -197,6 +211,60 @@ function appendRoundRect(
   ctx.arcTo(x, y + height, x, y, r)
   ctx.arcTo(x, y, x + width, y, r)
   ctx.closePath()
+}
+
+// ---------------------------------------------------------------------------
+// Linear point handles
+// ---------------------------------------------------------------------------
+
+/**
+ * The point circles of a selected linear element, drawn over the box
+ * chrome: a filled dot at every point and, for a two-point line, the
+ * hollow segment midpoint — Excalidraw's `renderLinearPointHandles` at
+ * POINT_HANDLE_SIZE / 2 while the point editor is closed.
+ */
+function drawLinearPointHandles(
+  ctx: CanvasRenderingContext2D,
+  element: VueDrawLinearElement,
+  color: string,
+  zoom: number,
+  dark: boolean,
+): void {
+  const radius = POINT_HANDLE_RADIUS / zoom
+  for (const handle of linearPointHandles(element)) {
+    drawPointDot(ctx, handle, radius, color, zoom, dark)
+  }
+  const mid = linearMidpointHandle(element)
+  if (mid) {
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(mid.at.x, mid.at.y, (POINT_HANDLE_RADIUS - 1) / zoom, 0, Math.PI * 2)
+    ctx.strokeStyle = color
+    ctx.lineWidth = 1.5 / zoom
+    ctx.setLineDash([])
+    ctx.stroke()
+    ctx.restore()
+  }
+}
+
+function drawPointDot(
+  ctx: CanvasRenderingContext2D,
+  handle: LinearHandle,
+  radius: number,
+  color: string,
+  zoom: number,
+  dark: boolean,
+): void {
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(handle.at.x, handle.at.y, radius, 0, Math.PI * 2)
+  ctx.fillStyle = dark ? HANDLE_FILL_DARK : HANDLE_FILL_LIGHT
+  ctx.strokeStyle = color
+  ctx.lineWidth = 1 / zoom
+  ctx.setLineDash([])
+  ctx.fill()
+  ctx.stroke()
+  ctx.restore()
 }
 
 // ---------------------------------------------------------------------------

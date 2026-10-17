@@ -7,13 +7,17 @@ import type {
   Point,
   ResizeHandle,
   SelectionFrame,
+  ToolId,
   VueDrawBindableShape,
   VueDrawElement,
+  VueDrawLinearElement,
 } from '@vuedraw/core'
 import {
+  applyViewportTransform,
   bindableShapeAt,
   bindingFollowPatches,
   computeLinearBindings,
+  computeTipBinding,
   draftLinePoints,
   draftShapeRect,
   elementsInBounds,
@@ -24,13 +28,20 @@ import {
   hitThreshold,
   isFreedrawElement,
   isLinearElement,
+  linearHandleAt,
+  linearMidpointHandle,
+  linearPointHandles,
+  localPointOf,
   maxBindingDistance,
   moveElements,
+  moveLinearPoint,
   newElement,
   newFreedrawElement,
+  newFrameElement,
   newLinearElement,
   newTextElement,
   pointInSelectionFrame,
+  pointsPatch,
   renderOverlay,
   renderScene,
   resizeCursorFor,
@@ -44,6 +55,12 @@ import {
 } from '@vuedraw/core'
 
 import { useVueDraw } from '../composables/useVueDraw.js'
+import {
+  imageDataUrlsOf,
+  imageResolver,
+  isImageFile,
+  requestImageDecode,
+} from '../services/image.service.js'
 import TextEditor from './TextEditor.vue'
 
 /**
@@ -156,6 +173,8 @@ function renderAll() {
     },
     canvasSize: size,
     dpr: dpr.value,
+    // Decoded bitmaps come from the shared cache; misses render placeholders.
+    resolveImage: imageResolver,
   })
 
   renderOverlay(overlayCtx, {
@@ -172,10 +191,96 @@ function renderAll() {
     canvasSize: size,
     dpr: dpr.value,
   })
+
+  drawLaserTrail(overlayCtx)
 }
+
+// ---------------------------------------------------------------------------
+// Image decode sweep — keeps the shared bitmap cache warm
+// ---------------------------------------------------------------------------
+
+// A decode landing repaints once; the rAF-coalesced render loop does the rest.
+watch(
+  () => ctx.state.value.elements,
+  (elements) => {
+    for (const dataUrl of imageDataUrlsOf(elements)) {
+      requestImageDecode(dataUrl, scheduleRender)
+    }
+  },
+  { immediate: true },
+)
+
+// ---------------------------------------------------------------------------
+// Laser trail — transient overlay ink, never document state
+// ---------------------------------------------------------------------------
+
+interface LaserPoint {
+  x: number
+  y: number
+  /** Performance timestamp — points fade out by age. */
+  t: number
+}
+
+const LASER_COLOR = '#ff2698'
+const LASER_FADE_MS = 1000
+
+/** Live trail in scene coordinates; trimmed by the fade loop below. */
+let laserTrail: LaserPoint[] = []
+let laserFadeFrame = 0
+
+function scheduleLaserFade(): void {
+  if (laserFadeFrame) {
+    return
+  }
+  laserFadeFrame = requestAnimationFrame(() => {
+    laserFadeFrame = 0
+    const cutoff = performance.now() - LASER_FADE_MS
+    laserTrail = laserTrail.filter((p) => p.t > cutoff)
+    scheduleRender()
+    if (laserTrail.length > 0) {
+      scheduleLaserFade()
+    }
+  })
+}
+
+/** Draws the fading pointer trail straight onto the overlay canvas. */
+function drawLaserTrail(target: CanvasRenderingContext2D): void {
+  if (laserTrail.length < 2) {
+    return
+  }
+  const { viewport } = ctx.state.value.appState
+  const now = performance.now()
+  target.save()
+  applyViewportTransform(target, viewport, dpr.value)
+  target.lineCap = 'round'
+  target.lineJoin = 'round'
+  for (let i = 1; i < laserTrail.length; i++) {
+    const a = laserTrail[i - 1]!
+    const b = laserTrail[i]!
+    const age = Math.max(a.t, b.t)
+    const alpha = Math.max(0, 1 - (now - age) / LASER_FADE_MS)
+    if (alpha <= 0) {
+      continue
+    }
+    target.strokeStyle = LASER_COLOR
+    target.globalAlpha = alpha
+    target.lineWidth = 4
+    target.beginPath()
+    target.moveTo(a.x, a.y)
+    target.lineTo(b.x, b.y)
+    target.stroke()
+  }
+  target.restore()
+}
+
 
 watch(() => ctx.state.value.rev, scheduleRender)
 watch(canvasSize, scheduleRender)
+// The marquee is pure overlay ink: `ctx.select` short-circuits once the
+// dragged rect covers everything under it, so no document rev change keeps
+// flowing — the rect itself must schedule its repaint or it visually
+// freezes the moment the selection set stops growing.
+watch(marquee, scheduleRender)
 
 onMounted(() => {
   observeSize()
@@ -187,8 +292,12 @@ onBeforeUnmount(() => {
   if (renderFrame) {
     cancelAnimationFrame(renderFrame)
   }
+  if (laserFadeFrame) {
+    cancelAnimationFrame(laserFadeFrame)
+  }
   window.removeEventListener('keyup', onKeyUp)
   window.removeEventListener('keydown', onKeyDownGlobal)
+  window.removeEventListener('paste', onPaste)
 })
 
 // ---------------------------------------------------------------------------
@@ -233,7 +342,21 @@ type Interaction =
       frame: ReturnType<typeof selectionFrameOf>
       startAngle: number
     }
-  | { kind: 'erasing' }
+  | { kind: 'erasing'; lastScene: Point }
+  | { kind: 'laser' }
+  | {
+      kind: 'movingPoint'
+      elementId: string
+      index: number
+      /** Which tip the moved point is — start, end — or a midpoint (null). */
+      end: 'start' | 'end' | null
+    }
+  | {
+      kind: 'draftingLinear'
+      elementId: string
+      /** Points committed so far; a trailing temp point may follow beyond it. */
+      committedCount: number
+    }
 
 const interaction = shallowRef<Interaction>({ kind: 'none' })
 const modifiers = shallowRef({ shift: false })
@@ -262,7 +385,7 @@ const handleLayout = computed(() => {
 })
 
 /** Shape tools that draft by dragging. */
-const SHAPE_TOOLS = new Set(['rectangle', 'diamond', 'ellipse', 'line', 'arrow'])
+const SHAPE_TOOLS = new Set(['rectangle', 'diamond', 'ellipse', 'line', 'arrow', 'frame'])
 
 function onPointerDown(event: PointerEvent) {
   const host = hostRef.value
@@ -299,16 +422,57 @@ function onPointerDown(event: PointerEvent) {
     return
   }
 
-  // Text tool: create immediately and start editing.
+  // A press while a multi-point draft is live continues the draft when the
+  // line/arrow tool is still armed; any other gesture finishes it first.
+  if (interaction.value.kind === 'draftingLinear') {
+    if (tool === 'line' || tool === 'arrow') {
+      appendDraftPoint(scenePoint)
+      return
+    }
+    finishLinearDraft()
+  }
+
+  // Text tool: Excalidraw parity — a click on an existing text element
+  // re-opens ITS editor (App.textTool resolves a "text" target before
+  // falling through to free creation); anywhere else creates a new one.
   if (tool === 'text') {
+    const hit = findElementAt(
+      ctx.elements.value,
+      scenePoint,
+      hitThreshold(ctx.viewport.value.zoom),
+    )
+    if (hit?.type === 'text') {
+      // Same shape as a creation: one open step the editor commits into,
+      // the element selected, and the tool reverted to selection.
+      ctx.doc.beginStep()
+      ctx.select(hit.id)
+      ctx.setActiveTool('selection')
+      ctx.setEditing(hit.id)
+      return
+    }
     createTextAt(scenePoint)
     return
   }
 
   if (tool === 'eraser') {
     ctx.doc.beginStep()
-    interaction.value = { kind: 'erasing' }
-    eraseAt(scenePoint)
+    interaction.value = { kind: 'erasing', lastScene: scenePoint }
+    eraseAlong(scenePoint, scenePoint)
+    return
+  }
+
+  // Image tool: a press opens the file picker (Excalidraw parity — inserting
+  // is a gesture, not a persistent mode).
+  if (tool === 'image') {
+    ctx.openImagePicker()
+    return
+  }
+
+  // Laser: pure overlay ink, no document step.
+  if (tool === 'laser') {
+    laserTrail = [{ x: scenePoint.x, y: scenePoint.y, t: performance.now() }]
+    interaction.value = { kind: 'laser' }
+    scheduleRender()
     return
   }
 
@@ -346,6 +510,45 @@ function onPointerDown(event: PointerEvent) {
   }
 
   // Selection tool.
+  // Point handles of a lone selected line/arrow outrank the box chrome —
+  // Excalidraw grabs endpoints by their circles, never the corner boxes.
+  const loneLinear = loneSelectedLinear()
+  if (loneLinear) {
+    const zoom = ctx.viewport.value.zoom
+    const pointHit = linearHandleAt(linearPointHandles(loneLinear), scenePoint, zoom)
+    if (pointHit) {
+      interaction.value = {
+        kind: 'movingPoint',
+        elementId: loneLinear.id,
+        index: pointHit.index,
+        end:
+          pointHit.index === 0
+            ? 'start'
+            : pointHit.index === loneLinear.points.length - 1
+              ? 'end'
+              : null,
+      }
+      ctx.doc.beginStep()
+      return
+    }
+    const mid = linearMidpointHandle(loneLinear)
+    if (mid && linearHandleAt([mid], scenePoint, zoom)) {
+      // Pressing the segment midpoint inserts a point there and drags it —
+      // the two-point line grows to three.
+      ctx.doc.beginStep()
+      const points = loneLinear.points.map((point) => ({ ...point }))
+      points.splice(mid.index, 0, localPointOf(loneLinear, mid.at))
+      ctx.doc.forceUpdateElement(loneLinear.id, pointsPatch(loneLinear, points))
+      interaction.value = {
+        kind: 'movingPoint',
+        elementId: loneLinear.id,
+        index: mid.index,
+        end: null,
+      }
+      return
+    }
+  }
+
   const handle = handleAt(handleLayout.value, scenePoint)
   if (handle === 'rotation') {
     const originals = snapshotSelection()
@@ -501,7 +704,7 @@ function onPointerMove(event: PointerEvent) {
       }
       if (el.type === 'line' || el.type === 'arrow') {
         const points = draftLinePoints(current.originScene, scenePoint, modifiers.value)
-        ctx.doc.forceUpdateElement(el.id, { points })
+        ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points))
         // Connect feedback: outline every shape the line would bind — the
         // one under the dragged tip AND the one the drag started on.
         // The draft is never rotated, so scene position is origin + point.
@@ -553,6 +756,49 @@ function onPointerMove(event: PointerEvent) {
       followBindings(current.originals)
       return
     }
+    case 'movingPoint': {
+      const el = ctx.doc.getElement(current.elementId)
+      if (!el || !isLinearElement(el)) {
+        return
+      }
+      ctx.doc.forceUpdateElement(el.id, moveLinearPoint(el, current.index, scenePoint))
+      // Binding feedback while a tip is dragged: outline the shape it
+      // would dock onto.
+      if (current.end) {
+        const shape = bindableShapeAt(
+          ctx.elements.value,
+          scenePoint,
+          maxBindingDistance(ctx.viewport.value.zoom),
+          el.id,
+        )
+        bindingCandidates.value = shape ? [shape] : []
+      }
+      return
+    }
+    case 'draftingLinear': {
+      const el = ctx.doc.getElement(current.elementId)
+      if (!el || !isLinearElement(el)) {
+        return
+      }
+      // The trailing temp point follows the cursor between clicks; if a
+      // retreat popped it, the first move spins a fresh one up.
+      const points = el.points.map((point) => ({ ...point }))
+      const local = localPointOf(el, scenePoint)
+      if (points.length === current.committedCount) {
+        points.push({ ...local })
+      } else {
+        points[points.length - 1] = local
+      }
+      ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points))
+      const shape = bindableShapeAt(
+        ctx.elements.value,
+        scenePoint,
+        maxBindingDistance(ctx.viewport.value.zoom),
+        el.id,
+      )
+      bindingCandidates.value = shape ? [shape] : []
+      return
+    }
     case 'resizing': {
       const patch =
         current.originals.length === 1
@@ -590,7 +836,14 @@ function onPointerMove(event: PointerEvent) {
       return
     }
     case 'erasing': {
-      eraseAt(scenePoint)
+      eraseAlong(current.lastScene, scenePoint)
+      current.lastScene = scenePoint
+      return
+    }
+    case 'laser': {
+      laserTrail.push({ x: scenePoint.x, y: scenePoint.y, t: performance.now() })
+      scheduleRender()
+      scheduleLaserFade()
       return
     }
   }
@@ -611,13 +864,22 @@ function onPointerUp(event: PointerEvent) {
       const el = ctx.doc.getElement(current.elementId)
       if (el) {
         const tooSmall =
-          (el.type === 'rectangle' || el.type === 'diamond' || el.type === 'ellipse') &&
+          (el.type === 'rectangle' || el.type === 'diamond' || el.type === 'ellipse' || el.type === 'frame') &&
           el.width < 2 &&
           el.height < 2
         const emptyLine =
           (el.type === 'line' || el.type === 'arrow') &&
           (el.points.length < 2 || (el.points[1]!.x === 0 && el.points[1]!.y === 0))
-        if (tooSmall || emptyLine) {
+        if (emptyLine) {
+          // Excalidraw's multi-point creation: a no-drag click parks the
+          // first point and keeps the draft live — each later click beyond
+          // the commit threshold appends a point until Enter, Escape or a
+          // double-click ends it.
+          ctx.doc.forceUpdateElement(el.id, { points: [{ x: 0, y: 0 }, { x: 0, y: 0 }] })
+          interaction.value = { kind: 'draftingLinear', elementId: el.id, committedCount: 1 }
+          return
+        }
+        if (tooSmall) {
           ctx.doc.cancelStep()
           return
         }
@@ -655,6 +917,32 @@ function onPointerUp(event: PointerEvent) {
       // selection to it; a drag moved the whole group instead.
       if (!current.didDrag && current.hitId) {
         ctx.select(current.hitId)
+      }
+      return
+    }
+    case 'movingPoint': {
+      const el = ctx.doc.getElement(current.elementId)
+      if (el && isLinearElement(el) && current.end) {
+        // Release-time docking: a tip dropped on (or near) a shape binds to
+        // it; dropped loose, any previous binding clears.
+        const patch = computeTipBinding(
+          el,
+          current.end,
+          ctx.elements.value,
+          maxBindingDistance(ctx.viewport.value.zoom),
+        )
+        ctx.doc.updateElement(el.id, patch)
+      }
+      ctx.doc.endStep()
+      return
+    }
+    case 'draftingLinear': {
+      // The commit/retreat logic lives on pointerdown (Excalidraw's
+      // multiElement flow) — the release just keeps the draft live.
+      interaction.value = {
+        kind: 'draftingLinear',
+        elementId: current.elementId,
+        committedCount: current.committedCount,
       }
       return
     }
@@ -702,6 +990,13 @@ function draftElement(tool: string, at: Point): VueDrawElement {
       points: [{ x: 0, y: 0 }],
     })
   }
+  if (tool === 'frame') {
+    return newFrameElement({
+      x: at.x,
+      y: at.y,
+      style: ctx.appState.value.style,
+    })
+  }
   return newElement(tool as 'rectangle' | 'diamond' | 'ellipse', {
     x: at.x,
     y: at.y,
@@ -710,11 +1005,120 @@ function draftElement(tool: string, at: Point): VueDrawElement {
   })
 }
 
-function eraseAt(point: Point) {
-  const hits = elementsUnderEraser(ctx.elements.value, point, ctx.viewport.value.zoom)
+function eraseAlong(from: Point, to: Point) {
+  const hits = elementsUnderEraser(ctx.elements.value, from, to, ctx.viewport.value.zoom)
   if (hits.length > 0) {
     ctx.doc.deleteElements(hits.map((el) => el.id))
   }
+}
+
+// ---------------------------------------------------------------------------
+// Multi-point line/arrow drafting
+// ---------------------------------------------------------------------------
+
+/**
+ * Beyond this many scene px from the last committed point, a press commits
+ * the temp point and starts a fresh one; inside it, a press retreats the
+ * temp (Excalidraw's LINE_CONFIRM_THRESHOLD).
+ */
+const LINE_CONFIRM_THRESHOLD = 8
+
+/**
+ * A press in the live multi-point draft — Excalidraw's multiElement flow:
+ *   — no temp yet: a press beyond the threshold spins one up; inside the
+ *     zone the press is swallowed (the cursor sits on the committed tip);
+ *   — temp live: a press beyond the threshold commits it and pushes a new
+ *     temp at the press; a press back inside the zone retreats (pops the
+ *     temp), which is also how a double-click's second press unwinds it.
+ */
+function appendDraftPoint(at: Point): void {
+  const draft = interaction.value
+  if (draft.kind !== 'draftingLinear') {
+    return
+  }
+  const el = ctx.doc.getElement(draft.elementId)
+  if (!el || !isLinearElement(el)) {
+    interaction.value = { kind: 'none' }
+    return
+  }
+  const local = localPointOf(el, at)
+  const points = el.points.map((point) => ({ ...point }))
+  const lastCommitted = points[draft.committedCount - 1]
+  if (!lastCommitted) {
+    return
+  }
+  const distance = Math.hypot(at.x - (el.x + lastCommitted.x), at.y - (el.y + lastCommitted.y))
+  if (points.length === draft.committedCount) {
+    // No temp: beyond the threshold a fresh temp starts following.
+    if (distance >= LINE_CONFIRM_THRESHOLD) {
+      points.push({ ...local })
+      ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points))
+    }
+    return
+  }
+  if (distance < LINE_CONFIRM_THRESHOLD) {
+    // Retreat — but never below the first committed point plus one.
+    if (points.length > 2) {
+      ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points.slice(0, -1)))
+    }
+    return
+  }
+  // Commit the temp where it parks and let a fresh temp follow the press.
+  points.push({ ...local })
+  interaction.value = {
+    kind: 'draftingLinear',
+    elementId: el.id,
+    committedCount: draft.committedCount + 1,
+  }
+  ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points))
+  // Binding feedback for the tip that just parked.
+  const shape = bindableShapeAt(
+    ctx.elements.value,
+    at,
+    maxBindingDistance(ctx.viewport.value.zoom),
+    el.id,
+  )
+  bindingCandidates.value = shape ? [shape] : []
+}
+
+/**
+ * Close the multi-point draft: the trailing temp is dropped, the remaining
+ * polyline docks its tips like a fresh creation, and the step commits (or
+ * cancels when fewer than two points remain).
+ */
+function finishLinearDraft(): void {
+  const draft = interaction.value
+  if (draft.kind !== 'draftingLinear') {
+    return
+  }
+  interaction.value = { kind: 'none' }
+  bindingCandidates.value = []
+  const el = ctx.doc.getElement(draft.elementId)
+  if (!el || !isLinearElement(el)) {
+    return
+  }
+  const points = el.points.map((point) => ({ ...point }))
+  // A live temp follows the cursor; a retreat may have popped it already
+  // (the second press of a double-click does exactly that).
+  if (points.length === draft.committedCount + 1) {
+    points.pop()
+  }
+  if (points.length < 2) {
+    ctx.doc.cancelStep()
+    return
+  }
+  ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points))
+  const binding = computeLinearBindings(
+    { ...el, points },
+    ctx.elements.value,
+    maxBindingDistance(ctx.viewport.value.zoom),
+  )
+  if (binding) {
+    ctx.doc.updateElement(el.id, binding)
+  }
+  ctx.doc.endStep()
+  ctx.select(el.id)
+  ctx.setActiveTool('selection')
 }
 
 // ---------------------------------------------------------------------------
@@ -739,6 +1143,12 @@ function createTextAt(point: Point) {
 }
 
 function onDoubleClick(event: MouseEvent) {
+  if (interaction.value.kind === 'draftingLinear') {
+    // The second press of a double-click appended its point already; the
+    // dedup pass on its pointerup removed it. Finish here.
+    finishLinearDraft()
+    return
+  }
   if (ctx.activeTool.value !== 'selection') {
     return
   }
@@ -768,6 +1178,14 @@ function onDoubleClick(event: MouseEvent) {
 // Wheel: zoom (ctrl/cmd), pan (plain / shift-horizontal)
 // ---------------------------------------------------------------------------
 
+/**
+ * One ctrl/cmd+wheel zoom step, in zoom units — Excalidraw's ZOOM_STEP
+ * (packages/common/src/constants.ts:365). Wheel ticks clamp their delta to
+ * this step so a single mouse notch moves one step, while a trackpad
+ * pinch's small ticks land per-tick.
+ */
+const WHEEL_ZOOM_STEP = 0.1
+
 function onWheel(event: WheelEvent) {
   event.preventDefault()
   const host = hostRef.value
@@ -778,8 +1196,19 @@ function onWheel(event: WheelEvent) {
   const screenPoint = { x: event.clientX - rect.left, y: event.clientY - rect.top }
 
   if (event.ctrlKey || event.metaKey) {
-    const factor = Math.exp(-event.deltaY * 0.01)
-    ctx.zoomAt(screenPoint, ctx.viewport.value.zoom * factor)
+    // Excalidraw parity (App.wheel.ts `zoomBy`): the delta clamps to one
+    // step, the zoom moves linearly by it, and a small trackpad delta gets
+    // amplified by how far past 100% the canvas already is — so a wheel
+    // notch is a fixed step and a pinch accelerates smoothly. zoomAt
+    // anchors the new zoom at the cursor and clamps to [MIN_ZOOM, MAX_ZOOM].
+    const sign = Math.sign(event.deltaY)
+    const absDelta = Math.abs(event.deltaY)
+    const maxStep = WHEEL_ZOOM_STEP * 100
+    const delta = absDelta > maxStep ? maxStep * sign : event.deltaY
+    const zoom = ctx.viewport.value.zoom
+    let nextZoom = zoom - delta / 100
+    nextZoom += Math.log10(Math.max(1, zoom)) * -sign * Math.min(1, absDelta / 20)
+    ctx.zoomAt(screenPoint, nextZoom)
     return
   }
   if (event.shiftKey) {
@@ -787,6 +1216,41 @@ function onWheel(event: WheelEvent) {
     return
   }
   ctx.panBy(0, -event.deltaY)
+}
+
+// ---------------------------------------------------------------------------
+// Image insertion: drag-and-drop & clipboard paste
+// ---------------------------------------------------------------------------
+
+function onDrop(event: DragEvent): void {
+  const files = event.dataTransfer?.files
+  if (!files || files.length === 0) {
+    return
+  }
+  const images = Array.from(files).filter(isImageFile)
+  if (images.length === 0) {
+    return
+  }
+  ctx.insertImageFiles(images, toScene(event))
+}
+
+function onPaste(event: ClipboardEvent): void {
+  if (ctx.editingId.value) {
+    return
+  }
+  const files = event.clipboardData?.files
+  if (!files) {
+    return
+  }
+  const images = Array.from(files).filter(isImageFile)
+  if (images.length === 0) {
+    return
+  }
+  event.preventDefault()
+  // No pointer position exists for a paste — the visible canvas center is
+  // the natural landing spot.
+  const size = canvasSize.value
+  ctx.insertImageFiles(images, screenToScene({ x: size.width / 2, y: size.height / 2 }, ctx.viewport.value))
 }
 
 // ---------------------------------------------------------------------------
@@ -803,7 +1267,10 @@ const TOOL_SHORTCUTS: Record<string, string> = {
   '6': 'line',
   p: 'freedraw',
   t: 'text',
+  '9': 'image',
   e: 'eraser',
+  f: 'frame',
+  k: 'laser',
 }
 
 const NUDGE_STEP = 2
@@ -864,7 +1331,16 @@ function onKeyDown(event: KeyboardEvent) {
     return
   }
   if (event.key === 'Escape') {
+    // Escape ends a multi-point draft first; otherwise it drops selection.
+    if (interaction.value.kind === 'draftingLinear') {
+      finishLinearDraft()
+      return
+    }
     ctx.select(null)
+    return
+  }
+  if (event.key === 'Enter' && interaction.value.kind === 'draftingLinear') {
+    finishLinearDraft()
     return
   }
   if (event.key === 'Delete' || event.key === 'Backspace') {
@@ -894,7 +1370,17 @@ function onKeyDown(event: KeyboardEvent) {
   }
 
   if (!mod && TOOL_SHORTCUTS[key]) {
-    ctx.setActiveTool(TOOL_SHORTCUTS[key]! as never)
+    if (interaction.value.kind === 'draftingLinear') {
+      finishLinearDraft()
+    }
+    const tool = TOOL_SHORTCUTS[key]! as ToolId
+    // The image "tool" is an insertion gesture: pressing 9 opens the picker
+    // rather than parking the app in a mode, matching the toolbar button.
+    if (tool === 'image') {
+      ctx.openImagePicker()
+      return
+    }
+    ctx.setActiveTool(tool)
     return
   }
 
@@ -920,6 +1406,7 @@ function onKeyUp(event: KeyboardEvent) {
 onMounted(() => {
   window.addEventListener('keyup', onKeyUp)
   window.addEventListener('keydown', onKeyDownGlobal)
+  window.addEventListener('paste', onPaste)
 })
 
 // ---------------------------------------------------------------------------
@@ -948,6 +1435,13 @@ function sideGrabAt(point: Point, frame: SelectionFrame, zoom: number): HandleDi
     return null
   }
   return sideHandleAt(frame, point, zoom)
+}
+
+/** The lone selected, unlocked line/arrow — or null. */
+function loneSelectedLinear(): VueDrawLinearElement | null {
+  const selected = ctx.selectedElements.value
+  const only = selected.length === 1 ? selected[0] : null
+  return only && !only.locked && isLinearElement(only) ? only : null
 }
 
 /** Both-end probe results, deduped — a drag from a shape onto itself outlines it once. */
@@ -1001,7 +1495,7 @@ const cursor = computed(() => {
     const angle = selectionFrameOf(ctx.selectedElements.value)?.angle ?? 0
     return resizeCursorFor(active.handle, angle)
   }
-  if (active.kind === 'moving') {
+  if (active.kind === 'moving' || active.kind === 'movingPoint') {
     return 'move'
   }
   const tool = ctx.activeTool.value
@@ -1019,6 +1513,17 @@ const cursor = computed(() => {
     const zoom = ctx.viewport.value.zoom
     const frame = selectionFrameOf(ctx.selectedElements.value)
     if (frame) {
+      // Point handles advertise a point drag before the box chrome does.
+      const loneLinear = loneSelectedLinear()
+      if (loneLinear) {
+        const mid = linearMidpointHandle(loneLinear)
+        if (
+          linearHandleAt(linearPointHandles(loneLinear), point, zoom) ||
+          (mid && linearHandleAt([mid], point, zoom))
+        ) {
+          return 'move'
+        }
+      }
       // What a press here would do, top to bottom: a transform handle,
       // a border side, then a grab of the selection itself.
       const handle = handleAt(handleLayout.value, point)
@@ -1064,6 +1569,8 @@ const cursor = computed(() => {
     @dblclick="onDoubleClick"
     @keydown="onKeyDown"
     @contextmenu.prevent="emit('contextmenu', { x: $event.clientX, y: $event.clientY })"
+    @dragover.prevent
+    @drop.prevent="onDrop"
   >
     <canvas ref="staticRef" class="vuedraw-canvas__static" />
     <canvas ref="overlayRef" class="vuedraw-canvas__overlay" />

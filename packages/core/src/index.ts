@@ -9,7 +9,7 @@
  *   interaction    — handles + pure transform math
  *   scene          — VueDrawDocument store + history
  *   render         — rough.js scene renderer + interactive overlay
- *   export         — JSON files + PNG export
+ *   export         — JSON files + PNG and SVG export
  */
 
 export * from './types.js'
@@ -41,9 +41,10 @@ export {
   renderScene,
   renderableElements,
 } from './render/renderScene.js'
-export type { SceneRenderInput, CanvasSize } from './render/renderScene.js'
+export type { SceneRenderInput, CanvasSize, SceneImageResolver } from './render/renderScene.js'
 export { renderOverlay } from './render/overlay.js'
 export type { OverlayRenderInput } from './render/overlay.js'
 
 export * from './export/serialize.js'
 export * from './export/png.js'
+export * from './export/svg.js'

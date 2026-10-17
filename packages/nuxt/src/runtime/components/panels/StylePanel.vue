@@ -20,12 +20,19 @@ import {
 import { useVueDraw } from '../../composables/useVueDraw.js'
 import UiPanel from '../ui/UiPanel.vue'
 import UiSegmented, { type UiSegmentedOption } from '../ui/UiSegmented.vue'
+import UiSlider from '../ui/UiSlider.vue'
 import UiSwatchRow from '../ui/UiSwatchRow.vue'
 
 const ctx = useVueDraw()
 
-/** The style panel belongs to selection mode only (v-if keeps the DOM light). */
-const visible = computed(() => ctx.activeTool.value === 'selection')
+/**
+ * The style panel shows wherever style applies — selection mode AND armed
+ * shape tools (Excalidraw keeps the property panel live so a draw can be
+ * pre-styled before it starts); only the chrome-only tools hide it.
+ */
+const visible = computed(
+  () => !(ctx.activeTool.value === 'hand' || ctx.activeTool.value === 'eraser' || ctx.activeTool.value === 'laser'),
+)
 
 // ---------------------------------------------------------------------------
 // Current style: read from the first selected element, else app-state defaults.
@@ -93,10 +100,11 @@ const fillOptions: UiSegmentedOption[] = [
   { value: 'solid', label: 'Solid fill', icon: 'fillSolid' },
 ]
 
+// Excalidraw's naming for the 1/2/4 widths.
 const strokeWidthOptions: UiSegmentedOption[] = [
   { value: String(STROKE_WIDTHS.thin), label: 'Thin stroke', icon: 'strokeThin' },
-  { value: String(STROKE_WIDTHS.medium), label: 'Medium stroke', icon: 'strokeMedium' },
-  { value: String(STROKE_WIDTHS.bold), label: 'Bold stroke', icon: 'strokeBold' },
+  { value: String(STROKE_WIDTHS.medium), label: 'Bold stroke', icon: 'strokeMedium' },
+  { value: String(STROKE_WIDTHS.bold), label: 'Extra bold stroke', icon: 'strokeBold' },
 ]
 
 const strokeStyleOptions: UiSegmentedOption[] = [
@@ -109,13 +117,6 @@ const roughnessOptions: UiSegmentedOption[] = [
   { value: String(ROUGHNESS_LEVELS.architect), label: 'Architect' },
   { value: String(ROUGHNESS_LEVELS.artist), label: 'Artist' },
   { value: String(ROUGHNESS_LEVELS.cartoonist), label: 'Cartoonist' },
-]
-
-const opacityOptions: UiSegmentedOption[] = [
-  { value: '100', label: '100% opacity' },
-  { value: '75', label: '75% opacity' },
-  { value: '50', label: '50% opacity' },
-  { value: '25', label: '25% opacity' },
 ]
 
 const cornerOptions: UiSegmentedOption[] = [
@@ -147,7 +148,7 @@ const setFill = (value: string): void => ctx.changeStyle({ fillStyle: value as F
 const setStrokeWidth = (value: string): void => ctx.changeStyle({ strokeWidth: Number(value) as StrokeWidth })
 const setStrokeStyle = (value: string): void => ctx.changeStyle({ strokeStyle: value as StrokeStyle })
 const setRoughness = (value: string): void => ctx.changeStyle({ roughness: Number(value) as Roughness })
-const setOpacity = (value: string): void => ctx.changeStyle({ opacity: Number(value) })
+const setOpacity = (value: number): void => ctx.changeStyle({ opacity: value })
 const setFontFamily = (value: string): void => ctx.changeTextStyle({ fontFamily: value as FontFamily })
 const setFontSize = (value: string): void => ctx.changeTextStyle({ fontSize: Number(value) })
 const setTextAlign = (value: string): void => ctx.changeTextStyle({ textAlign: value as TextAlign })
@@ -170,7 +171,6 @@ const styleSegments = computed<StyleSegment[]>(() => {
     { key: 'width', label: 'Width', ariaLabel: 'Stroke width', options: strokeWidthOptions, model: String(style.strokeWidth), set: setStrokeWidth },
     { key: 'stroke', label: 'Style', ariaLabel: 'Stroke style', options: strokeStyleOptions, model: style.strokeStyle, set: setStrokeStyle },
     { key: 'roughness', label: 'Sloppiness', ariaLabel: 'Sloppiness', options: roughnessOptions, model: String(style.roughness), set: setRoughness },
-    { key: 'opacity', label: 'Opacity', ariaLabel: 'Opacity', options: opacityOptions, model: String(style.opacity), set: setOpacity },
   ]
 })
 
@@ -224,6 +224,16 @@ const textSegments = computed<StyleSegment[]>(() => {
           :model-value="segment.model"
           :ariaLabel="segment.ariaLabel"
           @update:model-value="segment.set"
+        />
+      </section>
+
+      <section class="style-section">
+        <span class="style-section__label">Opacity</span>
+        <UiSlider
+          :model-value="currentStyle.opacity"
+          ariaLabel="Opacity"
+          suffix="%"
+          @update:model-value="setOpacity"
         />
       </section>
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 defineProps<{
   /** Fixed placement of the floating panel. */
-  position: 'left' | 'right' | 'bottom' | 'top-left'
+  position: 'left' | 'right' | 'bottom' | 'top-left' | 'bottom-left' | 'top-center'
 }>()
 </script>
 
@@ -52,6 +52,17 @@ defineProps<{
 
 .ui-panel--top-left {
   top: 16px;
+  left: 16px;
+}
+
+.ui-panel--top-center {
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ui-panel--bottom-left {
+  bottom: 16px;
   left: 16px;
 }
 

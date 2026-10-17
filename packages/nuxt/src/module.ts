@@ -57,6 +57,10 @@ const vuedrawModule: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>
         name: 'provideVueDraw',
         from: resolver.resolve('./runtime/composables/useVueDraw'),
       },
+      {
+        name: 'useScenePersistence',
+        from: resolver.resolve('./runtime/composables/useScenePersistence'),
+      },
     ])
   },
 })

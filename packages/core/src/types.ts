@@ -37,6 +37,8 @@ export type ElementType =
   | 'line'
   | 'freedraw'
   | 'text'
+  | 'image'
+  | 'frame'
 
 export type FillStyle = 'hachure' | 'cross-hatch' | 'solid'
 
@@ -154,6 +156,28 @@ export interface VueDrawEllipseElement extends VueDrawElementBase {
   type: 'ellipse'
 }
 
+/**
+ * An image, carried inline as a data URL (Excalidraw keeps bitmaps in a
+ * separate file store keyed by `fileId`; vuedraw's single-document model
+ * embeds the data on the element instead, so scenes stay one payload).
+ * Geometry is box-like: bounds, hit testing, resize and rotation treat it
+ * exactly like a rectangle.
+ */
+export interface VueDrawImageElement extends VueDrawElementBase {
+  type: 'image'
+  /** Self-contained `data:image/...;base64,` payload — survives export as-is. */
+  dataUrl: string
+}
+
+/**
+ * A frame: a named, dashed outline that visually groups its contents.
+ * Box-like geometry; the name renders above the top-left corner.
+ */
+export interface VueDrawFrameElement extends VueDrawElementBase {
+  type: 'frame'
+  name: string
+}
+
 export type VueDrawElement =
   | VueDrawRectangleElement
   | VueDrawDiamondElement
@@ -162,6 +186,8 @@ export type VueDrawElement =
   | VueDrawLineElement
   | VueDrawFreedrawElement
   | VueDrawTextElement
+  | VueDrawImageElement
+  | VueDrawFrameElement
 
 export type ElementOf<T extends ElementType> = Extract<VueDrawElement, { type: T }>
 
@@ -200,7 +226,10 @@ export type ToolId =
   | 'line'
   | 'freedraw'
   | 'text'
+  | 'image'
   | 'eraser'
+  | 'frame'
+  | 'laser'
 
 export type ThemeName = 'light' | 'dark'
 

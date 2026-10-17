@@ -114,7 +114,11 @@ export function moveElements(
 
 const MIN_SIZE = 1
 
-/** No-flip policy: sizes clamp to a positive minimum, never go negative. */
+/**
+ * Text-only no-flip policy: its size clamps to a positive minimum. Every
+ * other element flips through zero, keeping the drag's sign — Excalidraw's
+ * `flipFactorX/Y = nextWidth < 0 ? -1 : 1` semantics.
+ */
 function withMinSize(size: number): number {
   return Math.max(size, MIN_SIZE)
 }
@@ -126,6 +130,11 @@ function withMinSize(size: number): number {
  * element's original local frame about the ORIGINAL center, compute the new
  * local rect with the opposite corner/edge anchored, then rotate the new
  * center back into scene space. Linear/freedraw points rescale to match.
+ *
+ * Sizes keep the drag's sign, so dragging a handle past the opposite edge
+ * flips the element through zero (Excalidraw's `flipFactorX/Y`); the patch
+ * normalizes the result back into the always-positive data model, mirroring
+ * linear/freedraw points by the same flip. Text alone clamps to a minimum.
  */
 export function resizeSingleElement(
   original: VueDrawElement,
@@ -145,39 +154,44 @@ export function resizeSingleElement(
   let width = original.width
   let height = original.height
 
+  // Text never flips through zero (Excalidraw resizes text by its font,
+  // never a mirror); every other element keeps the drag's sign.
+  const dim = original.type === 'text' ? withMinSize : ((size: number) => size)
+
   if (handle === 'nw') {
-    width = withMinSize(right - local.x)
-    height = withMinSize(bottom - local.y)
+    width = dim(right - local.x)
+    height = dim(bottom - local.y)
     x = right - width
     y = bottom - height
   } else if (handle === 'ne') {
-    width = withMinSize(local.x - original.x)
-    height = withMinSize(bottom - local.y)
+    width = dim(local.x - original.x)
+    height = dim(bottom - local.y)
     y = bottom - height
   } else if (handle === 'se') {
-    width = withMinSize(local.x - original.x)
-    height = withMinSize(local.y - original.y)
+    width = dim(local.x - original.x)
+    height = dim(local.y - original.y)
   } else if (handle === 'sw') {
-    width = withMinSize(right - local.x)
-    height = withMinSize(local.y - original.y)
+    width = dim(right - local.x)
+    height = dim(local.y - original.y)
     x = right - width
   } else if (handle === 'n') {
-    height = withMinSize(bottom - local.y)
+    height = dim(bottom - local.y)
     y = bottom - height
   } else if (handle === 's') {
-    height = withMinSize(local.y - original.y)
+    height = dim(local.y - original.y)
   } else if (handle === 'e') {
-    width = withMinSize(local.x - original.x)
+    width = dim(local.x - original.x)
   } else if (handle === 'w') {
-    width = withMinSize(right - local.x)
+    width = dim(right - local.x)
     x = right - width
   }
 
-  // Shift keeps the aspect ratio.
+  // Shift keeps the aspect ratio — on magnitudes, so a corner dragged
+  // through the opposite edge keeps its flip direction.
   if (modifiers.shift && isCorner(handle) && original.width > 0 && original.height > 0) {
-    const scale = Math.max(width / original.width, height / original.height)
-    width = withMinSize(original.width * scale)
-    height = withMinSize(original.height * scale)
+    const scale = Math.max(Math.abs(width) / original.width, Math.abs(height) / original.height)
+    width = (width < 0 ? -1 : 1) * original.width * scale
+    height = (height < 0 ? -1 : 1) * original.height * scale
     if (handle === 'nw') {
       x = right - width
       y = bottom - height
@@ -188,34 +202,47 @@ export function resizeSingleElement(
     }
   }
 
-  // New center in the ORIGINAL local frame.
+  // New center in the ORIGINAL local frame. The signed rect's center is
+  // the normalized box's center, so this holds through flips too.
   const localCenter: Point = { x: x + width / 2, y: y + height / 2 }
   const sceneCenter =
     original.angle === 0
       ? localCenter
       : rotatePoint(localCenter, center, original.angle)
 
+  // Normalize the flip into the always-positive data model: the element
+  // keeps positive width/height and (x, y) moves to the box's top-left.
+  const nextWidth = Math.abs(width)
+  const nextHeight = Math.abs(height)
+
   const patch: Record<string, unknown> = {
-    x: sceneCenter.x - width / 2,
-    y: sceneCenter.y - height / 2,
-    width,
-    height,
+    x: sceneCenter.x - nextWidth / 2,
+    y: sceneCenter.y - nextHeight / 2,
+    width: nextWidth,
+    height: nextHeight,
   }
 
-  // Polylines rescale around their own origin — per axis, since a flat
-  // line legitimately has a zero width or height.
+  // Polylines and strokes rescale by the SIGNED ratios around the original
+  // origin, then shift by the flip offset so the anchored edge stays put —
+  // mirroring Excalidraw's `rescalePointsInElement(..., true)`. Zero-extent
+  // axes (a flat line) don't scale.
+  const flipX = Math.max(-width, 0)
+  const flipY = Math.max(-height, 0)
   if (original.type === 'line' || original.type === 'arrow') {
     const sx = original.width === 0 ? 1 : width / original.width
     const sy = original.height === 0 ? 1 : height / original.height
-    if (sx !== 1 || sy !== 1) {
-      patch.points = original.points.map((p) => ({ x: p.x * sx, y: p.y * sy }))
+    if (sx !== 1 || sy !== 1 || flipX !== 0 || flipY !== 0) {
+      patch.points = original.points.map((p) => ({
+        x: p.x * sx + flipX,
+        y: p.y * sy + flipY,
+      }))
     }
   }
   if (original.type === 'freedraw') {
     const sx = original.width === 0 ? 1 : width / original.width
     const sy = original.height === 0 ? 1 : height / original.height
-    if (sx !== 1 || sy !== 1) {
-      patch.points = original.points.map((p) => [p[0]! * sx, p[1]! * sy, p[2]!])
+    if (sx !== 1 || sy !== 1 || flipX !== 0 || flipY !== 0) {
+      patch.points = original.points.map((p) => [p[0]! * sx + flipX, p[1]! * sy + flipY, p[2]!])
     }
   }
   return patch as ElementPatch<typeof original>
@@ -267,13 +294,19 @@ export function resizeMultipleElements(
   let nextWidth = anchorX === null ? boxWidth : Math.abs(pointer.x - anchorX)
   let nextHeight = anchorY === null ? boxHeight : Math.abs(pointer.y - anchorY)
 
+  // Excalidraw refuses the update rather than collapse the group to zero
+  // (resizeElements' `nextWidth === 0` guard); the caller keeps the last
+  // good frame for that instant. Past the anchor the abs-based scale
+  // regrows the group smoothly instead of jamming at a minimum size.
+  if (nextWidth === 0 || nextHeight === 0) {
+    return []
+  }
+
   if (modifiers.shift && isCorner(handle)) {
     const scale = Math.max(nextWidth / boxWidth, nextHeight / boxHeight)
     nextWidth = boxWidth * scale
     nextHeight = boxHeight * scale
   }
-  nextWidth = Math.max(nextWidth, MIN_SIZE)
-  nextHeight = Math.max(nextHeight, MIN_SIZE)
 
   const scaleX = anchorX === null ? 1 : nextWidth / boxWidth
   const scaleY = anchorY === null ? 1 : nextHeight / boxHeight
