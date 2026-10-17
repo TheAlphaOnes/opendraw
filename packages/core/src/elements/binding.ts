@@ -11,6 +11,10 @@
  *       BASE_BINDING_GAP + strokeWidth / 2
  *   — magnetic radius around a shape at which a tip still binds:
  *       maxBindingDistance(zoom), base max(BASE_BINDING_GAP, 15)
+ *   — where a docked tip sits: on the shape's OWN outline (diamond edges,
+ *       ellipse curve, rectangle box), dilated by the gap — never the
+ *       bounds box, which glues tips to the border the selection frame
+ *       draws on (see `intersectElementWithLineSegment` in the reference)
  */
 
 import { getElementBounds, pointInBounds } from '../geometry/bounds.js'
@@ -98,15 +102,13 @@ export function bindableShapeAt(
 // Docking geometry
 // ---------------------------------------------------------------------------
 
-/** The shape's bounds dilated by the binding gap — the line tips dock onto. */
-function dockingBounds(shape: VueDrawBindableShape): Bounds {
-  const bounds = getElementBounds(shape)
-  const gap = bindingGap(shape)
+/** The shape's local box dilated by the binding gap, in element coordinates. */
+function dilatedLocalBounds(shape: VueDrawBindableShape, gap: number): Bounds {
   return {
-    x1: bounds.x1 - gap,
-    y1: bounds.y1 - gap,
-    x2: bounds.x2 + gap,
-    y2: bounds.y2 + gap,
+    x1: -gap,
+    y1: -gap,
+    x2: shape.width + gap,
+    y2: shape.height + gap,
   }
 }
 
@@ -160,30 +162,209 @@ function nearestPerimeterPoint(point: Point, rect: Bounds): Point {
 }
 
 /**
- * Where a tip docks on `shape`: the border crossing of the segment
- * `focus` -> shape center against the gap-dilated bounds. When the focus
- * itself lies inside those bounds (a self-loop, or the shape dragged over
- * the loose end) the perimeter point nearest the tip's current position wins,
- * so the two tips can never collapse onto a single point.
+ * Line param where the infinite line `from -> toward` crosses segment
+ * `a -> b`, or null when parallel or crossing outside the segment.
+ */
+function lineSegmentCrossing(from: Point, toward: Point, a: Point, b: Point): number | null {
+  const d = { x: toward.x - from.x, y: toward.y - from.y }
+  const e = { x: b.x - a.x, y: b.y - a.y }
+  const w = { x: a.x - from.x, y: a.y - from.y }
+  const denominator = d.x * e.y - d.y * e.x
+  if (denominator === 0) {
+    return null
+  }
+  const t = (w.x * e.y - w.y * e.x) / denominator
+  const s = (w.x * d.y - w.y * d.x) / denominator
+  return s >= 0 && s <= 1 ? t : null
+}
+
+/** Closest point on segment `a -> b` to `p`. */
+function closestPointOnSegment(p: Point, a: Point, b: Point): Point {
+  const ex = b.x - a.x
+  const ey = b.y - a.y
+  const lengthSq = ex * ex + ey * ey
+  if (lengthSq === 0) {
+    return { ...a }
+  }
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * ex + (p.y - a.y) * ey) / lengthSq))
+  return { x: a.x + ex * t, y: a.y + ey * t }
+}
+
+/** The dilated rhombus vertices, clockwise from the top, in local coords. */
+function diamondVertices(shape: VueDrawBindableShape, gap: number): readonly Point[] {
+  const cx = shape.width / 2
+  const cy = shape.height / 2
+  return [
+    { x: cx, y: -gap },
+    { x: shape.width + gap, y: cy },
+    { x: cx, y: shape.height + gap },
+    { x: -gap, y: cy },
+  ]
+}
+
+/**
+ * Crossing of the infinite line `from -> toward` with the shape's dilated
+ * outline (the smallest positive line param wins — the entry crossing when
+ * `from` is outside, the exit when it starts inside), or null when the line
+ * never crosses.
+ */
+function outlineCrossing(
+  shape: VueDrawBindableShape,
+  from: Point,
+  toward: Point,
+  gap: number,
+): Point | null {
+  let best: number | null = null
+  if (shape.type === 'diamond') {
+    const vertices = diamondVertices(shape, gap)
+    for (let i = 0; i < vertices.length; i++) {
+      const t = lineSegmentCrossing(
+        from,
+        toward,
+        vertices[i]!,
+        vertices[(i + 1) % vertices.length]!,
+      )
+      if (t !== null && t > 0 && (best === null || t < best)) {
+        best = t
+      }
+    }
+  } else if (shape.type === 'ellipse') {
+    const a = shape.width / 2 + gap
+    const b = shape.height / 2 + gap
+    const dx = toward.x - from.x
+    const dy = toward.y - from.y
+    const ux = from.x - shape.width / 2
+    const uy = from.y - shape.height / 2
+    const qa = (dx * dx) / (a * a) + (dy * dy) / (b * b)
+    if (qa > 0) {
+      const qb = 2 * ((ux * dx) / (a * a) + (uy * dy) / (b * b))
+      const qc = (ux * ux) / (a * a) + (uy * uy) / (b * b) - 1
+      const discriminant = qb * qb - 4 * qa * qc
+      if (discriminant >= 0) {
+        const root = Math.sqrt(discriminant)
+        for (const t of [(-qb - root) / (2 * qa), (-qb + root) / (2 * qa)]) {
+          if (t > 0 && (best === null || t < best)) {
+            best = t
+          }
+        }
+      }
+    }
+  } else {
+    // Rectangle (any corner rounding) and text frame a box.
+    const t = clipParam(from, toward, dilatedLocalBounds(shape, gap))
+    if (t > 0) {
+      best = t
+    }
+  }
+  if (best === null) {
+    return null
+  }
+  return {
+    x: from.x + (toward.x - from.x) * best,
+    y: from.y + (toward.y - from.y) * best,
+  }
+}
+
+/** Whether `point` (local coords) lies inside the shape's dilated outline. */
+function outlineContains(shape: VueDrawBindableShape, point: Point, gap: number): boolean {
+  if (shape.type === 'ellipse') {
+    const a = shape.width / 2 + gap
+    const b = shape.height / 2 + gap
+    const ux = (point.x - shape.width / 2) / a
+    const uy = (point.y - shape.height / 2) / b
+    return ux * ux + uy * uy <= 1
+  }
+  if (shape.type === 'diamond') {
+    const vertices = diamondVertices(shape, gap)
+    for (let i = 0; i < vertices.length; i++) {
+      const a = vertices[i]!
+      const b = vertices[(i + 1) % vertices.length]!
+      const cross = (b.x - a.x) * (point.y - a.y) - (b.y - a.y) * (point.x - a.x)
+      if (cross < 0) {
+        return false
+      }
+    }
+    return true
+  }
+  const bounds = dilatedLocalBounds(shape, gap)
+  return (
+    point.x >= bounds.x1 &&
+    point.x <= bounds.x2 &&
+    point.y >= bounds.y1 &&
+    point.y <= bounds.y2
+  )
+}
+
+/** The point on the shape's dilated outline nearest `point` (local coords). */
+function nearestOutlinePoint(shape: VueDrawBindableShape, point: Point, gap: number): Point {
+  if (shape.type === 'ellipse') {
+    const a = shape.width / 2 + gap
+    const b = shape.height / 2 + gap
+    const cx = shape.width / 2
+    const cy = shape.height / 2
+    const dx = point.x - cx
+    const dy = point.y - cy
+    const length = Math.hypot(dx, dy)
+    if (length === 0) {
+      return { x: cx, y: cy - b }
+    }
+    // Radial projection: exact for circles, a hairline off for stretched
+    // ones — the inside case only anchors a tip already near the rim.
+    return { x: cx + (a * dx) / length, y: cy + (b * dy) / length }
+  }
+  if (shape.type === 'diamond') {
+    const vertices = diamondVertices(shape, gap)
+    let nearest: Point | null = null
+    let bestDistanceSq = Infinity
+    for (let i = 0; i < vertices.length; i++) {
+      const candidate = closestPointOnSegment(
+        point,
+        vertices[i]!,
+        vertices[(i + 1) % vertices.length]!,
+      )
+      const distanceSq = (candidate.x - point.x) ** 2 + (candidate.y - point.y) ** 2
+      if (distanceSq < bestDistanceSq) {
+        bestDistanceSq = distanceSq
+        nearest = candidate
+      }
+    }
+    return nearest!
+  }
+  return nearestPerimeterPoint(point, dilatedLocalBounds(shape, gap))
+}
+
+/**
+ * Where a tip docks on `shape`: the crossing of the ray from the opposite
+ * tip toward the shape's center with the shape's OWN outline, dilated by
+ * the binding gap — the diamond's slanted edges, the ellipse's curve, the
+ * rectangle's box. Docking against the bounds box instead would glue tips
+ * to the invisible border the selection frame draws on. When the focus
+ * itself lies inside the dilated outline (a self-loop, or the shape
+ * dragged over the loose end), the outline point nearest the tip's
+ * current position wins, so the two tips can never collapse together.
+ *
+ * Geometry runs in the shape's unrotated local space — the same pivot the
+ * hit-tester and retip math use — so rotated shapes dock on their true
+ * rotated edges.
  */
 export function dockPoint(
   shape: VueDrawBindableShape,
   focus: Point,
   current?: Point,
 ): Point {
-  const rect = dockingBounds(shape)
-  const center = { x: (rect.x1 + rect.x2) / 2, y: (rect.y1 + rect.y2) / 2 }
-  const inside =
-    focus.x >= rect.x1 && focus.x <= rect.x2 && focus.y >= rect.y1 && focus.y <= rect.y2
-  if (inside) {
-    return nearestPerimeterPoint(current ?? focus, rect)
+  const gap = bindingGap(shape)
+  const localFocus = localPointOf(shape, focus)
+  const center = { x: shape.width / 2, y: shape.height / 2 }
+  if (outlineContains(shape, localFocus, gap)) {
+    const anchor = current ? localPointOf(shape, current) : localFocus
+    return scenePointOf(shape, nearestOutlinePoint(shape, anchor, gap))
   }
-  if (Math.abs(center.x - focus.x) < 0.5 && Math.abs(center.y - focus.y) < 0.5) {
+  if (Math.abs(localFocus.x - center.x) < 0.5 && Math.abs(localFocus.y - center.y) < 0.5) {
     // Degenerate ray (focus at the center): dock straight above it.
-    return { x: center.x, y: rect.y1 }
+    return scenePointOf(shape, { x: center.x, y: -gap })
   }
-  const t = clipParam(focus, center, rect)
-  return { x: focus.x + (center.x - focus.x) * t, y: focus.y + (center.y - focus.y) * t }
+  const crossing = outlineCrossing(shape, localFocus, center, gap)
+  return scenePointOf(shape, crossing ?? { x: center.x, y: -gap })
 }
 
 // ---------------------------------------------------------------------------

@@ -13,6 +13,7 @@ import {
 } from '../src/elements/binding.js'
 import {
   newDiamondElement,
+  newEllipseElement,
   newFreedrawElement,
   newLinearElement,
   newRectangleElement,
@@ -144,6 +145,44 @@ describe('dockPoint', () => {
   it('falls back to the perimeter point nearest the tip when the focus is inside', () => {
     // Focus at the center, tip up and left: the nearest dilated edge is top.
     expect(dockPoint(rectA, { x: 150, y: 140 }, { x: 120, y: 105 })).toEqual({ x: 120, y: RECT_A_DILATED.y1 })
+  })
+
+  it('docks a diagonal tip on the diamond slanted edge, not its bounds box', () => {
+    // Diamond (300,120)-(460,220). The bounds-box dock used to land on the
+    // left border at (294, 120.9) — exactly where the selection frame draws.
+    const diamond = newDiamondElement({ id: 'd', x: 300, y: 120, width: 160, height: 100 })
+    const dock = dockPoint(diamond, { x: 240, y: 90 })
+    // The crossing with the upper-left slanted edge, gap-dilated.
+    expect(dock.x).toBeCloseTo(334.20, 1)
+    expect(dock.y).toBeCloseTo(143.83, 1)
+  })
+
+  it('docks a diagonal tip on the ellipse curve, not its bounds box', () => {
+    // Ellipse (100,100)-(260,200). The bounds-box dock used to land on the
+    // top border at (108.7, 94), floating far off the curve.
+    const ellipse = newEllipseElement({ id: 'e', x: 100, y: 100, width: 160, height: 100 })
+    const dock = dockPoint(ellipse, { x: 40, y: 40 })
+    expect(dock.x).toBeCloseTo(125.13, 1)
+    expect(dock.y).toBeCloseTo(106.89, 1)
+  })
+
+  it('docks on a rotated rectangle\'s true edge, not its bounds box', () => {
+    // A 45°-rotated 100x60 rect: its bounds box extends ~7px past the shape
+    // on the left; the bounds-box dock landed at (187.4, 130) on the box.
+    const rotated = { ...rect('r', 200, 100, 100, 60), angle: Math.PI / 4 }
+    const dock = dockPoint(rotated, { x: 0, y: 130 })
+    // Six pixels off the rotated bottom edge, near its leftmost corner.
+    expect(dock.x).toBeCloseTo(199.09, 1)
+    expect(dock.y).toBeCloseTo(130, 1)
+  })
+
+  it('anchors a focus inside the diamond on its nearest slanted edge', () => {
+    const diamond = newDiamondElement({ id: 'd', x: 300, y: 120, width: 160, height: 100 })
+    // Focus at the center, tip up and left: nearest point on the dilated
+    // upper-left edge — not a projection onto the bounds box.
+    const dock = dockPoint(diamond, { x: 380, y: 170 }, { x: 330, y: 140 })
+    expect(dock.x).toBeCloseTo(333.0, 1)
+    expect(dock.y).toBeCloseTo(144.6, 1)
   })
 })
 
