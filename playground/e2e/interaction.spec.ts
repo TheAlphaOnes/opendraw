@@ -9,6 +9,7 @@ import {
   scene,
   settleFrames,
   test,
+  tipOf,
 } from './helpers'
 import { expect } from './helpers'
 
@@ -66,7 +67,7 @@ test('resizes from the selection border, not just the corner handles', async ({ 
   const resized = (await scene(page)).elements[0]!
   expect(resized.y).toBe(rect.y)
   expect(resized.width).toBe(rect.width)
-  expect(resized.height).toBeGreaterThan(rect.height + 50)
+  expect(resized.height).toBeGreaterThan((rect.height ?? 0) + 50)
 })
 
 test('advertises every grab zone with the right cursor', async ({ page }) => {
@@ -172,4 +173,30 @@ test('outlines a hoverable shape before the drag even starts', async ({ page }) 
   await page.mouse.move(at(box, 650, 210).x, at(box, 650, 210).y)
   await settleFrames(page)
   expect((await overlayPixelAt(page, 390, 150))[3]).toBe(0)
+})
+
+test('docks a diagonal arrow on the diamond\'s own edge, not its bounds box', async ({ page }) => {
+  await openEditor(page)
+  const box = await canvasBox(page)
+
+  await pickTool(page, 'Diamond (3)')
+  await drag(page, at(box, 400, 120), at(box, 560, 220))
+  await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
+  const diamondId = (await scene(page)).elements[0]!.id
+
+  // An arrow from empty space, diagonally into the diamond's middle.
+  await pickTool(page, 'Arrow (5)')
+  await drag(page, at(box, 240, 90), at(box, 480, 170))
+  await expect.poll(async () => (await scene(page)).elements.length).toBe(2)
+
+  // The tip retracts onto the upper-left slanted edge (~423,151) — about
+  // 40px inside where the bounds-box dock used to land on the border
+  // (394,141), right under the selection frame.
+  const arrow = (await scene(page)).elements.find((el) => el.type === 'arrow')!
+  expect(arrow.endBinding).toEqual({ elementId: diamondId })
+  const tip = tipOf(arrow, 'end')
+  expect(tip.x).toBeGreaterThan(410)
+  expect(tip.x).toBeLessThan(440)
+  expect(tip.y).toBeGreaterThan(140)
+  expect(tip.y).toBeLessThan(165)
 })

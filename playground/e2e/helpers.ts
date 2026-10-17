@@ -16,6 +16,8 @@ export interface MirroredElement {
   type: string
   x: number
   y: number
+  width?: number
+  height?: number
   points?: Array<{ x: number; y: number }>
   startBinding?: { elementId: string } | null
   endBinding?: { elementId: string } | null
