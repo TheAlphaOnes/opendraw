@@ -6,6 +6,7 @@ import type {
   HandleDirection,
   Point,
   ResizeHandle,
+  SelectionFrame,
   VueDrawBindableShape,
   VueDrawElement,
 } from '@vuedraw/core'
@@ -29,13 +30,16 @@ import {
   newFreedrawElement,
   newLinearElement,
   newTextElement,
+  pointInSelectionFrame,
   renderOverlay,
   renderScene,
+  resizeCursorFor,
   resizeMultipleElements,
   resizeSingleElement,
   rotateElements,
   screenToScene,
   selectionFrameOf,
+  sideHandleAt,
   startRotationAngle,
 } from '@vuedraw/core'
 
@@ -164,7 +168,7 @@ function renderAll() {
     pointer: 'mouse',
     marquee: marquee.value,
     previewElements: [],
-    bindingCandidate: bindingCandidate.value,
+    bindingCandidates: bindingCandidates.value,
     canvasSize: size,
     dpr: dpr.value,
   })
@@ -233,8 +237,13 @@ type Interaction =
 
 const interaction = shallowRef<Interaction>({ kind: 'none' })
 const modifiers = shallowRef({ shift: false })
-/** Shape an in-flight line/arrow tip would dock onto — outlined on the overlay. */
-const bindingCandidate = shallowRef<VueDrawBindableShape | null>(null)
+/** Shapes the live line/arrow probes would dock onto — outlined on the overlay. */
+const bindingCandidates = shallowRef<readonly VueDrawBindableShape[]>([])
+/** Scene point under an idle pointer — drives the hover cursor + probes. */
+const hoverScene = shallowRef<Point | null>(null)
+// Idle-hover highlight changes no document state, so the candidates array
+// itself must schedule the repaint.
+watch(bindingCandidates, scheduleRender)
 
 function setModifiers(event: PointerEvent | MouseEvent | KeyboardEvent) {
   modifiers.value = { shift: event.shiftKey }
@@ -276,7 +285,7 @@ function onPointerDown(event: PointerEvent) {
   setModifiers(event)
   // A new gesture starts from a clean slate — a stale highlight must not
   // survive into the next interaction.
-  bindingCandidate.value = null
+  bindingCandidates.value = []
 
   const scenePoint = toScene(event)
   const tool = ctx.activeTool.value
@@ -308,6 +317,17 @@ function onPointerDown(event: PointerEvent) {
     ctx.doc.beginStep()
     ctx.doc.addElement(element)
     interaction.value = { kind: 'creating', elementId: element.id, originScene: scenePoint }
+    // A drag starting on a shape highlights it from the first frame — the
+    // start tip is a binding candidate exactly like the dragged one.
+    if (tool === 'line' || tool === 'arrow') {
+      const shape = bindableShapeAt(
+        ctx.elements.value,
+        scenePoint,
+        maxBindingDistance(ctx.viewport.value.zoom),
+        element.id,
+      )
+      bindingCandidates.value = shape ? [shape] : []
+    }
     return
   }
 
@@ -346,6 +366,20 @@ function onPointerDown(event: PointerEvent) {
     return
   }
 
+  // Border grabbing: a press within a few pixels of the selection border
+  // resizes from that side, like Excalidraw's side resizing. A lone
+  // two-point linear stays drag-only, exactly as Excalidraw excludes it.
+  const frame = selectionFrameOf(ctx.selectedElements.value)
+  if (frame) {
+    const side = sideGrabAt(scenePoint, frame, ctx.viewport.value.zoom)
+    if (side) {
+      const originals = snapshotSelection()
+      interaction.value = { kind: 'resizing', handle: side, originals }
+      ctx.doc.beginStep()
+      return
+    }
+  }
+
   const threshold = hitThreshold(ctx.viewport.value.zoom)
   const hit = findElementAt(ctx.elements.value, scenePoint, threshold)
   if (hit) {
@@ -368,6 +402,32 @@ function onPointerDown(event: PointerEvent) {
       originScene: scenePoint,
       originals: snapshotSelection(),
       hitId: !event.shiftKey && wasSelected ? hit.id : null,
+      didDrag: false,
+    }
+    ctx.doc.beginStep()
+    return
+  }
+
+  // Pressing inside the current selection's frame grabs the whole
+  // selection — Excalidraw's common-bounding-box grab, extended to lone
+  // selections so an unfilled shape drags from its middle, not just its
+  // outline. Shift keeps the add-to-selection gesture instead.
+  if (
+    frame &&
+    !event.shiftKey &&
+    !ctx.selectedElements.value.every((el) => el.locked) &&
+    pointInSelectionFrame(
+      frame,
+      scenePoint,
+      SELECTION_GRAB_PADDING / ctx.viewport.value.zoom,
+    )
+  ) {
+    interaction.value = {
+      kind: 'moving',
+      originScene: scenePoint,
+      originals: snapshotSelection(),
+      // No element was pressed, so a no-drag click keeps the selection.
+      hitId: null,
       didDrag: false,
     }
     ctx.doc.beginStep()
@@ -405,6 +465,7 @@ function onPointerMove(event: PointerEvent) {
   setModifiers(event)
   const current = interaction.value
   if (current.kind === 'none') {
+    handleIdleHover(toScene(event))
     return
   }
   const scenePoint = toScene(event)
@@ -441,15 +502,24 @@ function onPointerMove(event: PointerEvent) {
       if (el.type === 'line' || el.type === 'arrow') {
         const points = draftLinePoints(current.originScene, scenePoint, modifiers.value)
         ctx.doc.forceUpdateElement(el.id, { points })
-        // Connect feedback: outline the shape the drafted tip would dock onto.
+        // Connect feedback: outline every shape the line would bind — the
+        // one under the dragged tip AND the one the drag started on.
         // The draft is never rotated, so scene position is origin + point.
         const tip = points[points.length - 1]!
-        bindingCandidate.value = bindableShapeAt(
+        const distance = maxBindingDistance(ctx.viewport.value.zoom)
+        const startShape = bindableShapeAt(
           ctx.elements.value,
-          { x: el.x + tip.x, y: el.y + tip.y },
-          maxBindingDistance(ctx.viewport.value.zoom),
+          current.originScene,
+          distance,
           el.id,
         )
+        const tipShape = bindableShapeAt(
+          ctx.elements.value,
+          { x: el.x + tip.x, y: el.y + tip.y },
+          distance,
+          el.id,
+        )
+        bindingCandidates.value = mergeBindingCandidates([startShape, tipShape])
       } else {
         const rect = draftShapeRect(current.originScene, scenePoint, modifiers.value)
         ctx.doc.forceUpdateElement(el.id, rect)
@@ -530,7 +600,7 @@ function onPointerUp(event: PointerEvent) {
   const current = interaction.value
   interaction.value = { kind: 'none' }
   marquee.value = null
-  bindingCandidate.value = null
+  bindingCandidates.value = []
   const host = hostRef.value
   if (host?.hasPointerCapture(event.pointerId)) {
     host.releasePointerCapture(event.pointerId)
@@ -856,19 +926,122 @@ onMounted(() => {
 // Cursor
 // ---------------------------------------------------------------------------
 
-const cursor = computed(() => {
+/**
+ * Screen-px slack around the selection frame that still grabs (moves) the
+ * selection — Excalidraw sums its collision threshold (≈8px) and handle
+ * spacing (4px) into roughly this padding.
+ */
+const SELECTION_GRAB_PADDING = 12
+
+/**
+ * The side a border press grabs for a resize, honoring Excalidraw's
+ * exclusion: a lone two-point linear never side-resizes.
+ */
+function sideGrabAt(point: Point, frame: SelectionFrame, zoom: number): HandleDirection | null {
+  const selected = ctx.selectedElements.value
+  const only = selected.length === 1 ? selected[0] : null
+  if (
+    only &&
+    (only.type === 'line' || only.type === 'arrow') &&
+    only.points.length <= 2
+  ) {
+    return null
+  }
+  return sideHandleAt(frame, point, zoom)
+}
+
+/** Both-end probe results, deduped — a drag from a shape onto itself outlines it once. */
+function mergeBindingCandidates(
+  shapes: ReadonlyArray<VueDrawBindableShape | null>,
+): readonly VueDrawBindableShape[] {
+  const merged: VueDrawBindableShape[] = []
+  const seen = new Set<string>()
+  for (const shape of shapes) {
+    if (shape && !seen.has(shape.id)) {
+      seen.add(shape.id)
+      merged.push(shape)
+    }
+  }
+  return merged
+}
+
+/**
+ * Idle pointer: feeds the hover cursor and, with a line/arrow tool,
+ * outlines the shape a drag would bind to before the drag even starts.
+ */
+function handleIdleHover(scenePoint: Point): void {
+  hoverScene.value = scenePoint
   const tool = ctx.activeTool.value
-  if (interaction.value.kind === 'panning') {
+  if (tool === 'line' || tool === 'arrow') {
+    const shape = bindableShapeAt(
+      ctx.elements.value,
+      scenePoint,
+      maxBindingDistance(ctx.viewport.value.zoom),
+    )
+    bindingCandidates.value = shape ? [shape] : []
+  } else if (bindingCandidates.value.length > 0) {
+    bindingCandidates.value = []
+  }
+}
+
+function onPointerLeave(): void {
+  // Mid-gesture the capture owns the pointer; only an idle leave clears.
+  if (interaction.value.kind === 'none') {
+    hoverScene.value = null
+    bindingCandidates.value = []
+  }
+}
+
+const cursor = computed(() => {
+  const active = interaction.value
+  if (active.kind === 'panning' || active.kind === 'rotating') {
     return 'grabbing'
   }
+  if (active.kind === 'resizing') {
+    const angle = selectionFrameOf(ctx.selectedElements.value)?.angle ?? 0
+    return resizeCursorFor(active.handle, angle)
+  }
+  if (active.kind === 'moving') {
+    return 'move'
+  }
+  const tool = ctx.activeTool.value
   if (tool === 'hand') {
     return 'grab'
   }
   if (tool === 'selection') {
-    return spaceDown.value ? 'grab' : 'default'
+    if (spaceDown.value) {
+      return 'grab'
+    }
+    const point = hoverScene.value
+    if (!point) {
+      return 'default'
+    }
+    const zoom = ctx.viewport.value.zoom
+    const frame = selectionFrameOf(ctx.selectedElements.value)
+    if (frame) {
+      // What a press here would do, top to bottom: a transform handle,
+      // a border side, then a grab of the selection itself.
+      const handle = handleAt(handleLayout.value, point)
+      if (handle) {
+        return resizeCursorFor(handle, frame.angle)
+      }
+      const side = sideGrabAt(point, frame, zoom)
+      if (side) {
+        return resizeCursorFor(side, frame.angle)
+      }
+      if (pointInSelectionFrame(frame, point, SELECTION_GRAB_PADDING / zoom)) {
+        return 'move'
+      }
+    }
+    const hit = findElementAt(ctx.elements.value, point, hitThreshold(zoom))
+    return hit && !hit.locked ? 'move' : 'default'
   }
   if (tool === 'text') {
-    return 'text'
+    const point = hoverScene.value
+    const hit = point
+      ? findElementAt(ctx.elements.value, point, hitThreshold(ctx.viewport.value.zoom))
+      : null
+    return hit?.type === 'text' ? 'text' : 'crosshair'
   }
   return 'crosshair'
 })
@@ -885,6 +1058,7 @@ const cursor = computed(() => {
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
     @pointercancel="onPointerUp"
+    @pointerleave="onPointerLeave"
     @mousedown="onMouseDown"
     @wheel="onWheel"
     @dblclick="onDoubleClick"

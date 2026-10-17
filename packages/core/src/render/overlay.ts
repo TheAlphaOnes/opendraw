@@ -28,8 +28,12 @@ export interface OverlayRenderInput {
   marquee: Bounds | null
   /** Elements being created/dragged right now, drawn before the chrome. */
   previewElements: readonly VueDrawElement[]
-  /** Bindable shape a line/arrow tip would dock onto right now, or null. */
-  bindingCandidate: VueDrawBindableShape | null
+  /**
+   * Shapes the live line/arrow probes would dock onto right now — the tip
+   * being dragged, the shape the drag started on, or the shape under an
+   * idle hover. Empty when nothing probes.
+   */
+  bindingCandidates: readonly VueDrawBindableShape[]
   canvasSize: CanvasSize
   dpr: number
 }
@@ -45,7 +49,7 @@ const HANDLE_RADIUS_PX = 2
 const MARQUEE_FILL_ALPHA = 0.06
 
 export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRenderInput): void {
-  const { selectedElements, appState, pointer, marquee, previewElements, bindingCandidate } = input
+  const { selectedElements, appState, pointer, marquee, previewElements, bindingCandidates } = input
   const { theme, viewport, editingId } = appState
   const zoom = viewport.zoom
   const dark = theme === 'dark'
@@ -68,11 +72,11 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
     renderElementShape(ctx, element, dark)
   }
 
-  // Connect feedback: outline the shape an in-flight line/arrow tip would
+  // Connect feedback: outline every shape the live line/arrow probes would
   // dock onto, before the selection chrome (a highlight never reads as a
-  // selection).
-  if (bindingCandidate) {
-    drawBindingHighlight(ctx, bindingCandidate, UI.selection, zoom)
+  // selection). A drag from shape A to shape B outlines both at once.
+  for (const candidate of bindingCandidates) {
+    drawBindingHighlight(ctx, candidate, UI.selection, zoom)
   }
 
   // While a text element is being edited the DOM editor draws its own

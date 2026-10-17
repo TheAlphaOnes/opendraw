@@ -6,8 +6,8 @@
  */
 
 import { boundsCenter, getCommonBounds, getElementBounds } from '../geometry/bounds.js'
-import { rotatePoint } from '../geometry/points.js'
-import type { Bounds, Point, ResizeHandle, VueDrawElement } from '../types.js'
+import { rotatePoint, unrotatePoint } from '../geometry/points.js'
+import type { Bounds, HandleDirection, Point, ResizeHandle, VueDrawElement } from '../types.js'
 
 export type PointerKind = 'mouse' | 'pen' | 'touch'
 
@@ -157,4 +157,110 @@ export function rotationHandleCenter(
     x: center.x,
     y: frame.y - ROTATION_HANDLE_GAP / zoom - spacing,
   }
+}
+
+// ---------------------------------------------------------------------------
+// Border grabbing & cursors
+// ---------------------------------------------------------------------------
+
+/**
+ * Screen-px distance from a selection border at which a press still counts
+ * as grabbing that side for a resize (Excalidraw's SIDE_RESIZING_THRESHOLD:
+ * twice the handle spacing).
+ */
+export const SIDE_GRAB_THRESHOLD = 4
+
+/** Center of a selection frame. */
+function frameCenter(frame: SelectionFrame): Point {
+  return { x: frame.x + frame.width / 2, y: frame.y + frame.height / 2 }
+}
+
+/**
+ * Whether `point` lies within the (possibly rotated) selection frame,
+ * dilated by `padding` scene px. The grab and hover tests for a selection
+ * live here so the cursor can advertise exactly what a press would do.
+ */
+export function pointInSelectionFrame(
+  frame: SelectionFrame,
+  point: Point,
+  padding = 0,
+): boolean {
+  const local =
+    frame.angle === 0 ? point : unrotatePoint(point, frameCenter(frame), frame.angle)
+  return (
+    local.x >= frame.x - padding &&
+    local.x <= frame.x + frame.width + padding &&
+    local.y >= frame.y - padding &&
+    local.y <= frame.y + frame.height + padding
+  )
+}
+
+/**
+ * The side a press within {@link SIDE_GRAB_THRESHOLD} of the frame border
+ * grabs for a resize, in Excalidraw's border priority (n, e, s, w) — or
+ * null when the point is not near a border. Corner presses land on the
+ * handle boxes before this runs, so exact corners never reach it.
+ */
+export function sideHandleAt(
+  frame: SelectionFrame,
+  point: Point,
+  zoom: number,
+): HandleDirection | null {
+  const threshold = SIDE_GRAB_THRESHOLD / Math.max(zoom, 0.001)
+  const local =
+    frame.angle === 0 ? point : unrotatePoint(point, frameCenter(frame), frame.angle)
+  const x1 = frame.x
+  const y1 = frame.y
+  const x2 = frame.x + frame.width
+  const y2 = frame.y + frame.height
+  // Border segments, dilated by the threshold at each end so a press just
+  // past a corner still grabs the nearest side (Excalidraw dilates the
+  // same way before its point-on-segment test).
+  const borders: readonly { handle: HandleDirection; ax: number; ay: number; bx: number; by: number }[] = [
+    { handle: 'n', ax: x1 - threshold, ay: y1, bx: x2 + threshold, by: y1 },
+    { handle: 'e', ax: x2, ay: y1 - threshold, bx: x2, by: y2 + threshold },
+    { handle: 's', ax: x2 + threshold, ay: y2, bx: x1 - threshold, by: y2 },
+    { handle: 'w', ax: x1, ay: y2 + threshold, bx: x1, by: y1 - threshold },
+  ]
+  for (const border of borders) {
+    const minX = Math.min(border.ax, border.bx)
+    const maxX = Math.max(border.ax, border.bx)
+    const minY = Math.min(border.ay, border.by)
+    const maxY = Math.max(border.ay, border.by)
+    const cx = Math.min(Math.max(local.x, minX), maxX)
+    const cy = Math.min(Math.max(local.y, minY), maxY)
+    const dx = local.x - cx
+    const dy = local.y - cy
+    if (dx * dx + dy * dy <= threshold * threshold) {
+      return border.handle
+    }
+  }
+  return null
+}
+
+/** Cursor bases per resize direction, in 45° rotation order (Excalidraw's RESIZE_CURSORS). */
+const RESIZE_CURSOR_BASES = ['ns', 'nesw', 'ew', 'nwse'] as const
+
+/**
+ * The CSS cursor for a transform handle — Excalidraw's
+ * `getCursorForResizingElement`: bidirectional resize cursors per side,
+ * walked in 45° steps for rotated selections, `grab` for rotation.
+ */
+export function resizeCursorFor(handle: ResizeHandle, angle = 0): string {
+  if (handle === 'rotation') {
+    return 'grab'
+  }
+  const base =
+    handle === 'n' || handle === 's'
+      ? 'ns'
+      : handle === 'e' || handle === 'w'
+        ? 'ew'
+        : handle === 'nw' || handle === 'se'
+          ? 'nwse'
+          : 'nesw'
+  const shift = Math.round(angle / (Math.PI / 4))
+  const index = RESIZE_CURSOR_BASES.indexOf(base)
+  const rotated =
+    RESIZE_CURSOR_BASES[(((index + shift) % 4) + 4) % 4] ?? base
+  return `${rotated}-resize`
 }

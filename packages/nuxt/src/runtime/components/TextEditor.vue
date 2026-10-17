@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import type { Point, VueDrawTextElement } from '@vuedraw/core'
-import { isTextElement, sceneToScreen, screenToScene } from '@vuedraw/core'
+import { isTextElement, sceneToScreen, screenToScene, themeColor } from '@vuedraw/core'
 
 import { useVueDraw } from '../composables/useVueDraw.js'
 
@@ -87,7 +87,9 @@ const fontStyle = computed(() => {
     // element, so center/right would show text away from its committed
     // position. The committed render keeps the element's true align.
     textAlign: 'left',
-    color: el.strokeColor,
+    // The committed render dark-filters stroke colors; the editor must
+    // match it, or dark ink types invisibly on the dark canvas.
+    color: themeColor(el.strokeColor, ctx.theme.value === 'dark'),
     ...(sessionWidth.value > 0 ? { width: `${sessionWidth.value}px` } : {}),
     ...(sessionHeight.value > 0 ? { minHeight: `${sessionHeight.value}px` } : {}),
   }
