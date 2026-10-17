@@ -70,6 +70,29 @@ test('resizes from the selection border, not just the corner handles', async ({ 
   expect(resized.height).toBeGreaterThan((rect.height ?? 0) + 50)
 })
 
+test('flips a resize through the opposite edge instead of jamming', async ({ page }) => {
+  await openEditor(page)
+  const box = await canvasBox(page)
+
+  await pickTool(page, 'Rectangle (2)')
+  await drag(page, at(box, 300, 150), at(box, 480, 270))
+  await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
+  const rect = (await scene(page)).elements[0]!
+
+  // Drag the se corner past the anchored west edge: the rect must flip
+  // through zero and regrow on the pointer's side, never jam at 1px.
+  await drag(page, at(box, 480, 270), at(box, 240, 200))
+  await settleFrames(page)
+
+  const flipped = (await scene(page)).elements[0]!
+  expect(flipped.width!).toBeGreaterThan(1)
+  expect(flipped.height!).toBeGreaterThan(1)
+  expect(flipped.x).toBeCloseTo(240, 0)
+  expect(flipped.y).toBeCloseTo(rect.y, 0)
+  expect(flipped.width).toBeCloseTo(rect.x - 240, 0)
+  expect(flipped.height).toBeCloseTo(50, 0)
+})
+
 test('advertises every grab zone with the right cursor', async ({ page }) => {
   await openEditor(page)
   const box = await canvasBox(page)

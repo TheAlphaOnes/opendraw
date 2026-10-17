@@ -6,10 +6,13 @@ import {
   bindableShapeAt,
   bindingGap,
   computeLinearBindings,
+  computeTipBinding,
   dockPoint,
   isBindableShape,
   maxBindingDistance,
+  moveLinearPoint,
   orphanBindingPatches,
+  pointsPatch,
 } from '../src/elements/binding.js'
 import {
   newDiamondElement,
@@ -398,5 +401,86 @@ describe('binding coercion on restore', () => {
     expect(el).not.toBeNull()
     expect(el!.startBinding).toEqual({ elementId: 'shape-a' })
     expect(el!.endBinding).toBeNull()
+  })
+})
+
+describe('computeTipBinding', () => {
+  const rectA = rect('rect-a', 100, 100)
+  // Rect A dilated by the gap: 94,94 – 206,186.
+  const THRESHOLD = 20
+
+  it('docks a dragged end tip onto the shape under it', () => {
+    // Tip at (220,140) sits within the magnetic radius of rect A.
+    const arrow = makeArrow('arrow', [300, 140], [220, 140])
+    const patch = computeTipBinding(arrow, 'end', [rectA], THRESHOLD)
+    expect(patch.endBinding).toEqual({ elementId: 'rect-a' })
+    // Docks on the dilated right edge: scene (206,140) → local (-94,0).
+    expect(patch.points![1]).toEqual({ x: -94, y: 0 })
+    expect(patch.points![0]).toEqual({ x: 0, y: 0 })
+  })
+
+  it('clears the binding when the tip is dropped loose', () => {
+    const arrow = makeArrow('arrow', [400, 400], [500, 400], { end: { elementId: 'rect-a' } })
+    const patch = computeTipBinding(arrow, 'end', [rectA], THRESHOLD)
+    expect(patch.endBinding).toBeNull()
+    expect(patch.startBinding).toBeNull()
+    // A loose drop moves nothing — the points keep the dragged position.
+    expect(patch.points).toBeUndefined()
+  })
+
+  it('keeps midpoints and the opposite tip fixed while docking', () => {
+    const three = {
+      ...makeArrow('three', [300, 140], [220, 140]),
+      points: [{ x: 0, y: 0 }, { x: -40, y: -20 }, { x: -80, y: 0 }],
+    }
+    const patch = computeTipBinding(three, 'end', [rectA], THRESHOLD)
+    expect(patch.points![1]).toEqual({ x: -40, y: -20 })
+    expect(patch.points![0]).toEqual({ x: 0, y: 0 })
+    expect(patch.endBinding).toEqual({ elementId: 'rect-a' })
+  })
+
+  it('keeps the opposite tip binding untouched while docking one end', () => {
+    const arrow = makeArrow('arrow', [180, 200], [220, 140], { start: { elementId: 'rect-a' } })
+    const patch = computeTipBinding(arrow, 'end', [rectA], THRESHOLD)
+    expect(patch.startBinding).toEqual({ elementId: 'rect-a' })
+    expect(patch.endBinding).toEqual({ elementId: 'rect-a' })
+    // Self-loop: the dragged end docks apart from the parked start.
+    const start = { x: 0, y: 0 }
+    const end = patch.points![1]!
+    expect(Math.abs(end.x - start.x)).toBeGreaterThan(0)
+  })
+})
+
+describe('moveLinearPoint', () => {
+  it('moves one point and resyncs the size fields', () => {
+    const arrow = makeArrow('arrow', [100, 65], [300, 185])
+    const patch = moveLinearPoint(arrow, 1, { x: 350, y: 205 })
+    expect(patch.points).toEqual([{ x: 0, y: 0 }, { x: 250, y: 140 }])
+    expect(patch.width).toBe(250)
+    expect(patch.height).toBe(140)
+  })
+
+  it('leaves the pivot fields of a rotated element untouched', () => {
+    const rotated = {
+      ...makeArrow('arrow', [100, 65], [300, 185]),
+      width: 200,
+      height: 120,
+      angle: Math.PI / 2,
+    }
+    const patch = moveLinearPoint(rotated, 1, { x: 350, y: 205 })
+    expect(patch.width).toBeUndefined()
+    expect(patch.height).toBeUndefined()
+  })
+})
+
+describe('pointsPatch', () => {
+  it('re-syncs the size fields to the points extents', () => {
+    const arrow = { ...makeArrow('arrow', [100, 65], [300, 185]), width: 0, height: 0 }
+    const patch = pointsPatch(arrow, [
+      { x: 0, y: 0 },
+      { x: 200, y: 120 },
+    ])
+    expect(patch.width).toBe(200)
+    expect(patch.height).toBe(120)
   })
 })

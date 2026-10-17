@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   elementsInBounds,
+  elementsUnderEraser,
   findElementAt,
   hitTestElement,
   hitThreshold,
@@ -163,6 +164,44 @@ describe('z-order and marquee', () => {
     const b = newRectangleElement({ x: 100, y: 100, width: 10, height: 10 })
     const hits = elementsInBounds([a, b], { x1: -5, y1: -5, x2: 20, y2: 20 })
     expect(hits.map((el) => el.id)).toEqual([a.id])
+  })
+})
+
+describe('eraser sweep', () => {
+  const rect = newRectangleElement({ x: 100, y: 100, width: 80, height: 60 })
+
+  it('erases at a single sample (stationary or slow drag)', () => {
+    // Both endpoints on the rectangle's top edge.
+    const hits = elementsUnderEraser([rect], { x: 120, y: 100 }, { x: 160, y: 100 }, 1)
+    expect(hits.map((el) => el.id)).toEqual([rect.id])
+  })
+
+  it('erases an element crossed between two distant samples', () => {
+    // A fast drag: neither endpoint is anywhere near the rectangle, but the
+    // segment between them passes straight through it. Excalidraw parity —
+    // the whole segment is the eraser stroke, not the sampled endpoints.
+    const hits = elementsUnderEraser([rect], { x: 0, y: 130 }, { x: 300, y: 130 }, 1)
+    expect(hits.map((el) => el.id)).toEqual([rect.id])
+  })
+
+  it('erases opaque shapes whose interior the stroke crosses', () => {
+    const filled = newRectangleElement({
+      x: 100,
+      y: 100,
+      width: 80,
+      height: 60,
+      style: { backgroundColor: '#ffc9c9' },
+    })
+    const hits = elementsUnderEraser([filled], { x: 0, y: 130 }, { x: 300, y: 130 }, 1)
+    expect(hits.map((el) => el.id)).toEqual([filled.id])
+  })
+
+  it('leaves elements the stroke passes far from alone', () => {
+    const far = elementsUnderEraser([rect], { x: 0, y: 0 }, { x: 300, y: 0 }, 1)
+    expect(far).toEqual([])
+    const nearMiss = elementsUnderEraser([rect], { x: 0, y: 60 }, { x: 300, y: 60 }, 1)
+    // y=60 is 40px above the top edge (y=100) — well outside the threshold.
+    expect(nearMiss).toEqual([])
   })
 })
 

@@ -50,3 +50,67 @@ test('renders text once: the canvas stays blank while the editor is open', async
   const after = await staticInkPixels(page, 220, 175, 240, 80)
   expect(after).toBeGreaterThan(during + 40)
 })
+
+test('double-clicking existing text reopens the editor with its content', async ({ page }) => {
+  await openEditor(page)
+  const box = await canvasBox(page)
+
+  // Create and commit a text element first.
+  await pickTool(page, 'Text (T)')
+  await page.mouse.click(at(box, 300, 200).x, at(box, 300, 200).y)
+  await page.keyboard.type('hello vuedraw')
+  await page.keyboard.press('Escape')
+  await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
+  const created = (await scene(page)).elements[0]!
+
+  // The app reverted to the selection tool after creation. Double-click
+  // the committed text: the wysiwyg editor reopens over it.
+  await page.mouse.dblclick(at(box, 320, 200).x, at(box, 320, 200).y)
+
+  const editor = page.getByRole('textbox', { name: 'Text editor' })
+  await expect(editor).toBeVisible()
+  await expect(editor).toBeFocused()
+  // The session seeds from the existing content, not from empty.
+  await expect(editor).toHaveValue('hello vuedraw')
+
+  // Typing extends the same element — no new element is created.
+  await page.keyboard.type('!')
+  await page.keyboard.press('Escape')
+
+  await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
+  const edited = (await scene(page)).elements[0]!
+  expect(edited.id).toBe(created.id)
+  expect(edited.text).toBe('hello vuedraw!')
+  await expect(page.getByRole('textbox', { name: 'Text editor' })).toBeHidden()
+})
+
+test('clicking existing text with the text tool edits it in place', async ({ page }) => {
+  await openEditor(page)
+  const box = await canvasBox(page)
+
+  await pickTool(page, 'Text (T)')
+  await page.mouse.click(at(box, 300, 200).x, at(box, 300, 200).y)
+  await page.keyboard.type('hello vuedraw')
+  await page.keyboard.press('Escape')
+  await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
+  const created = (await scene(page)).elements[0]!
+
+  // Re-pick the text tool and click the existing text: Excalidraw opens
+  // ITS editor instead of stacking a new element under the pointer.
+  await pickTool(page, 'Text (T)')
+  await page.mouse.click(at(box, 320, 200).x, at(box, 320, 200).y)
+
+  const editor = page.getByRole('textbox', { name: 'Text editor' })
+  await expect(editor).toBeVisible()
+  await expect(editor).toBeFocused()
+  await expect(editor).toHaveValue('hello vuedraw')
+
+  await page.keyboard.type(' again')
+  await page.keyboard.press('Escape')
+
+  // Still one element, same id, extended content.
+  await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
+  const edited = (await scene(page)).elements[0]!
+  expect(edited.id).toBe(created.id)
+  expect(edited.text).toBe('hello vuedraw again')
+})

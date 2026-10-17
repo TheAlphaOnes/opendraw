@@ -95,7 +95,9 @@ export async function openApp(page: Page, path: string): Promise<void> {
 }
 
 /** Viewport box of the canvas host; all drawing helpers are relative to it. */
-export async function canvasBox(page: Page): Promise<{ x: number; y: number }> {
+export async function canvasBox(
+  page: Page,
+): Promise<{ x: number; y: number; width: number; height: number }> {
   const box = await page.locator('.vuedraw-canvas').boundingBox()
   if (!box) {
     throw new Error('vuedraw canvas did not mount')
@@ -293,6 +295,79 @@ export async function staticInkPixels(
         }
       }
       return ink
+    },
+    { x, y, w, h },
+  )
+}
+
+/** Centroid of the ink in a canvas-local window of the static canvas.
+ *
+ * Same ink definition as `staticInkPixels`, but returns the CSS-space
+ * center of mass and the ink count — viewport specs use it to assert
+ * WHERE content ended up after a zoom or pan, not just that it exists.
+ * Null when the window holds no ink.
+ */
+export async function staticInkCentroid(
+  page: Page,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): Promise<{ x: number; y: number; count: number } | null> {
+  return page.evaluate(
+    ({ x, y, w, h }) => {
+      const canvas = document.querySelector<HTMLCanvasElement>('canvas.vuedraw-canvas__static')
+      if (!canvas) {
+        throw new Error('static canvas missing')
+      }
+      const context = canvas.getContext('2d')
+      if (!context) {
+        throw new Error('2d context unavailable')
+      }
+      const scaleX = canvas.width / canvas.clientWidth
+      const scaleY = canvas.height / canvas.clientHeight
+      const { data } = context.getImageData(
+        Math.floor(x * scaleX),
+        Math.floor(y * scaleY),
+        Math.floor(w * scaleX),
+        Math.floor(h * scaleY),
+      )
+      const counts = new Map<string, number>()
+      for (let i = 0; i < data.length; i += 4) {
+        const key = `${data[i]!},${data[i + 1]!},${data[i + 2]!},${data[i + 3]!}`
+        counts.set(key, (counts.get(key) ?? 0) + 1)
+      }
+      let dominant = ''
+      let dominantCount = -1
+      for (const [key, count] of counts) {
+        if (count > dominantCount) {
+          dominant = key
+          dominantCount = count
+        }
+      }
+      const [dr, dg, db, da] = dominant.split(',').map(Number)
+      let sumX = 0
+      let sumY = 0
+      let count = 0
+      for (let py = 0; py < Math.floor(h * scaleY); py++) {
+        for (let px = 0; px < Math.floor(w * scaleX); px++) {
+          const i = (py * Math.floor(w * scaleX) + px) * 4
+          const isInk =
+            Math.abs(data[i]! - dr!) > 24 ||
+            Math.abs(data[i + 1]! - dg!) > 24 ||
+            Math.abs(data[i + 2]! - db!) > 24 ||
+            Math.abs(data[i + 3]! - da!) > 24
+          if (isInk) {
+            sumX += px
+            sumY += py
+            count++
+          }
+        }
+      }
+      if (count === 0) {
+        return null
+      }
+      return { x: sumX / count / scaleX + x, y: sumY / count / scaleY + y, count }
     },
     { x, y, w, h },
   )

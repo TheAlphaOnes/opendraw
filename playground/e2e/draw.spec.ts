@@ -218,25 +218,28 @@ test('frames a line drawn up-left around its true bounds', async ({ page }) => {
   await openEditor(page)
   const box = await canvasBox(page)
 
-  // Drawn up-left: the last point lands negative of the origin.
+  // Drawn up-left: the last point lands negative of the origin. The gesture
+  // stays in the upper strip of the canvas — the live style panel occupies
+  // the bottom-center (client y > 400 in the 720px-tall e2e viewport), and
+  // a press there hits the panel, not the canvas.
   await pickTool(page, 'Line (6)')
-  await drag(page, at(box, 500, 400), at(box, 380, 300))
+  await drag(page, at(box, 500, 280), at(box, 380, 180))
   await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
   await settleFrames(page)
 
   const line = (await scene(page)).elements[0]!
   expect(line.x).toBe(500)
-  expect(line.y).toBe(400)
+  expect(line.y).toBe(280)
   expect(line.points![1]).toEqual({ x: -120, y: -100 })
 
-  // The selection chrome hugs the true AABB (380,300)-(500,400): handles
+  // The selection chrome hugs the true AABB (380,180)-(500,280): handles
   // inflate it by ~10px, the rotation handle ~20px above the top edge.
   const bounds = await overlayInkBounds(page)
   expect(bounds).not.toBeNull()
   const centerX = (bounds!.minX + bounds!.maxX) / 2
   const centerY = (bounds!.minY + bounds!.maxY) / 2
   expect(Math.abs(centerX - 440)).toBeLessThanOrEqual(25)
-  expect(Math.abs(centerY - 350)).toBeLessThanOrEqual(25)
+  expect(Math.abs(centerY - 230)).toBeLessThanOrEqual(25)
   expect(bounds!.maxX - bounds!.minX).toBeGreaterThan(120)
   expect(bounds!.maxY - bounds!.minY).toBeGreaterThan(100)
 })
@@ -261,4 +264,57 @@ test('narrows a multi-selection with a plain click on one shape', async ({ page 
 
   await page.mouse.click(at(box, 380, 180).x, at(box, 380, 180).y)
   await expect.poll(async () => (await scene(page)).selection).toEqual([secondId])
+})
+
+test('draws an ellipse that lands in the document selected', async ({ page }) => {
+  await openEditor(page)
+  await pickTool(page, 'Ellipse (4)')
+
+  const box = await canvasBox(page)
+  await drag(page, at(box, 220, 140), at(box, 380, 240))
+
+  await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
+  const drawn = (await scene(page)).elements[0]!
+  expect(drawn.type).toBe('ellipse')
+  // The draw gesture ends with the shape selected and undo available.
+  expect((await scene(page)).selection).toEqual([drawn.id])
+  await expect(page.getByRole('button', { name: 'Undo (Ctrl+Z)' })).toBeEnabled()
+})
+
+test('captures a freedraw stroke as a pointer-move pressure path', async ({ page }) => {
+  await openEditor(page)
+  const box = await canvasBox(page)
+
+  await pickTool(page, 'Freedraw (P)')
+  const start = at(box, 220, 140)
+  await page.mouse.move(start.x, start.y)
+  await page.mouse.down()
+  // A zig-zag of intermediate points — each pointermove appends exactly
+  // one path point.
+  for (let i = 1; i <= 12; i++) {
+    const point = at(box, 220 + i * 12, 140 + Math.round(Math.sin(i / 1.9) * 50))
+    await page.mouse.move(point.x, point.y)
+  }
+  await page.mouse.up()
+
+  await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
+  const stroke = (await scene(page)).elements[0]!
+  expect(stroke.type).toBe('freedraw')
+  // Every intermediate move landed in the path: the press point plus one
+  // point per move event (the 12 zig-zag moves).
+  const points = stroke.points as unknown as Array<[number, number, number]>
+  expect(points.length).toBe(13)
+  // The path is anchored at the press; points are relative to (x, y).
+  expect(stroke.x).toBe(220)
+  expect(stroke.y).toBe(140)
+  expect(points[0]!.slice(0, 2)).toEqual([0, 0])
+  expect(points[points.length - 1]!.slice(0, 2)).toEqual([144, Math.round(Math.sin(12 / 1.9) * 50)])
+  // Mouse input simulates pressure at a flat 0.5 — the third channel.
+  expect(points[0]![2]).toBe(0.5)
+
+  // Excalidraw parity: a finished freedraw stroke is NOT auto-selected
+  // (App.tsx excludes freedraw from the post-draw selection) and the
+  // tool still reverts to selection.
+  expect((await scene(page)).selection).toEqual([])
+  await expect(page.getByRole('button', { name: 'Selection (1)' })).toBeEnabled()
 })

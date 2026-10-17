@@ -12,7 +12,7 @@ import {
 } from '../src/interaction/transform.js'
 import { selectionFrameOf } from '../src/interaction/handles.js'
 import { rotatePoint } from '../src/geometry/points.js'
-import { newLinearElement, newRectangleElement } from '../src/elements/factories.js'
+import { newFreedrawElement, newLinearElement, newRectangleElement, newTextElement } from '../src/elements/factories.js'
 import type { VueDrawRectangleElement } from '../src/types.js'
 
 
@@ -87,10 +87,62 @@ describe('single-element resize', () => {
     expect(patch).toMatchObject({ x: 10, y: 10, width: 250, height: 50 })
   })
 
-  it('clamps to a minimum size instead of flipping', () => {
-    const patch = resizeSingleElement(rect(), 'se', { x: -500, y: -500 }, { shift: false })
-    expect((patch as { width: number }).width).toBeGreaterThanOrEqual(1)
-    expect((patch as { height: number }).height).toBeGreaterThanOrEqual(1)
+  it('flips through zero when dragged past the opposite edge', () => {
+    const patch = resizeSingleElement(rect(), 'se', { x: -40, y: -15 }, { shift: false })
+    // The se corner follows the pointer; the nw anchor (10,10) stays put.
+    expect(patch).toMatchObject({ x: -40, y: -15, width: 50, height: 25 })
+  })
+
+  it('keeps the flip direction under shift aspect', () => {
+    const patch = resizeSingleElement(rect(), 'se', { x: -40, y: 60 }, { shift: true })
+    // Raw flip -50 x +50 → aspect scale 1 keeps 100x50, x still flipped.
+    expect(patch).toMatchObject({ x: -90, y: 10, width: 100, height: 50 })
+  })
+
+  it('keeps text clamped to a minimum instead of flipping', () => {
+    const text = { ...newTextElement({ x: 10, y: 10, text: 'vuedraw' }), width: 100, height: 50 }
+    const patch = resizeSingleElement(text, 'se', { x: -500, y: -500 }, { shift: false })
+    expect(patch).toMatchObject({ x: 10, y: 10, width: 1, height: 1 })
+  })
+
+  it('mirrors linear points when the box flips', () => {
+    const arrow = newLinearElement('arrow', {
+      x: 100,
+      y: 65,
+      width: 200,
+      height: 120,
+      points: [{ x: 0, y: 0 }, { x: 200, y: 120 }],
+    })
+    const patch = resizeSingleElement(arrow, 'se', { x: 50, y: 100 }, { shift: false }) as {
+      x: number
+      y: number
+      width: number
+      height: number
+      points: Array<{ x: number; y: number }>
+    }
+    expect(patch).toMatchObject({ x: 50, y: 65, width: 50, height: 35 })
+    // The start parks on the anchor and the tip lands on the pointer —
+    // the arrow reads flipped, not jammed at a minimum.
+    expect(patch.points[0]).toEqual({ x: 50, y: 0 })
+    expect(patch.points[1]).toEqual({ x: 0, y: 35 })
+  })
+
+  it('mirrors freedraw points and preserves pressure on a flip', () => {
+    const stroke = newFreedrawElement({
+      x: 10,
+      y: 10,
+      width: 80,
+      height: 40,
+      points: [
+        [0, 0, 0.4],
+        [80, 40, 0.8],
+      ],
+    })
+    const patch = resizeSingleElement(stroke, 'se', { x: -30, y: 60 }, { shift: false }) as {
+      points: number[][]
+    }
+    expect(patch.points[0]).toEqual([40, 0, 0.4])
+    expect(patch.points[1]).toEqual([0, 50, 0.8])
   })
 
   it('keeps the aspect ratio with shift on corners', () => {
@@ -148,6 +200,23 @@ describe('multi-element resize', () => {
     expect(byId.get(b.id)!.x).toBe(150)
     expect(byId.get(b.id)!.width).toBe(150)
     expect(byId.get(a.id)!.y).toBeUndefined() // no vertical change from an e handle
+  })
+
+  it('regrows past the anchor instead of jamming at a minimum', () => {
+    const a = newRectangleElement({ x: 0, y: 0, width: 100, height: 50 })
+    const b = newRectangleElement({ x: 50, y: 50, width: 50, height: 50 })
+    const patches = resizeMultipleElements([a, b], 'e', { x: -30, y: 60 }, { shift: false })
+    const byId = new Map(patches.map((p) => [p.id, p.patch as Record<string, number>]))
+    // Dragged past the west anchor (x=0): abs distance 30 → scale 0.3,
+    // the group regrows smoothly toward the pointer.
+    expect(byId.get(a.id)!.width).toBe(30)
+    expect(byId.get(b.id)!.x).toBe(15)
+    expect(byId.get(b.id)!.width).toBe(15)
+  })
+
+  it('refuses the update when the pointer sits exactly on the anchor', () => {
+    const a = newRectangleElement({ x: 0, y: 0, width: 100, height: 50 })
+    expect(resizeMultipleElements([a], 'e', { x: 0, y: 60 }, { shift: false })).toEqual([])
   })
 })
 
