@@ -11,6 +11,11 @@ import { defineConfig, devices } from '@playwright/test'
  * Pixel probes must run after a frame settles — renders are rAF-coalesced
  * (see helpers.settleFrames).
  */
+
+/** Override when another dev server already holds the default port. */
+const port = Number(process.env.E2E_PORT ?? 3000)
+const baseURL = `http://localhost:${port}`
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 30_000,
@@ -18,14 +23,14 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL,
     viewport: { width: 1280, height: 800 },
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'pnpm dev',
+    command: `pnpm dev --port ${port}`,
     cwd: '..',
-    url: 'http://localhost:3000',
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
   },
