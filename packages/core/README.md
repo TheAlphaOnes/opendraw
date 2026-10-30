@@ -96,7 +96,7 @@ doc.undo()
 - [Source code and full documentation](https://github.com/TheAlphaOnes/opendraw#readme)
 - [Report a bug or request a feature](https://github.com/TheAlphaOnes/opendraw/issues)
 
-opendraw is an independent project, inspired by Excalidraw and not affiliated with it. It builds on [rough.js](https://github.com/rough-stuff/rough) and [perfect-freehand](https://github.com/steveruizok/perfect-freehand).
+opendraw is an independent project, built with gratitude to [Excalidraw](https://github.com/excalidraw/excalidraw), whose design and code it learns from (some parts are ported under Excalidraw's MIT license). It is not affiliated with Excalidraw. It builds on [rough.js](https://github.com/rough-stuff/rough) and [perfect-freehand](https://github.com/steveruizok/perfect-freehand).
 
 ## License
 

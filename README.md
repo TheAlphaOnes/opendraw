@@ -323,16 +323,33 @@ test/
 
 Contributions are welcome. Please run `pnpm test`, `pnpm typecheck` and `pnpm e2e` before opening a pull request.
 
+## Thanks to Excalidraw
+
+opendraw would not exist without [Excalidraw](https://excalidraw.com), the open-source virtual whiteboard by the [Excalidraw team and contributors](https://github.com/excalidraw/excalidraw/graphs/contributors). Excalidraw showed what a hand-drawn whiteboard on the web can feel like, and opendraw follows its lead closely: how tools, selection, arrow binding, undo and keyboard shortcuts behave was studied from its source, so people who know Excalidraw feel at home.
+
+Some parts are ported or adapted from Excalidraw's code:
+
+- the elbow-arrow router and its heading logic (`packages/core/src/elements/elbowArrow.ts`)
+- the laser pointer's trail (`packages/editor/src/canvas/laserTrail.ts`, `laserOutline.ts`)
+- the two-finger pinch and pan gesture (`packages/editor/src/canvas/touchGestures.ts`)
+- the style previews in the properties panel and the arrow-type icons
+- [Excalifont](https://github.com/excalidraw/excalifont), the hand-drawn font, shipped unmodified (SIL Open Font License 1.1, see `packages/editor/styles/fonts/OFL.txt`)
+
+Excalidraw is released under the MIT license; the ported code keeps its notice:
+
+> Copyright (c) 2020 Excalidraw (laser pointer: Copyright (c) 2023 Excalidraw).
+> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+opendraw is an independent project and is not affiliated with or endorsed by Excalidraw. If you want a complete, collaborative whiteboard app, use [excalidraw.com](https://excalidraw.com); opendraw is for putting a whiteboard inside your own Vue, Nuxt, React or Svelte app.
+
 ## Acknowledgements
 
-opendraw is an independent project. It stands on:
+opendraw also stands on:
 
-- [Excalidraw](https://github.com/excalidraw/excalidraw): inspiration, and the style previews in the properties panel (MIT); opendraw is not affiliated with it
 - [rough.js](https://github.com/rough-stuff/rough): hand-drawn geometry (MIT)
 - [perfect-freehand](https://github.com/steveruizok/perfect-freehand): pressure-aware strokes (MIT)
 - [Lucide](https://lucide.dev): icons (ISC)
 - [Assistant](https://fonts.google.com/specimen/Assistant): UI typeface (OFL)
-- [Excalifont](https://github.com/excalidraw/excalifont): the hand-drawn logo wordmark, converted to outlines (OFL)
 
 ## License
 
