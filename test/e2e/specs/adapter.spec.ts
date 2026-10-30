@@ -1,9 +1,11 @@
 import { expect, test, type Page } from '@playwright/test'
 
 /**
- * The adapter contract: the React and Svelte packages must render the
- * same editor — toolbar, drawing, shortcuts, text, history, zoom, theme
- * and autosave — on top of @opendraw/editor.
+ * The adapter contract: Vue, React and Svelte must render the same editor
+ * — toolbar, drawing, shortcuts, text, history, zoom, theme and autosave —
+ * on top of @opendraw/editor. Vue ships the full Excalidraw-style UI and
+ * React/Svelte a lighter one, so selectors target what both share: roles,
+ * accessible names and the editor root.
  */
 
 interface Mirror {
@@ -15,8 +17,23 @@ async function open(page: Page): Promise<void> {
   await page.goto('/')
   await page.evaluate(() => window.localStorage.clear())
   await page.goto('/')
-  // Hydrated once the canvas has its real size (it starts at 300x150).
-  await page.waitForFunction(() => (document.querySelector<HTMLCanvasElement>('canvas.opendraw__static')?.width ?? 0) > 300)
+  await waitForCanvas(page)
+}
+
+/** Mounted once the scene canvas has its real size (it starts at 300x150). */
+async function waitForCanvas(page: Page): Promise<void> {
+  await page.waitForFunction(() => (document.querySelector<HTMLCanvasElement>('[data-opendraw-root] canvas')?.width ?? 0) > 300)
+}
+
+/** Theme switch: a toolbar button (React/Svelte) or the main menu (Vue). */
+async function switchTheme(page: Page, to: 'Dark mode' | 'Light mode'): Promise<void> {
+  const button = page.getByRole('button', { name: to })
+  if (await button.isVisible()) {
+    await button.click()
+    return
+  }
+  await page.getByRole('button', { name: 'Main menu' }).click()
+  await page.getByRole('menuitem', { name: new RegExp(`^${to}`) }).click()
 }
 
 async function mirror(page: Page): Promise<Mirror> {
@@ -39,8 +56,7 @@ test.beforeEach(async ({ page }) => {
 
 test('renders the toolbar with every tool and its key hint', async ({ page }) => {
   const toolbar = page.getByRole('toolbar', { name: 'Drawing tools' })
-  // The tool lock plus every tool in the editor's table.
-  await expect(toolbar.getByRole('button')).toHaveCount(15)
+  await expect(toolbar.getByRole('button', { name: 'Keep selected tool active after drawing (Q)' })).toBeVisible()
   await expect(toolbar.getByRole('button', { name: 'Selection (1)' })).toHaveAttribute('aria-pressed', 'true')
   await expect(toolbar.getByRole('button', { name: 'Rectangle (2)' })).toContainText('2')
   await expect(toolbar.getByRole('button', { name: 'Sticky note (N)' })).toContainText('N')
@@ -55,7 +71,7 @@ test('draws a rectangle with the toolbar and selects it', async ({ page }) => {
 })
 
 test('arms tools from the keyboard', async ({ page }) => {
-  await page.locator('.opendraw__host').click({ position: { x: 900, y: 600 } })
+  await page.mouse.click(900, 600)
   await page.keyboard.press('o')
   await expect(page.getByRole('button', { name: 'Ellipse (4)' })).toHaveAttribute('aria-pressed', 'true')
   await drag(page, [400, 300], [560, 420])
@@ -73,8 +89,8 @@ test('edits text in place', async ({ page }) => {
 })
 
 test('undoes and redoes from the history island', async ({ page }) => {
-  const undo = page.getByRole('button', { name: 'Undo' })
-  const redo = page.getByRole('button', { name: 'Redo' })
+  const undo = page.getByRole('button', { name: /^Undo/ })
+  const redo = page.getByRole('button', { name: /^Redo/ })
   await expect(undo).toBeDisabled()
   await page.getByRole('button', { name: 'Diamond (3)' }).click()
   await drag(page, [400, 300], [560, 420])
@@ -88,17 +104,17 @@ test('undoes and redoes from the history island', async ({ page }) => {
 test('zooms from the zoom island and resets', async ({ page }) => {
   const readout = page.getByRole('button', { name: /reset zoom/i })
   await expect(readout).toHaveText('100%')
-  await page.getByRole('button', { name: 'Zoom in' }).click()
+  await page.getByRole('button', { name: /^Zoom in/ }).click()
   await expect(readout).toHaveText('125%')
   await readout.click()
   await expect(readout).toHaveText('100%')
 })
 
 test('switches theme', async ({ page }) => {
-  const root = page.locator('.opendraw')
-  await page.getByRole('button', { name: 'Dark mode' }).click()
+  const root = page.locator('[data-opendraw-root]')
+  await switchTheme(page, 'Dark mode')
   await expect(root).toHaveAttribute('data-theme', 'dark')
-  await page.getByRole('button', { name: 'Light mode' }).click()
+  await switchTheme(page, 'Light mode')
   await expect(root).toHaveAttribute('data-theme', 'light')
 })
 
@@ -109,6 +125,6 @@ test('autosaves and restores the scene', async ({ page }) => {
   // The debounced save (300ms) lands before the reload reads it back.
   await page.waitForTimeout(600)
   await page.reload()
-  await page.waitForFunction(() => (document.querySelector<HTMLCanvasElement>('canvas.opendraw__static')?.width ?? 0) > 300)
+  await waitForCanvas(page)
   await expect.poll(async () => (await mirror(page)).elements.map((el) => el.type)).toEqual(['rectangle'])
 })

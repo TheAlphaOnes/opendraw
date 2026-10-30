@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, resolveComponent } from 'vue'
+import { computed, getCurrentInstance, type Component } from 'vue'
 
 import type { IconName } from '../../constants/icons.js'
 import UiIcon from '../ui/UiIcon.vue'
@@ -13,8 +13,9 @@ import UiIcon from '../ui/UiIcon.vue'
  *     <OpenDrawButton icon="share" label="Share" variant="primary" @click="share" />
  *   </template>
  *
- * `to` navigates inside the app (NuxtLink), `href` links out (new tab for
- * external URLs); otherwise it is a button. With an icon, phones show the
+ * `to` navigates inside the app (NuxtLink in Nuxt, a plain link in a bare
+ * Vue app), `href` links out (new tab for external URLs); otherwise it is
+ * a button. With an icon, phones show the
  * icon alone so the top row stays clear.
  */
 const props = withDefaults(
@@ -36,12 +37,16 @@ const props = withDefaults(
 
 const emit = defineEmits<{ click: [event: MouseEvent] }>()
 
-const NuxtLink = resolveComponent('NuxtLink')
+// NuxtLink when the app has it (Nuxt registers it globally); plain Vue apps
+// get an ordinary anchor for `to`.
+const NuxtLink = getCurrentInstance()?.appContext.components.NuxtLink as Component | undefined
 const external = computed(() => !!props.href && /^https?:/.test(props.href))
-const tag = computed(() => (props.to ? NuxtLink : props.href ? 'a' : 'button'))
+const tag = computed(() => (props.to ? (NuxtLink ?? 'a') : props.href ? 'a' : 'button'))
 const linkAttrs = computed(() =>
   props.to
-    ? { to: props.to }
+    ? NuxtLink
+      ? { to: props.to }
+      : { href: props.to }
     : props.href
       ? { href: props.href, target: external.value ? '_blank' : undefined, rel: external.value ? 'noopener noreferrer' : undefined }
       : { type: 'button', disabled: props.disabled },

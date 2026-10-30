@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["vite/client"],
+    "paths": {
+      "@opendraw/core": ["../../packages/core/src/index.ts"],
+      "@opendraw/editor": ["../../packages/editor/src/index.ts"],
+      "@opendraw/nuxt/vue": ["../../packages/nuxt/src/runtime/vue.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts"]
+}

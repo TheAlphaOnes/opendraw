@@ -14,6 +14,10 @@
     ".": {
       "types": "./dist/types.d.mts",
       "import": "./dist/module.mjs"
+    },
+    "./vue": {
+      "types": "./dist/runtime/vue.d.ts",
+      "import": "./dist/runtime/vue.js"
     }
   },
   "files": [

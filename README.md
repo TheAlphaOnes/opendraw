@@ -106,6 +106,12 @@ The pieces also come separately for `<OpenDraw>`'s slots: `<OpenDrawButton>`, `<
 
 **Requirements:** Nuxt 4 · Vue 3.5 · Node 20.19+
 
+**Plain Vue 3 (Vite, no Nuxt)?** Import the same components directly:
+
+```ts
+import { OpenDraw, OpenDrawApp, useOpenDraw } from '@opendraw/nuxt/vue'
+```
+
 ## Usage
 
 ### `<OpenDraw>`
@@ -193,7 +199,7 @@ The canvas keeps every gesture, shortcut and the text editor — you only draw t
 
 ## React & Svelte
 
-The same editor ships as React and Svelte 5 components: a ready-made `<OpenDraw>` (canvas, toolbar, zoom, history, theme and autosave) and a bare `<OpenDrawCanvas>` for your own UI. Both are covered by one shared end-to-end suite.
+The same editor ships as React and Svelte 5 components: a ready-made `<OpenDraw>` (canvas, toolbar, zoom, history, theme and autosave) and a bare `<OpenDrawCanvas>` for your own UI. All three — Vue, React and Svelte — are covered by one shared end-to-end suite.
 
 ```bash
 npm install @opendraw/react    # or: npm install @opendraw/svelte
@@ -288,8 +294,8 @@ pnpm install
 pnpm dev          # the demo app (playground/) at http://localhost:3000
 pnpm test         # unit tests for core, editor and nuxt
 pnpm typecheck    # every package, the playground and the e2e specs
-pnpm e2e          # Playwright: the Nuxt demo, then React + Svelte
-pnpm e2e:adapters # Playwright: the React and Svelte test apps only
+pnpm e2e          # Playwright: the Nuxt demo, then Vue + React + Svelte
+pnpm e2e:adapters # Playwright: the Vue, React and Svelte test apps only
 pnpm build        # build the publishable packages
 pnpm build:site   # the demo + docs as a static site (playground/.output/public)
 ```
@@ -305,9 +311,10 @@ packages/
   svelte/   @opendraw/svelte  Svelte 5 adapter
 playground/                   Nuxt demo app, docs page and its e2e specs
 test/
+  vue/      plain Vue 3 test app (Vite, @opendraw/nuxt/vue)
   react/    React test app (Vite)
   svelte/   Svelte test app (Vite)
-  e2e/      one Playwright suite run against both apps
+  e2e/      one Playwright suite run against all three apps
 ```
 
 Contributions are welcome. Behavior follows Excalidraw: when something is ambiguous, match what Excalidraw does. Please run `pnpm test`, `pnpm typecheck` and `pnpm e2e` before opening a pull request.
