@@ -28,6 +28,7 @@ export * from './elements/groups.js'
 export * from './elements/arrange.js'
 export * from './elements/duplicate.js'
 export * from './elements/boundText.js'
+export * from './elements/zindex.js'
 
 export * from './viewport.js'
 

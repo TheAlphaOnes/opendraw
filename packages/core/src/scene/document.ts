@@ -16,6 +16,7 @@
 import { isTextElement } from '../elements/factories.js'
 import { duplicateElements } from '../elements/duplicate.js'
 import { isBoundText, syncBoundTexts, withBoundTexts } from '../elements/boundText.js'
+import { reorderElements as reorderElementsInScene } from '../elements/zindex.js'
 import { bindingFollowPatches, orphanBindingPatches } from '../elements/binding.js'
 import {
   type Alignment,
@@ -524,30 +525,7 @@ export class VueDrawDocument {
       return
     }
     const idSet = new Set(ids)
-    this.mutate((current) => {
-      switch (action) {
-        case 'front': {
-          const selected: VueDrawElement[] = []
-          const rest: VueDrawElement[] = []
-          for (const el of current) {
-            ;(idSet.has(el.id) ? selected : rest).push(el)
-          }
-          return [...rest, ...selected]
-        }
-        case 'back': {
-          const selected: VueDrawElement[] = []
-          const rest: VueDrawElement[] = []
-          for (const el of current) {
-            ;(idSet.has(el.id) ? selected : rest).push(el)
-          }
-          return [...selected, ...rest]
-        }
-        case 'forward':
-          return shiftByOne(current, idSet, +1)
-        case 'backward':
-          return shiftByOne(current, idSet, -1)
-      }
-    })
+    this.mutate((current) => reorderElementsInScene(current, idSet, action, this.appState.editingGroupId))
   }
 
   reorderSelection(action: ReorderAction): void {
@@ -893,33 +871,4 @@ function shallowEqualKeys(a: Record<string, true>, b: Record<string, true>): boo
     }
   }
   return true
-}
-
-/**
- * Moves each maximal contiguous run of selected elements one slot in
- * `direction` when the slot is occupied by an unselected element.
- */
-function shiftByOne(
-  elements: readonly VueDrawElement[],
-  idSet: Set<string>,
-  direction: 1 | -1,
-): VueDrawElement[] | null {
-  const arr = [...elements]
-  let moved = false
-  if (direction === 1) {
-    for (let i = arr.length - 1; i >= 0; i--) {
-      if (idSet.has(arr[i]!.id) && i + 1 < arr.length && !idSet.has(arr[i + 1]!.id)) {
-        ;[arr[i], arr[i + 1]] = [arr[i + 1]!, arr[i]!]
-        moved = true
-      }
-    }
-  } else {
-    for (let i = 0; i < arr.length; i++) {
-      if (idSet.has(arr[i]!.id) && i - 1 >= 0 && !idSet.has(arr[i - 1]!.id)) {
-        ;[arr[i], arr[i - 1]] = [arr[i - 1]!, arr[i]!]
-        moved = true
-      }
-    }
-  }
-  return moved ? arr : null
 }
