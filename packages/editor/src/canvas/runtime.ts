@@ -5,6 +5,7 @@ import type {
   SelectionFrame,
   OpenDrawBindableShape,
   OpenDrawElement,
+  OpenDrawFrameElement,
 } from '@opendraw/core'
 import { screenToScene } from '@opendraw/core'
 
@@ -86,6 +87,12 @@ export interface CanvasRuntime {
    * side-midpoint snap dots.
    */
   suggestedBinding: Cell<SuggestedBinding | null>
+  /** The frame a press or drop would land in (Excalidraw's frameToHighlight). */
+  frameToHighlight: Cell<OpenDrawFrameElement | null>
+  /** What a frame being drawn or resized would hold (elementsToHighlight). */
+  elementsToHighlight: Cell<readonly OpenDrawElement[] | null>
+  /** The frame whose name is being edited in place, or null. */
+  editingFrameNameId: Cell<string | null>
   /** Scene point under an idle pointer — drives the hover cursor + probes. */
   hoverScene: Cell<Point | null>
   /** Space bar held → temporary pan mode. */
@@ -110,6 +117,9 @@ export function createCanvasRuntime(ctx: EditorController, host: HTMLElement): C
     modifiers: new Cell<CanvasModifiers>({ shift: false, alt: false }),
     marquee: new Cell<Bounds | null>(null),
     suggestedBinding: new Cell<SuggestedBinding | null>(null),
+    frameToHighlight: new Cell<OpenDrawFrameElement | null>(null),
+    elementsToHighlight: new Cell<readonly OpenDrawElement[] | null>(null),
+    editingFrameNameId: new Cell<string | null>(null),
     hoverScene: new Cell<Point | null>(null),
     spaceDown: new Cell(false),
     toHost,

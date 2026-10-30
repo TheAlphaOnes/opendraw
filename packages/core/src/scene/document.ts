@@ -17,7 +17,16 @@ import { isTextElement } from '../elements/factories.js'
 import { duplicateElements } from '../elements/duplicate.js'
 import { isBoundText, syncBoundTexts, withBoundTexts } from '../elements/boundText.js'
 import { reorderElements as reorderElementsInScene } from '../elements/zindex.js'
-import { frameMembershipPatches, withFrameChildren } from '../elements/frames.js'
+import {
+  addElementsToFrame,
+  elementsInNewFrame,
+  frameChildrenInsertionIndex,
+  frameMembershipAfterDrag,
+  frameMembershipAfterResize,
+  removeElementsFromFrame,
+  withFrameChildren,
+} from '../elements/frames.js'
+import { isFrameElement } from '../elements/factories.js'
 import { bindingFollowPatches, orphanBindingPatches } from '../elements/binding.js'
 import {
   type Alignment,
@@ -338,10 +347,16 @@ export class OpenDrawDocument {
     this.mutate((current) => {
       // `after` slots the new elements right above an anchor (bound text
       // directly over its container); otherwise they land on top.
+      // A new frame child lands among its frame's children (Excalidraw's
+      // insertNewElements / getFrameChildrenInsertionIndex).
       const anchor = options.after ? current.findIndex((el) => el.id === options.after) : -1
-      return anchor === -1
-        ? [...current, ...elements]
-        : [...current.slice(0, anchor + 1), ...elements, ...current.slice(anchor + 1)]
+      const frameId = elements[0]!.frameId
+      const frameIndex =
+        anchor === -1 && frameId !== null && elements.every((el) => el.frameId === frameId)
+          ? frameChildrenInsertionIndex(current, frameId)
+          : null
+      const index = anchor !== -1 ? anchor + 1 : (frameIndex ?? current.length)
+      return [...current.slice(0, index), ...elements, ...current.slice(index)]
     })
     if (options.select) {
       this.select(elements.map((el) => el.id))
@@ -492,13 +507,65 @@ export class OpenDrawDocument {
    */
   setFrameMembership(ids: readonly string[], frameId: string | null): void {
     const members = this.elements.filter((el) => ids.includes(el.id))
-    const patches = frameMembershipPatches(this.elements, members, frameId)
-    if (patches.size === 0) {
+    const frame = frameId === null ? null : this.elementsMap.get(frameId)
+    if (frameId !== null && (!frame || !isFrameElement(frame))) {
       return
     }
-    this.mutate((current) =>
-      current.map((el) => (patches.has(el.id) ? patchElement(el, { frameId: patches.get(el.id)! }) : el)),
+    this.applyFrameLayout((current) =>
+      frame && isFrameElement(frame) ? addElementsToFrame(current, members, frame) : removeElementsFromFrame(current, members),
     )
+  }
+
+  /** A freshly drawn frame adopts what lies completely inside it. */
+  adoptIntoNewFrame(frameId: string): void {
+    const frame = this.elementsMap.get(frameId)
+    if (!frame || !isFrameElement(frame)) {
+      return
+    }
+    this.applyFrameLayout((current) => addElementsToFrame(current, elementsInNewFrame(current, frame), frame))
+  }
+
+  /**
+   * After the selection was dragged and dropped: elements join the frame
+   * they were dropped over (null: none) or leave the one they left.
+   */
+  dropSelectionIntoFrame(frameId: string | null): void {
+    const frame = frameId === null ? null : this.elementsMap.get(frameId)
+    const selected = new Set(Object.keys(this.appState.selectedIds))
+    this.applyFrameLayout((current) =>
+      frameMembershipAfterDrag(current, selected, frame && isFrameElement(frame) ? frame : null),
+    )
+  }
+
+  /** After a resize: every resized frame re-adopts what it now covers. */
+  refitFrames(frameIds: readonly string[]): void {
+    this.applyFrameLayout((current) => {
+      let next = current
+      for (const id of frameIds) {
+        const frame = next.find((el) => el.id === id)
+        if (frame && isFrameElement(frame)) {
+          next = frameMembershipAfterResize(next, frame)
+        }
+      }
+      return next
+    })
+  }
+
+  /**
+   * Writes a frame-membership layout: takes its order, and re-stamps every
+   * element whose frame changed (version bump) — one mutation, folded into
+   * the open step.
+   */
+  private applyFrameLayout(layout: (current: readonly OpenDrawElement[]) => readonly OpenDrawElement[]): void {
+    this.mutate((current) => {
+      const byId = new Map(current.map((el) => [el.id, el]))
+      const next = layout(current).map((el) => {
+        const before = byId.get(el.id)!
+        return before.frameId === el.frameId ? before : patchElement(before, { frameId: el.frameId })
+      })
+      const unchanged = next.length === current.length && next.every((el, i) => el === current[i])
+      return unchanged ? null : next
+    })
   }
 
   private selectionUnits(): OpenDrawElement[][] {

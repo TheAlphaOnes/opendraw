@@ -1,5 +1,6 @@
 import { isFreedrawElement, isLinearElement, rebindAfterDrag } from '@opendraw/core'
 
+import { clearFrameHighlights, dropFrameAt } from './frameGestures.js'
 import type { LaserTrail } from './laserTrail.js'
 import type { CanvasRuntime } from './runtime.js'
 
@@ -13,6 +14,7 @@ export function onCanvasPointerUp(rt: CanvasRuntime, laser: LaserTrail, event: P
   rt.interaction.value = { kind: 'none' }
   rt.marquee.value = null
   rt.suggestedBinding.value = null
+  clearFrameHighlights(rt)
   const host = rt.host
   if (host?.hasPointerCapture(event.pointerId)) {
     host.releasePointerCapture(event.pointerId)
@@ -36,6 +38,11 @@ export function onCanvasPointerUp(rt: CanvasRuntime, laser: LaserTrail, event: P
       if (BOX_TOOLS.has(el.type) && el.width < 2 && el.height < 2) {
         ctx.doc.cancelStep()
         return
+      }
+      // A new frame adopts what it was drawn around (Excalidraw's
+      // getElementsInNewFrame), inside the draw's undo step.
+      if (el.type === 'frame') {
+        ctx.doc.adoptIntoNewFrame(el.id)
       }
       // A line/arrow was bound live while its end was dragged; the binding
       // is already part of the draw's undo step.
@@ -76,6 +83,9 @@ export function onCanvasPointerUp(rt: CanvasRuntime, laser: LaserTrail, event: P
           }
           ctx.doc.updateElement(el.id, rebindAfterDrag(el, ctx.elements, ctx.viewport.zoom))
         }
+        // Dropped elements join the frame under the pointer, or leave theirs
+        // (Excalidraw's handleSelectionDragOnPointerUp).
+        ctx.doc.dropSelectionIntoFrame(dropFrameAt(rt, rt.toScene(event))?.id ?? null)
       }
       ctx.doc.endStep()
       // A no-drag click on an element inside a multi-selection narrows the
@@ -98,7 +108,15 @@ export function onCanvasPointerUp(rt: CanvasRuntime, laser: LaserTrail, event: P
     case 'laser':
       laser.end()
       return
-    case 'resizing':
+    case 'resizing': {
+      // A resized frame re-adopts what it now covers.
+      const frames = ctx.selectedElements.filter((el) => el.type === 'frame').map((el) => el.id)
+      if (frames.length > 0) {
+        ctx.doc.refitFrames(frames)
+      }
+      ctx.doc.endStep()
+      return
+    }
     case 'rotating':
     case 'erasing':
       ctx.doc.endStep()
@@ -113,5 +131,6 @@ export function onCanvasPointerLeave(rt: CanvasRuntime): void {
   if (rt.interaction.value.kind === 'none') {
     rt.hoverScene.value = null
     rt.suggestedBinding.value = null
+    clearFrameHighlights(rt)
   }
 }

@@ -264,9 +264,22 @@ export function newImageElement(opts: NewImageOptions): ElementOf<'image'> {
 }
 
 /** Frames render a dashed, named outline; membership is visual, not stored. */
+/**
+ * Excalidraw's FRAME_STYLE: a frame never takes the current drawing style —
+ * it is a transparent, crisp container whatever the style panel says.
+ */
+export const FRAME_ELEMENT_STYLE: Partial<ElementStyle> = {
+  strokeColor: '#bbbbbb',
+  strokeWidth: 2,
+  strokeStyle: 'solid',
+  fillStyle: 'solid',
+  roughness: 0,
+  backgroundColor: TRANSPARENT,
+}
+
 export function newFrameElement(opts: NewFrameOptions): ElementOf<'frame'> {
   return {
-    ...baseElement('frame', opts),
+    ...baseElement('frame', { ...opts, style: FRAME_ELEMENT_STYLE }),
     name: opts.name ?? 'Frame',
   } as ElementOf<'frame'>
 }

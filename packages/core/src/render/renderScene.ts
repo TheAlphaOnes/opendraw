@@ -36,6 +36,8 @@ import type {
 } from '../types.js'
 import { applyViewportTransform, screenToScene } from '../viewport.js'
 import { arrowheadDrawables } from './arrowheads.js'
+import { isBoundText } from '../elements/boundText.js'
+import { elementOverlapsFrame, FRAME_NAME_STYLE, frameNameBounds, frameTitle } from '../elements/frames.js'
 import { themeColor, UI } from './theme.js'
 
 /**
@@ -70,6 +72,14 @@ export interface SceneRenderInput {
    * environment-agnostic. Missing bitmaps render a placeholder instead.
    */
   resolveImage?: SceneImageResolver
+  /**
+   * The selection being dragged and the frame it hovers (Excalidraw's
+   * frameToHighlight): dragged elements clip to the frame they would drop
+   * into, not the one they are leaving.
+   */
+  frameDrag?: { ids: ReadonlySet<string>; targetFrameId: string | null } | null
+  /** A frame whose name is being edited — the DOM input replaces its label. */
+  editingFrameNameId?: string | null
 }
 
 /**
@@ -517,6 +527,7 @@ function drawElement(
   dark: boolean,
   resolveImage: SceneImageResolver | undefined,
   background: string,
+  zoom = 1,
 ): void {
   ctx.save()
   ctx.translate(element.x, element.y)
@@ -554,7 +565,7 @@ function drawElement(
       drawImageElement(ctx, element, dark, resolveImage)
       break
     case 'frame':
-      drawFrame(ctx, element, dark)
+      drawFrame(ctx, element, dark, zoom)
       break
   }
   ctx.restore()
@@ -622,20 +633,63 @@ function drawImagePlaceholder(
 }
 
 /** Frame chrome ink per theme — muted, so contents stay the focus. */
-const FRAME_INK = { light: '#a0a0a0', dark: '#5c5c5c' } as const
-const FRAME_NAME_INK = { light: '#8a8a8a', dark: '#777777' } as const
+/**
+ * Excalidraw's FRAME_STYLE: a thin rounded outline, constant on screen.
+ * The outline color is element-like (dark-filtered); the name label is UI.
+ */
+const FRAME_STROKE = '#bbbbbb'
+const FRAME_STROKE_WIDTH = 2
+const FRAME_RADIUS = 8
+const FRAME_NAME_INK = { light: '#999999', dark: '#7a7a7a' } as const
 
-/** Frames: dashed box + name above the top-left corner (Excalidraw parity). */
-function drawFrame(ctx: CanvasRenderingContext2D, element: OpenDrawFrameElement, dark: boolean): void {
-  ctx.strokeStyle = dark ? FRAME_INK.dark : FRAME_INK.light
-  ctx.lineWidth = 1
-  ctx.setLineDash([8, 6])
-  ctx.strokeRect(0.5, 0.5, Math.max(0, element.width - 1), Math.max(0, element.height - 1))
+/** Frames: a rounded outline; the name is drawn by `drawFrameNames`. */
+function drawFrame(ctx: CanvasRenderingContext2D, element: OpenDrawFrameElement, dark: boolean, zoom: number): void {
+  ctx.strokeStyle = themeColor(FRAME_STROKE, dark)
+  ctx.lineWidth = FRAME_STROKE_WIDTH / zoom
   ctx.setLineDash([])
+  ctx.beginPath()
+  ctx.roundRect(0, 0, element.width, element.height, FRAME_RADIUS / zoom)
+  ctx.stroke()
+}
+
+/**
+ * Every frame's name above its top-left corner, at a constant screen size,
+ * ellipsized to the frame's width — Excalidraw renders these as DOM labels
+ * over the canvas; painting them last keeps them above every element.
+ */
+function drawFrameNames(
+  ctx: CanvasRenderingContext2D,
+  elements: readonly OpenDrawElement[],
+  zoom: number,
+  dark: boolean,
+  skipId: string | null,
+): void {
+  ctx.save()
+  ctx.font = `${FRAME_NAME_STYLE.fontSize / zoom}px ${FRAME_NAME_STYLE.fontFamily}`
   ctx.fillStyle = dark ? FRAME_NAME_INK.dark : FRAME_NAME_INK.light
-  ctx.font = '12px sans-serif'
-  ctx.textBaseline = 'alphabetic'
-  ctx.fillText(element.name, 0, -6)
+  ctx.textBaseline = 'middle'
+  ctx.globalAlpha = 1
+  for (const el of elements) {
+    if (el.type !== 'frame' || el.id === skipId) {
+      continue
+    }
+    const box = frameNameBounds(el, zoom)
+    const text = ellipsize(ctx, frameTitle(el), el.width)
+    ctx.fillText(text, box.x1, (box.y1 + box.y2) / 2)
+  }
+  ctx.restore()
+}
+
+/** Trims text with an ellipsis until it fits `maxWidth` (CSS text-overflow). */
+function ellipsize(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
+  if (ctx.measureText(text).width <= maxWidth) {
+    return text
+  }
+  let end = text.length
+  while (end > 0 && ctx.measureText(`${text.slice(0, end)}…`).width > maxWidth) {
+    end--
+  }
+  return end > 0 ? `${text.slice(0, end)}…` : ''
 }
 
 // ---------------------------------------------------------------------------
@@ -700,6 +754,29 @@ function drawGrid(
   ctx.restore()
 }
 
+/**
+ * The frame an element renders clipped to (Excalidraw's getTargetFrame +
+ * shouldApplyFrameClip): its own frame — but while the selection is
+ * dragged, the frame it would drop into, and only while it overlaps it.
+ */
+function clipFrameOf(
+  element: OpenDrawElement,
+  elements: readonly OpenDrawElement[],
+  frames: ReadonlyMap<string, OpenDrawFrameElement>,
+  drag: { ids: ReadonlySet<string>; targetFrameId: string | null } | null,
+): OpenDrawFrameElement | undefined {
+  if (element.type === 'frame') {
+    return undefined
+  }
+  const owner = isBoundText(element) ? (elements.find((el) => el.id === element.containerId) ?? element) : element
+  const dragged = drag !== null && drag.ids.has(owner.id)
+  if (!dragged || (owner.frameId !== null && drag.ids.has(owner.frameId))) {
+    return element.frameId !== null ? frames.get(element.frameId) : undefined
+  }
+  const target = drag.targetFrameId !== null ? frames.get(drag.targetFrameId) : undefined
+  return target && elementOverlapsFrame(owner, target) ? target : undefined
+}
+
 /** Clips the context to a frame's (possibly rotated) box. */
 function clipToFrame(ctx: CanvasRenderingContext2D, frame: OpenDrawFrameElement): void {
   ctx.beginPath()
@@ -748,18 +825,20 @@ export function renderScene(ctx: CanvasRenderingContext2D, input: SceneRenderInp
   const frames = new Map(
     elements.filter((el): el is OpenDrawFrameElement => el.type === 'frame').map((frame) => [frame.id, frame]),
   )
+  const zoom = viewport.zoom
   for (const element of renderableElements(elements, editingId)) {
-    const frame = element.frameId !== null ? frames.get(element.frameId) : undefined
+    const frame = clipFrameOf(element, elements, frames, input.frameDrag ?? null)
     if (frame) {
       // Frame children render clipped to their frame (Excalidraw's frame clip).
       ctx.save()
       clipToFrame(ctx, frame)
-      drawElement(ctx, rc, element, dark, input.resolveImage, viewBackgroundColor)
+      drawElement(ctx, rc, element, dark, input.resolveImage, viewBackgroundColor, zoom)
       ctx.restore()
     } else {
-      drawElement(ctx, rc, element, dark, input.resolveImage, viewBackgroundColor)
+      drawElement(ctx, rc, element, dark, input.resolveImage, viewBackgroundColor, zoom)
     }
   }
+  drawFrameNames(ctx, elements, zoom, dark, input.editingFrameNameId ?? null)
   ctx.restore()
 }
 

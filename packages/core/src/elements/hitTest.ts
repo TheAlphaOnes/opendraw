@@ -205,11 +205,12 @@ export function hitTestElement(
   }
   const local = toLocal(element, point)
 
+  // A frame is transparent: only its outline (and its name label, which the
+  // editor tests separately) grabs it — Excalidraw's shouldTestInside.
   const testInside =
     element.type === 'text' ||
     element.type === 'image' ||
-    element.type === 'frame' ||
-    (hasOpaqueBackground(element) && element.type !== 'line' && element.type !== 'arrow')
+    (hasOpaqueBackground(element) && element.type !== 'line' && element.type !== 'arrow' && element.type !== 'frame')
   if (testInside && pointInsideShape(element, local)) {
     return true
   }
@@ -241,11 +242,22 @@ export function findElementAt(
   point: Point,
   threshold: number,
 ): OpenDrawElement | null {
+  let frames: Map<string, OpenDrawElement> | null = null
   for (let i = elements.length - 1; i >= 0; i--) {
     const element = elements[i]!
-    if (hitTestElement(element, point, threshold)) {
-      return element
+    if (!hitTestElement(element, point, threshold)) {
+      continue
     }
+    // Frame children are clipped to their frame, so a point outside the
+    // frame cannot hit them (Excalidraw's isPointClippedByEnclosingFrame).
+    if (element.frameId !== null) {
+      frames ??= new Map(elements.filter((el) => el.type === 'frame').map((el) => [el.id, el]))
+      const frame = frames.get(element.frameId)
+      if (frame && !pointInBounds(point, getElementBounds(frame))) {
+        continue
+      }
+    }
+    return element
   }
   return null
 }

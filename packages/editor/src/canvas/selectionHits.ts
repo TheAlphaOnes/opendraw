@@ -6,7 +6,15 @@ import type {
   OpenDrawElement,
   OpenDrawLinearElement,
 } from '@opendraw/core'
-import { getHandleLayout, hasBoundingBox, isLinearElement, selectionFrameOf, sideHandleAt } from '@opendraw/core'
+import {
+  getHandleLayout,
+  hasBoundingBox,
+  isFrameElement,
+  isLinearElement,
+  selectionFrameOf,
+  sideHandleAt,
+  withFrameChildren,
+} from '@opendraw/core'
 
 import type { CanvasRuntime } from './runtime.js'
 
@@ -28,7 +36,9 @@ export function selectionHandleLayout(rt: CanvasRuntime): readonly HandleBox[] {
   if (!frame) {
     return []
   }
-  return getHandleLayout(frame, { zoom: rt.ctx.viewport.zoom, pointer: 'mouse' })
+  // Frames never rotate (Excalidraw drops the handle for any selected frame).
+  const showRotation = !selected.some(isFrameElement)
+  return getHandleLayout(frame, { zoom: rt.ctx.viewport.zoom, pointer: 'mouse', showRotation })
 }
 
 /**
@@ -58,4 +68,10 @@ export function loneSelectedLinear(rt: CanvasRuntime): OpenDrawLinearElement | n
 /** Live copies of the selection — the pointerdown snapshot transforms read. */
 export function snapshotSelection(rt: CanvasRuntime): readonly OpenDrawElement[] {
   return rt.ctx.selectedElements.map((el) => rt.ctx.doc.getElement(el.id) ?? el)
+}
+
+/** What a drag of the selection moves: the selection plus its frames' children. */
+export function snapshotMovingSelection(rt: CanvasRuntime): readonly OpenDrawElement[] {
+  const ids = rt.ctx.selectedElements.map((el) => el.id)
+  return withFrameChildren(rt.ctx.elements, ids).map((el) => rt.ctx.doc.getElement(el.id) ?? el)
 }

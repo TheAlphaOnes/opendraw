@@ -30,7 +30,7 @@ import {
   POINT_HANDLE_RADIUS,
   selectionFrameOf,
 } from '../interaction/handles.js'
-import type { Bounds, OpenDrawAppState, OpenDrawElement, OpenDrawLinearElement, Point } from '../types.js'
+import type { Bounds, OpenDrawAppState, OpenDrawElement, OpenDrawFrameElement, OpenDrawLinearElement, Point } from '../types.js'
 import { applyViewportTransform } from '../viewport.js'
 import type { CanvasSize } from './renderScene.js'
 import { cornerRadius, renderElementShape } from './renderScene.js'
@@ -60,6 +60,10 @@ export interface OverlayRenderInput {
    * edited group. Omitted, a multi-selection draws only its common frame.
    */
   groupChrome?: GroupSelectionChrome
+  /** The frame a drag would drop into (Excalidraw's frameToHighlight). */
+  frameToHighlight?: OpenDrawFrameElement | null
+  /** What a frame being resized would hold (Excalidraw's elementsToHighlight). */
+  elementsToHighlight?: readonly OpenDrawElement[] | null
   canvasSize: CanvasSize
   dpr: number
 }
@@ -106,6 +110,13 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
     const highlight = dark ? BINDING_HIGHLIGHT.dark : BINDING_HIGHLIGHT.light
     drawBindingHighlight(ctx, suggestedBinding.shape, highlight, zoom)
     drawMidpointIndicators(ctx, suggestedBinding.shape, suggestedBinding.pointer, highlight, dark, zoom)
+  }
+
+  if (input.frameToHighlight) {
+    drawFrameHighlight(ctx, input.frameToHighlight, dark, zoom)
+  }
+  if (input.elementsToHighlight && input.elementsToHighlight.length > 0) {
+    drawElementsBoxHighlight(ctx, input.elementsToHighlight, dark, zoom)
   }
 
   // While text is being edited — free text, or a label inside its selected
@@ -156,7 +167,8 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
         drawGroupBorder(ctx, frame, accent, zoom)
       }
       if (boxed) {
-        drawHandles(ctx, getHandleLayout(frame, { zoom, pointer }), accent, zoom, dark)
+        const showRotation = !selectedElements.some((el) => el.type === 'frame')
+        drawHandles(ctx, getHandleLayout(frame, { zoom, pointer, showRotation }), accent, zoom, dark)
       }
       // A lone selected line/arrow also shows its point handles: filled
       // endpoint circles that drag tips, plus the hollow midpoint that
@@ -224,6 +236,49 @@ function boundsMatchFrame(bounds: Bounds, frame: SelectionFrame): boolean {
 }
 
 /** Dashed box around a group's common bounds. */
+/** Excalidraw's frame/element highlight blue, `getThemedColor("rgb(0,118,255)")`. */
+const FRAME_HIGHLIGHT = { light: 'rgb(0,118,255)', dark: 'rgb(0,118,255)' } as const
+
+/** The drop-target frame: its rounded outline, thicker and blue. */
+function drawFrameHighlight(
+  ctx: CanvasRenderingContext2D,
+  frame: OpenDrawFrameElement,
+  dark: boolean,
+  zoom: number,
+): void {
+  ctx.save()
+  ctx.translate(frame.x + frame.width / 2, frame.y + frame.height / 2)
+  ctx.rotate(frame.angle)
+  ctx.strokeStyle = dark ? FRAME_HIGHLIGHT.dark : FRAME_HIGHLIGHT.light
+  ctx.lineWidth = 2 / zoom
+  ctx.setLineDash([])
+  ctx.beginPath()
+  ctx.roundRect(-frame.width / 2, -frame.height / 2, frame.width, frame.height, 8 / zoom)
+  ctx.stroke()
+  ctx.restore()
+}
+
+/** One blue box per element — or per outermost group — a frame would hold. */
+function drawElementsBoxHighlight(
+  ctx: CanvasRenderingContext2D,
+  elements: readonly OpenDrawElement[],
+  dark: boolean,
+  zoom: number,
+): void {
+  const units = new Map<string, OpenDrawElement[]>()
+  for (const el of elements) {
+    const key = el.groupIds[el.groupIds.length - 1] ?? el.id
+    units.set(key, [...(units.get(key) ?? []), el])
+  }
+  const color = dark ? FRAME_HIGHLIGHT.dark : FRAME_HIGHLIGHT.light
+  for (const unit of units.values()) {
+    const frame = selectionFrameOf(unit)
+    if (frame) {
+      drawSingleBorder(ctx, frame, color, zoom)
+    }
+  }
+}
+
 function drawDashedBounds(
   ctx: CanvasRenderingContext2D,
   bounds: Bounds,

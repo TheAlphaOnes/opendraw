@@ -12,6 +12,7 @@ import {
   selectionFrameOf,
 } from '@opendraw/core'
 
+import { elementAtPointer } from './frameGestures.js'
 import type { CanvasRuntime } from './runtime.js'
 import {
   loneSelectedLinear,
@@ -84,6 +85,6 @@ export function resolveCursor(rt: CanvasRuntime): string {
       return 'move'
     }
   }
-  const hit = findElementAt(ctx.elements, point, hitThreshold(zoom))
+  const hit = elementAtPointer(rt, point)
   return hit && !hit.locked ? 'move' : 'default'
 }

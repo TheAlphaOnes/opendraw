@@ -91,6 +91,8 @@ export interface HandleLayoutOptions {
   pointer: PointerKind
   /** Hide cardinal (n/s/e/w) handles on tiny selections. */
   showSides?: boolean
+  /** False drops the rotation handle — frames never rotate (Excalidraw). */
+  showRotation?: boolean
 }
 
 /** Lay out the 8 resize handles + rotation handle in scene space. */
@@ -119,10 +121,12 @@ export function getHandleLayout(
     centers.push({ handle: 'w', at: { x: frame.x, y: center.y } })
   }
   // Rotation handle: above the top edge, centered.
-  centers.push({
-    handle: 'rotation',
-    at: { x: center.x, y: frame.y - ROTATION_HANDLE_GAP / options.zoom - spacing },
-  })
+  if (options.showRotation ?? true) {
+    centers.push({
+      handle: 'rotation',
+      at: { x: center.x, y: frame.y - ROTATION_HANDLE_GAP / options.zoom - spacing },
+    })
+  }
 
   const boxes: HandleBox[] = []
   for (const { handle, at } of centers) {

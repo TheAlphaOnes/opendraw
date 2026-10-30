@@ -35,6 +35,7 @@ export function createCanvasSurface(
       return
     }
     const { elements, appState } = ctx.state
+    const gesture = rt.interaction.value
 
     renderScene(staticCtx, {
       elements,
@@ -49,6 +50,12 @@ export function createCanvasSurface(
       dpr,
       // Decoded bitmaps come from the shared cache; misses render placeholders.
       resolveImage: imageResolver,
+      // A dragged selection clips to the frame it would drop into.
+      frameDrag:
+        gesture.kind === 'moving' && gesture.didDrag
+          ? { ids: new Set(Object.keys(appState.selectedIds)), targetFrameId: rt.frameToHighlight.value?.id ?? null }
+          : null,
+      editingFrameNameId: rt.editingFrameNameId.value,
     })
 
     renderOverlay(overlayCtx, {
@@ -60,6 +67,8 @@ export function createCanvasSurface(
       suggestedBinding: rt.suggestedBinding.value,
       elements,
       groupChrome: groupSelectionChrome(elements, appState.selectedIds, appState.editingGroupId),
+      frameToHighlight: rt.frameToHighlight.value,
+      elementsToHighlight: rt.elementsToHighlight.value,
       canvasSize: size,
       dpr,
     })
@@ -119,6 +128,9 @@ export function createCanvasSurface(
     }),
     rt.marquee.subscribe(scheduleRender),
     rt.suggestedBinding.subscribe(scheduleRender),
+    rt.frameToHighlight.subscribe(scheduleRender),
+    rt.elementsToHighlight.subscribe(scheduleRender),
+    rt.editingFrameNameId.subscribe(scheduleRender),
   ]
 
   scheduleRender()

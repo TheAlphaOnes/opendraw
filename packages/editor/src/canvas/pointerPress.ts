@@ -30,8 +30,10 @@ import {
   SELECTION_GRAB_PADDING,
   selectionHandleLayout,
   sideGrabAt,
+  snapshotMovingSelection,
   snapshotSelection,
 } from './selectionHits.js'
+import { elementAtPointer, frameForNewElement } from './frameGestures.js'
 import { createTextAt, editContainerText } from './textEntry.js'
 import { tipModifiers } from './tipBinding.js'
 import type { LaserTrail } from './laserTrail.js'
@@ -56,14 +58,17 @@ export function eraseAlong(rt: CanvasRuntime, from: Point, to: Point): void {
 
 function draftElement(rt: CanvasRuntime, tool: string, at: Point): OpenDrawElement {
   const { style, shapeRoundness, arrowheads, arrowType } = rt.ctx.appState
+  // A new element joins the frame it is drawn in; frames never nest.
+  const frameId = tool === 'frame' ? null : (frameForNewElement(rt, at)?.id ?? null)
   if (tool === 'line') {
-    return newLinearElement(tool, { x: at.x, y: at.y, style, points: [{ x: 0, y: 0 }], roundness: shapeRoundness })
+    return newLinearElement(tool, { x: at.x, y: at.y, style, frameId, points: [{ x: 0, y: 0 }], roundness: shapeRoundness })
   }
   if (tool === 'arrow') {
     return newLinearElement(tool, {
       x: at.x,
       y: at.y,
       style,
+      frameId,
       points: [{ x: 0, y: 0 }],
       roundness: arrowType === 'round' ? 'round' : null,
       startArrowhead: arrowheads.start,
@@ -77,6 +82,7 @@ function draftElement(rt: CanvasRuntime, tool: string, at: Point): OpenDrawEleme
     x: at.x,
     y: at.y,
     style,
+    frameId,
     roundness: shapeRoundness,
   })
 }
@@ -209,6 +215,7 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
       x: scenePoint.x,
       y: scenePoint.y,
       style: ctx.appState.style,
+      frameId: frameForNewElement(rt, scenePoint)?.id ?? null,
       simulatePressure: event.pointerType === 'mouse',
       points: [[0, 0, pressureOf(event)]],
     })
@@ -290,12 +297,17 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
     }
   }
 
-  const raw = findElementAt(ctx.elements, scenePoint, hitThreshold(zoom))
+  const raw = elementAtPointer(rt, scenePoint)
   const hit = raw ? selectableTarget(raw, ctx.elements) : null
   if (hit) {
     const wasSelected = ctx.isIdSelected(hit.id)
     if (event.shiftKey) {
-      // Shift toggles the hit's whole (visible) group in or out.
+      // Shift toggles the hit's whole (visible) group in or out — and a
+      // frame and its children are never selected together: adding a child
+      // drops its selected frame.
+      if (!wasSelected && hit.frameId !== null && ctx.isIdSelected(hit.frameId)) {
+        ctx.select(ctx.selectedElements.filter((el) => el.id !== hit.frameId).map((el) => el.id))
+      }
       ctx.selectGrouped([hit.id], 'toggle')
     } else if (!wasSelected) {
       // Pressing outside the edited group leaves it (Excalidraw's
@@ -317,7 +329,7 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
     rt.interaction.value = {
       kind: 'moving',
       originScene: scenePoint,
-      originals: snapshotSelection(rt),
+      originals: snapshotMovingSelection(rt),
       hitId: !event.shiftKey && wasSelected ? hit.id : null,
       didDrag: false,
       duplicated: false,
@@ -340,7 +352,7 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
     rt.interaction.value = {
       kind: 'moving',
       originScene: scenePoint,
-      originals: snapshotSelection(rt),
+      originals: snapshotMovingSelection(rt),
       // No element was pressed, so a no-drag click keeps the selection.
       hitId: null,
       didDrag: false,

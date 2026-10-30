@@ -3,6 +3,7 @@ import type { TextContainer, OpenDrawElement } from '@opendraw/core'
 import {
   boundTextOf,
   findElementAt,
+  frameNameAt,
   hitThreshold,
   isTextContainer,
   newTextElement,
@@ -11,6 +12,8 @@ import {
   textContainerAt,
 } from '@opendraw/core'
 
+import { frameForNewElement } from './frameGestures.js'
+import { editFrameName } from './frameNameEditor.js'
 import { finishLinearDraft } from './linearDraft.js'
 import type { CanvasRuntime } from './runtime.js'
 
@@ -29,6 +32,7 @@ export function createTextAt(rt: CanvasRuntime, point: Point): void {
     x: point.x,
     y: point.y - fontSize * 1.25 * 0.5,
     style: style.style,
+    frameId: frameForNewElement(rt, point)?.id ?? null,
     text: '',
     textStyle: style.textStyle,
   })
@@ -107,6 +111,12 @@ export function onCanvasDoubleClick(rt: CanvasRuntime, event: MouseEvent): void 
     rt.interaction.value = { kind: 'none' }
   }
   const scenePoint = rt.toScene(event)
+  // Double-clicking a frame's name renames it in place.
+  const named = frameNameAt(ctx.elements, scenePoint, ctx.viewport.zoom, hitThreshold(ctx.viewport.zoom))
+  if (named) {
+    editFrameName(rt, named)
+    return
+  }
   const raw = findElementAt(ctx.elements, scenePoint, hitThreshold(ctx.viewport.zoom))
   const hit = raw ? selectableTarget(raw, ctx.elements) : null
   // Double-clicking a selected group enters it: the hit becomes the

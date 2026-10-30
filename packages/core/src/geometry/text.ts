@@ -29,6 +29,11 @@ function defaultMeasurer(font: string, text: string): number {
   return offscreenCtx.measureText(text).width
 }
 
+/** Width of one line of text in the given CSS font. */
+export function measureTextWidth(font: string, text: string): number {
+  return defaultMeasurer(font, text)
+}
+
 /** CSS `font` shorthand for a family/size pair. */
 export function fontCss(family: FontFamily, fontSize: number): string {
   return `${fontSize}px ${FONT_STACKS[family]}`

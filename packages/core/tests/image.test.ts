@@ -95,10 +95,11 @@ describe('image & frame geometry', () => {
     expect(getElementBounds(frame)).toEqual({ x1: 0, y1: 0, x2: 200, y2: 150 })
   })
 
-  it('hit-tests like a filled box: inside counts, near misses do not', () => {
+  it('hit-tests images like a filled box and frames by their outline only', () => {
     expect(hitTestElement(image, { x: 120, y: 115 }, 5)).toBe(true)
     expect(hitTestElement(image, { x: 200, y: 200 }, 5)).toBe(false)
-    expect(hitTestElement(frame, { x: 10, y: 10 }, 5)).toBe(true)
+    // A frame is transparent: its empty inside clicks through (Excalidraw).
+    expect(hitTestElement(frame, { x: 60, y: 60 }, 5)).toBe(false)
     // Outline hits stay within the threshold, box-like.
     expect(hitTestElement(frame, { x: 205, y: 75 }, 5)).toBe(true)
     expect(hitTestElement(frame, { x: 215, y: 75 }, 5)).toBe(false)

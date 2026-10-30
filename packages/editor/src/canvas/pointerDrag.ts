@@ -20,6 +20,7 @@ import {
 } from '@opendraw/core'
 
 import { trackDraftPointer } from './linearDraft.js'
+import { updateDragFrameHighlight, updateHoverFrameHighlight, updateResizingFrameHighlight } from './frameGestures.js'
 import { dragTipTo, tipModifiers } from './tipBinding.js'
 import type { Interaction } from './runtime.js'
 import { eraseAlong, pressureOf } from './pointerPress.js'
@@ -66,6 +67,7 @@ function duplicateDraggedSelection(
 function handleIdleHover(rt: CanvasRuntime, scenePoint: Point): void {
   const { ctx } = rt
   rt.hoverScene.value = scenePoint
+  updateHoverFrameHighlight(rt, scenePoint)
   const tool = ctx.activeTool
   if (tool === 'line' || tool === 'arrow') {
     // Hovering with a line/arrow tool previews the binding a press here
@@ -133,6 +135,11 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
         dragTipTo(rt, el.id, 'end', { x: el.x + end.x, y: el.y + end.y }, tipModifiers(event))
       } else {
         ctx.doc.forceUpdateElement(el.id, draftShapeRect(current.originScene, scenePoint, modifiers))
+        // A frame being drawn outlines what it will adopt.
+        const drawn = ctx.doc.getElement(el.id)
+        if (drawn?.type === 'frame') {
+          updateResizingFrameHighlight(rt, [drawn])
+        }
       }
       return
     }
@@ -160,6 +167,9 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
         ctx.doc.forceUpdateElement(id, patch)
       }
       followBindings(rt, current.originals)
+      if (current.didDrag) {
+        updateDragFrameHighlight(rt, scenePoint)
+      }
       return
     }
     case 'movingPoint': {
@@ -197,6 +207,10 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
         }
       }
       followBindings(rt, current.originals)
+      // A frame being resized outlines what it will hold.
+      if (current.originals.some((el) => el.type === 'frame')) {
+        updateResizingFrameHighlight(rt, ctx.selectedElements)
+      }
       return
     }
     case 'rotating': {
