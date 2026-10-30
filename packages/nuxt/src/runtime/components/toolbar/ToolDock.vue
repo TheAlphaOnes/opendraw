@@ -97,14 +97,15 @@ function activate(entry: ToolDefinition): void {
   pointer-events: none;
 }
 
-/* Excalidraw's toolbar island: 4px padding, 4px between tools. */
+/* The toolbar island: 36px tools in 2px of padding — the shared 40px bar. */
 .tool-dock {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 4px;
+  gap: 2px;
+  min-height: var(--od-bar);
+  padding: 2px;
   background: var(--od-surface);
   border-radius: var(--od-radius-l);
   box-shadow: var(--od-shadow-1), var(--od-shadow-2);

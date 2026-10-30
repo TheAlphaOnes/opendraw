@@ -82,6 +82,9 @@ import {
   Monitor,
   Save,
   Code,
+  Share2,
+  ExternalLink,
+  Terminal,
 } from 'lucide-vue-next'
 
 /** Semantic icon names — defined by @opendraw/editor, glyphs chosen here. */
@@ -180,6 +183,9 @@ export const iconRegistry: Record<IconName, Component> = {
   check: Check,
   monitor: Monitor,
   saveAs: Save,
+  share: Share2,
+  externalLink: ExternalLink,
+  terminal: Terminal,
   fontHand: Pencil,
   fontNormal: Type,
   fontCode: Code,

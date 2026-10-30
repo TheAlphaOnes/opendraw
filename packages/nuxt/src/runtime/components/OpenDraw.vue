@@ -13,6 +13,7 @@ import {
   DEFAULT_SCENE_STORAGE_KEY,
   resolveThemeDefault,
   type CanvasContextMenuRequest,
+  type EditorController,
   type ThemeDefault,
 } from '@opendraw/editor'
 import OpenDrawCanvas from './OpenDrawCanvas.vue'
@@ -71,6 +72,8 @@ const props = withDefaults(defineProps<OpenDrawProps>(), {
 const emit = defineEmits<{
   (e: 'change', detail: OpenDrawChangeDetail): void
   (e: 'select', ids: string[]): void
+  /** Mounted: the controller, to drive the editor from outside. */
+  (e: 'ready', editor: EditorController): void
 }>()
 
 // The context always holds a concrete theme: an explicit prop maps straight
@@ -123,9 +126,13 @@ if (props.persist !== false) {
   onMounted(() => ctx.setTheme(resolveThemeDefault('system')))
 }
 
+onMounted(() => emit('ready', ctx.editor))
+
 onBeforeUnmount(() => {
   unsubscribe()
 })
+
+defineExpose({ editor: ctx.editor, context: ctx })
 
 // Context menu (full UI only).
 const menu = reactive<CanvasContextMenuRequest & { visible: boolean }>({

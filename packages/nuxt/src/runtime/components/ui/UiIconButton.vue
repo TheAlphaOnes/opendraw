@@ -24,7 +24,7 @@ const props = withDefaults(
     size?: 'md' | 'lg'
     /** Key hint shown in the bottom-right corner (toolbar tools). */
     keybinding?: string
-    /** Filled on-canvas look: surface-low fill, no island around it. */
+    /** A standalone on-canvas control (menu, help): its own 40px island. */
     filled?: boolean
   }>(),
   { active: false, disabled: false, danger: false, size: 'md', keybinding: undefined, filled: false },
@@ -98,12 +98,18 @@ const emit = defineEmits<{ click: [event: MouseEvent] }>()
 }
 
 .ui-icon-button.is-filled {
-  background: var(--od-surface-low);
-  box-shadow: 0 0 0 1px var(--od-surface);
+  width: var(--od-bar);
+  height: var(--od-bar);
+  background: var(--od-surface);
+  box-shadow: var(--od-shadow-1), var(--od-shadow-2);
 }
 
 .ui-icon-button.is-filled:hover {
-  background: var(--od-surface-high);
+  background: var(--od-hover);
+}
+
+.ui-icon-button.is-filled.is-active {
+  background: var(--od-accent-soft);
 }
 
 .ui-icon-button.is-danger:hover {

@@ -1,18 +1,11 @@
 <template>
-  <main class="page">
-    <OpenDraw class="draw" :menu-links="MENU_LINKS" @change="onChange" @select="onSelect">
-      <template #top-right>
-        <InstallCommand />
-        <DocsButton />
-      </template>
-    </OpenDraw>
-  </main>
+  <OpenDrawApp :config="config" @change="onChange" @select="onSelect" />
 </template>
 
 <script setup lang="ts">
 /**
- * The published demo: the editor fills the page, Excalidraw-style, with
- * the install command and the docs link top-right.
+ * The published demo: <OpenDrawApp> with one config — the install command
+ * and the docs link top-right, the repository in the main menu.
  *
  * E2E mirror: the Playwright suite reads document state through the public
  * change/select events (mirrored onto `window.__opendraw`) instead of
@@ -26,10 +19,14 @@ declare global {
 
 useHead({ title: 'opendraw — hand-drawn diagrams for Vue & Nuxt' })
 
-const MENU_LINKS = [
-  { label: 'Documentation', href: '/docs', icon: 'docs' },
-  { label: 'GitHub', href: 'https://github.com/TheAlphaOnes/opendraw', icon: 'github' },
-] as const
+const config = defineOpenDrawConfig({
+  command: { text: 'npm install @opendraw/nuxt', short: 'npm i @opendraw/nuxt' },
+  links: [{ label: 'Docs', icon: 'docs', to: '/docs' }],
+  menuLinks: [
+    { label: 'Documentation', href: '/docs', icon: 'docs' },
+    { label: 'GitHub', href: 'https://github.com/TheAlphaOnes/opendraw', icon: 'github' },
+  ],
+})
 
 function onChange(detail: { elements: readonly unknown[] }): void {
   window.__opendraw = { elements: detail.elements, selection: window.__opendraw?.selection ?? [] }
@@ -39,14 +36,3 @@ function onSelect(ids: string[]): void {
   window.__opendraw = { elements: window.__opendraw?.elements ?? [], selection: ids }
 }
 </script>
-
-<style scoped>
-.page {
-  height: 100vh;
-  height: 100dvh;
-}
-
-.draw {
-  height: 100%;
-}
-</style>

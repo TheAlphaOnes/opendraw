@@ -192,7 +192,7 @@ function openHelp(): void {
 }
 
 .welcome__hint--menu {
-  top: calc(var(--od-gutter) + var(--od-button-lg) + 4px);
+  top: calc(var(--od-gutter) + var(--od-bar) + 4px);
   left: calc(var(--od-gutter) + 6px);
   align-items: flex-end;
   animation: welcome-fade 520ms ease-out 520ms both;
@@ -213,7 +213,7 @@ function openHelp(): void {
 }
 
 .welcome__hint--toolbar {
-  top: calc(var(--od-gutter) + var(--od-button-lg) + 40px);
+  top: calc(var(--od-gutter) + var(--od-bar) + 40px);
   left: 50%;
   align-items: flex-end;
   transform: translateX(-110px);
@@ -232,7 +232,7 @@ function openHelp(): void {
 
 .welcome__hint--help {
   right: calc(var(--od-gutter) + 6px);
-  bottom: calc(var(--od-gutter) + var(--od-button-lg) + 8px);
+  bottom: calc(var(--od-gutter) + var(--od-bar) + 8px);
   align-items: flex-start;
   animation: welcome-fade 560ms ease-out 640ms both;
 }

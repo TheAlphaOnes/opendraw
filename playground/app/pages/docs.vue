@@ -11,6 +11,7 @@ const NAV: DocsNavGroup[] = [
       { id: 'introduction', label: 'Introduction' },
       { id: 'installation', label: 'Installation' },
       { id: 'quick-start', label: 'Quick start' },
+      { id: 'opendraw-app', label: '<OpenDrawApp>' },
     ],
   },
   {
@@ -47,6 +48,7 @@ const NAV: DocsNavGroup[] = [
   <DocsShell :nav="NAV">
     <article class="prose">
       <DocsSectionsGettingStarted />
+      <DocsSectionsAppComponent />
       <DocsSectionsComponentApi />
       <DocsSectionsComposableApi />
       <DocsSectionsReactSvelte />

@@ -61,6 +61,9 @@ function zoomAnchor(): Point {
 .footer-left__island {
   display: flex;
   align-items: center;
+  gap: 2px;
+  height: var(--od-bar);
+  padding: 2px;
   background: var(--od-surface);
   border-radius: var(--od-radius-l);
   box-shadow: var(--od-shadow-1), var(--od-shadow-2);
@@ -85,7 +88,7 @@ function zoomAnchor(): Point {
   .footer-left {
     top: var(--od-gutter);
     bottom: auto;
-    left: calc(var(--od-gutter) + var(--od-button-lg) + 8px);
+    left: calc(var(--od-gutter) + var(--od-bar) + 8px);
   }
 
   .zoom-controls {

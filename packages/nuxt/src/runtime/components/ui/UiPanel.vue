@@ -81,10 +81,10 @@ defineProps<{
 /* Excalidraw's selected-shape actions: a 12px-padded column under the main
    menu trigger, clear of the footer; a bottom sheet on phones. */
 .ui-panel--properties {
-  top: calc(var(--od-gutter) * 2 + var(--od-button-lg));
+  top: calc(var(--od-gutter) * 2 + var(--od-bar));
   left: var(--od-gutter);
   width: 202px;
-  max-height: calc(100% - var(--od-gutter) * 4 - var(--od-button-lg) * 2);
+  max-height: calc(100% - var(--od-gutter) * 4 - var(--od-bar) * 2);
   padding: 12px;
 }
 
@@ -93,7 +93,7 @@ defineProps<{
     top: auto;
     left: var(--od-gutter);
     right: var(--od-gutter);
-    bottom: calc(var(--od-gutter) * 2 + var(--od-button-lg) + 8px);
+    bottom: calc(var(--od-gutter) * 2 + var(--od-bar));
     width: auto;
     max-height: 42%;
     padding: 8px;

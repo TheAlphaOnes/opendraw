@@ -143,7 +143,7 @@ defineExpose({ close })
   display: flex;
   flex-direction: column;
   gap: 1px;
-  max-height: calc(100% - var(--od-gutter) * 2 - var(--od-button-lg));
+  max-height: calc(100% - var(--od-gutter) * 2 - var(--od-bar));
   overflow-y: auto;
   padding: 8px;
   background: var(--od-surface);

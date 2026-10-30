@@ -76,6 +76,9 @@
   /* Sizes — --default-button-size, --lg-button-size, --editor-container-padding */
   --od-button: 32px;
   --od-button-lg: 36px;
+  /* Every on-canvas island and standalone control is this tall, so the top
+     and bottom rows line up: 36px buttons inside 2px of island padding. */
+  --od-bar: 40px;
   --od-gutter: 16px;
 
   /* Motion */

@@ -83,6 +83,27 @@ export default defineNuxtConfig({
 
 That's it — the editor fills its container and saves to `localStorage` as you draw. Press <kbd>?</kbd> for every shortcut.
 
+### The whole demo in one component
+
+`<OpenDrawApp>` is the demo site as a single component — the editor filling the page, your buttons, a glowing copyable command and a Share button top-right — configured with one typed object and hooks:
+
+```vue
+<script setup lang="ts">
+const config = defineOpenDrawConfig({
+  command: { text: 'npm install my-lib', short: 'npm i my-lib' },
+  links: [{ label: 'Docs', icon: 'docs', to: '/docs' }],
+  share: true,
+  onChange: ({ elements }) => save(elements),
+})
+</script>
+
+<template>
+  <OpenDrawApp :config="config" />
+</template>
+```
+
+The pieces also come separately for `<OpenDraw>`'s slots: `<OpenDrawButton>`, `<OpenDrawCopyCommand>` and `<OpenDrawShareButton>`.
+
 **Requirements:** Nuxt 4 · Vue 3.5 · Node 20.19+
 
 ## Usage
@@ -102,6 +123,7 @@ That's it — the editor fills its container and saves to `localStorage` as you 
 | --- | --- | --- |
 | `@change` | `{ elements, appState }` | Every document or editor-state change. |
 | `@select` | `string[]` | The selected element ids. |
+| `@ready` | `EditorController` | Mounted — drive the editor from outside. |
 
 | Slot | Placement |
 | --- | --- |

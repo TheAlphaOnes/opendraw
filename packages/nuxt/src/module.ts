@@ -44,6 +44,17 @@ const opendrawModule: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions
       filePath: resolver.resolve('./runtime/components/OpenDrawCanvas.vue'),
     })
 
+    // The demo site as one component, configured with defineOpenDrawConfig().
+    addComponent({
+      name: 'OpenDrawApp',
+      filePath: resolver.resolve('./runtime/components/OpenDrawApp.vue'),
+    })
+
+    // Ready-made pieces for <OpenDraw>'s top-right and footer slots.
+    for (const name of ['OpenDrawButton', 'OpenDrawCopyCommand', 'OpenDrawShareButton']) {
+      addComponent({ name, filePath: resolver.resolve(`./runtime/components/slots/${name}.vue`) })
+    }
+
     addImports([
       {
         name: 'useOpenDraw',
@@ -56,6 +67,10 @@ const opendrawModule: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions
       {
         name: 'provideOpenDraw',
         from: resolver.resolve('./runtime/composables/useOpenDraw'),
+      },
+      {
+        name: 'defineOpenDrawConfig',
+        from: resolver.resolve('./runtime/config/openDrawApp'),
       },
       {
         name: 'useScenePersistence',
