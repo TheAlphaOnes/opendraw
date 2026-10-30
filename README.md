@@ -291,7 +291,10 @@ pnpm typecheck    # every package, the playground and the e2e specs
 pnpm e2e          # Playwright: the Nuxt demo, then React + Svelte
 pnpm e2e:adapters # Playwright: the React and Svelte test apps only
 pnpm build        # build the publishable packages
+pnpm build:site   # the demo + docs as a static site (playground/.output/public)
 ```
+
+**Deploying the site:** the repo includes a `vercel.json` — import it on Vercel with the default settings and it builds the packages, generates the demo and docs statically, and serves `playground/.output/public`. Any static host works the same way after `pnpm build:site`.
 
 ```
 packages/
