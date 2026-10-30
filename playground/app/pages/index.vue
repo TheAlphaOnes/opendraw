@@ -1,18 +1,24 @@
 <template>
   <main class="page">
-    <nav class="page__bar">
-      <span class="page__title">opendraw playground</span>
-      <NuxtLink class="page__link" to="/headless">headless demo →</NuxtLink>
-    </nav>
-    <OpenDraw class="draw" @change="onChange" @select="onSelect" />
+    <OpenDraw class="draw" :menu-links="MENU_LINKS" @change="onChange" @select="onSelect">
+      <template #top-right>
+        <DocsButton />
+      </template>
+      <template #footer>
+        <InstallCommand />
+      </template>
+    </OpenDraw>
   </main>
 </template>
 
 <script setup lang="ts">
 /**
- * E2E mirror: the Playwright suite reads document state through these same
- * public events (mirrored onto `window.__opendraw`) instead of poking Vue
- * internals. The hook lives in the playground, never in the library.
+ * The published demo: the editor fills the page, Excalidraw-style, with
+ * the docs link top-right and the install command bottom-right.
+ *
+ * E2E mirror: the Playwright suite reads document state through the public
+ * change/select events (mirrored onto `window.__opendraw`) instead of
+ * poking Vue internals. The hook lives here, never in the library.
  */
 declare global {
   interface Window {
@@ -20,47 +26,29 @@ declare global {
   }
 }
 
+useHead({ title: 'opendraw — hand-drawn diagrams for Vue & Nuxt' })
+
+const MENU_LINKS = [
+  { label: 'Documentation', href: '/docs', icon: 'docs' },
+  { label: 'GitHub', href: 'https://github.com/TheAlphaOnes/opendraw', icon: 'github' },
+] as const
+
 function onChange(detail: { elements: readonly unknown[] }): void {
   window.__opendraw = { elements: detail.elements, selection: window.__opendraw?.selection ?? [] }
-  // eslint-disable-next-line no-console
-  console.debug('[opendraw] change', detail.elements.length)
 }
 
 function onSelect(ids: string[]): void {
   window.__opendraw = { elements: window.__opendraw?.elements ?? [], selection: ids }
-  // eslint-disable-next-line no-console
-  console.debug('[opendraw] select', ids)
 }
 </script>
 
 <style scoped>
 .page {
   height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.page__bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  border-bottom: 1px solid #eaeaea;
-  font: 500 13px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #495057;
-}
-
-.page__link {
-  color: #0c8599;
-  text-decoration: none;
-}
-
-.page__link:hover {
-  text-decoration: underline;
+  height: 100dvh;
 }
 
 .draw {
-  flex: 1;
-  min-height: 0;
+  height: 100%;
 }
 </style>
