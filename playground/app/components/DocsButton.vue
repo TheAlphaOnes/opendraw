@@ -35,17 +35,17 @@ import { BookOpen } from 'lucide-vue-next'
 }
 
 .docs-button:hover {
-  background: var(--od-surface-high, #f1f0ff);
+  background: var(--od-surface-high, #fff4ec);
 }
 
 .docs-button:active {
   transform: scale(0.96);
-  box-shadow: 0 0 0 1px var(--od-brand-active, #4440bf);
+  box-shadow: 0 0 0 1px var(--od-brand-active, #c2410c);
 }
 
 .docs-button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--od-accent, #6965db);
+  box-shadow: 0 0 0 2px var(--od-accent, #ea580c);
 }
 
 @keyframes docs-button-in {

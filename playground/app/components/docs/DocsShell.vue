@@ -54,6 +54,7 @@ onBeforeUnmount(() => observer?.disconnect())
         <Menu v-else :size="18" />
       </button>
       <NuxtLink to="/" class="docs__brand">
+        <img src="/favicon.svg" alt="" class="docs__mark" width="28" height="28" />
         <span class="docs__logo">opendraw</span>
         <span class="docs__badge">docs</span>
       </NuxtLink>
@@ -92,8 +93,8 @@ onBeforeUnmount(() => observer?.disconnect())
 
 <style scoped>
 .docs {
-  --docs-accent: #6965db;
-  --docs-accent-soft: #f1f0ff;
+  --docs-accent: #ea580c;
+  --docs-accent-soft: #fff4ec;
   --docs-ink: #1b1b1f;
   --docs-soft: #5c5c66;
   --docs-line: #ececf4;
@@ -122,16 +123,22 @@ onBeforeUnmount(() => observer?.disconnect())
 
 .docs__brand {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   color: inherit;
   text-decoration: none;
 }
 
+.docs__mark {
+  display: block;
+  border-radius: 7px;
+}
+
 .docs__logo {
-  font-family: 'Excalifont', 'Virgil', 'Segoe Print', 'Bradley Hand', cursive;
-  font-size: 24px;
-  color: var(--docs-accent);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--docs-ink);
 }
 
 .docs__badge {

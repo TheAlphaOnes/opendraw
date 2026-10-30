@@ -2,10 +2,8 @@
   <main class="page">
     <OpenDraw class="draw" :menu-links="MENU_LINKS" @change="onChange" @select="onSelect">
       <template #top-right>
-        <DocsButton />
-      </template>
-      <template #footer>
         <InstallCommand />
+        <DocsButton />
       </template>
     </OpenDraw>
   </main>
@@ -14,7 +12,7 @@
 <script setup lang="ts">
 /**
  * The published demo: the editor fills the page, Excalidraw-style, with
- * the docs link top-right and the install command bottom-right.
+ * the install command and the docs link top-right.
  *
  * E2E mirror: the Playwright suite reads document state through the public
  * change/select events (mirrored onto `window.__opendraw`) instead of

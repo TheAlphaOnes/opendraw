@@ -75,7 +75,7 @@ const NAV: DocsNavGroup[] = [
   font-size: 44px;
   font-weight: 400;
   line-height: 1.15;
-  color: #6965db;
+  color: #ea580c;
 }
 
 .prose :deep(h2) {
@@ -117,8 +117,8 @@ const NAV: DocsNavGroup[] = [
 .prose :deep(code) {
   padding: 1px 6px;
   border-radius: 5px;
-  background: #f1f0ff;
-  color: #4a47b1;
+  background: #fff4ec;
+  color: #c2410c;
   font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   font-size: 0.86em;
 }

@@ -93,7 +93,7 @@ onBeforeUnmount(() => {
 }
 
 .code__copy:hover {
-  background: #f1f0ff;
-  color: #6965db;
+  background: #fff4ec;
+  color: #ea580c;
 }
 </style>
