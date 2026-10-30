@@ -1,12 +1,13 @@
 import { isFreedrawElement, isLinearElement, rebindAfterDrag } from '@opendraw/core'
 
+import type { LaserTrail } from './laserTrail.js'
 import type { CanvasRuntime } from './runtime.js'
 
 /** Box tools whose click-without-drag leaves nothing worth keeping. */
 const BOX_TOOLS = new Set(['rectangle', 'diamond', 'ellipse', 'frame'])
 
 /** pointerup / pointercancel: closes the live gesture's history step. */
-export function onCanvasPointerUp(rt: CanvasRuntime, event: PointerEvent): void {
+export function onCanvasPointerUp(rt: CanvasRuntime, laser: LaserTrail, event: PointerEvent): void {
   const { ctx } = rt
   const current = rt.interaction.value
   rt.interaction.value = { kind: 'none' }
@@ -93,6 +94,9 @@ export function onCanvasPointerUp(rt: CanvasRuntime, event: PointerEvent): void 
       // The commit/retreat logic lives on pointerdown (Excalidraw's
       // multiElement flow) — the release just keeps the draft live.
       rt.interaction.value = current
+      return
+    case 'laser':
+      laser.end()
       return
     case 'resizing':
     case 'rotating':

@@ -83,7 +83,7 @@ export function mountCanvas(editor: EditorController, options: MountCanvasOption
   }
   const onPointerDown = (event: PointerEvent): void => onCanvasPointerDown(rt, laser, event)
   const onPointerMove = (event: PointerEvent): void => onCanvasPointerMove(rt, laser, event)
-  const onPointerUp = (event: PointerEvent): void => onCanvasPointerUp(rt, event)
+  const onPointerUp = (event: PointerEvent): void => onCanvasPointerUp(rt, laser, event)
   const onPointerLeave = (): void => onCanvasPointerLeave(rt)
   const onDoubleClick = (event: MouseEvent): void => onCanvasDoubleClick(rt, event)
   const onWheel = (event: WheelEvent): void => onCanvasWheel(rt, event)

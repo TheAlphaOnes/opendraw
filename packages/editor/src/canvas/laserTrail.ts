@@ -1,93 +1,107 @@
 import type { Point } from '@opendraw/core'
 import { applyViewportTransform } from '@opendraw/core'
 
+import type { SizeMappingDetails } from './laserOutline.js'
+import { LaserStroke, svgPathFromOutline } from './laserOutline.js'
 import type { CanvasRuntime } from './runtime.js'
 
 /**
- * Laser pointer — transient overlay ink, never document state. Points
- * fade out by age; a rAF loop trims the trail and repaints until empty.
+ * Laser pointer — transient overlay ink, never document state. A port of
+ * Excalidraw's LaserTrails + AnimatedTrail: each press is one stroke drawn
+ * as a single filled outline whose width decays with age and tapers toward
+ * the tail, so nothing overlaps into dots. Finished strokes keep fading
+ * until their outline is empty; a rAF loop repaints while any remain.
  */
 
-interface LaserPoint {
-  x: number
-  y: number
-  /** Performance timestamp — points fade out by age. */
-  t: number
-}
+/** Excalidraw's DEFAULT_LASER_COLOR. */
+const LASER_COLOR = 'red'
+/** LaserPointer's default half-width, in screen pixels. */
+const LASER_SIZE = 2
+const DECAY_TIME = 1000
+const DECAY_LENGTH = 50
 
-const LASER_COLOR = '#ff2698'
-const LASER_FADE_MS = 1000
-const LASER_WIDTH = 4
+const easeOut = (k: number): number => 1 - Math.pow(1 - k, 4)
+
+/** Excalidraw's laser sizeMapping: shrink with age and toward the tail. */
+function laserSizeMapping(c: SizeMappingDetails): number {
+  const t = Math.max(0, 1 - (performance.now() - c.pressure) / DECAY_TIME)
+  const l = (DECAY_LENGTH - Math.min(DECAY_LENGTH, c.totalLength - c.currentIndex)) / DECAY_LENGTH
+  return Math.min(easeOut(l), easeOut(t))
+}
 
 export interface LaserTrail {
   start: (at: Point) => void
   extend: (at: Point) => void
+  /** Pointer released: the stroke keeps fading on its own. */
+  end: () => void
   /** Paints the trail onto the overlay (its own viewport transform). */
   draw: (target: CanvasRenderingContext2D, dpr: number) => void
   dispose: () => void
 }
 
 export function createLaserTrail(rt: CanvasRuntime): LaserTrail {
-  /** Live trail in scene coordinates; trimmed by the fade loop below. */
-  let trail: LaserPoint[] = []
-  let fadeFrame = 0
+  let current: LaserStroke | null = null
+  let past: LaserStroke[] = []
+  let frame = 0
 
-  function scheduleFade(): void {
-    if (fadeFrame) {
+  /** Outline size in scene units so the ink is constant on screen. */
+  const sceneSize = (): number => LASER_SIZE / rt.ctx.state.appState.viewport.zoom
+
+  function animate(): void {
+    if (frame) {
       return
     }
-    fadeFrame = requestAnimationFrame(() => {
-      fadeFrame = 0
-      const cutoff = performance.now() - LASER_FADE_MS
-      trail = trail.filter((p) => p.t > cutoff)
+    frame = requestAnimationFrame(() => {
+      frame = 0
+      past = past.filter((stroke) => stroke.getStrokeOutline(sceneSize()).length !== 0)
       rt.scheduleRender()
-      if (trail.length > 0) {
-        scheduleFade()
+      if (current || past.length > 0) {
+        animate()
       }
     })
   }
 
   return {
     dispose() {
-      if (fadeFrame) {
-        cancelAnimationFrame(fadeFrame)
-        fadeFrame = 0
+      if (frame) {
+        cancelAnimationFrame(frame)
+        frame = 0
       }
+      current = null
+      past = []
     },
     start(at) {
-      trail = [{ x: at.x, y: at.y, t: performance.now() }]
-      rt.scheduleRender()
+      current = new LaserStroke({ size: LASER_SIZE, streamline: 0.4, keepHead: false, sizeMapping: laserSizeMapping })
+      current.addPoint([at.x, at.y, performance.now()])
+      animate()
     },
     extend(at) {
-      trail.push({ x: at.x, y: at.y, t: performance.now() })
-      rt.scheduleRender()
-      scheduleFade()
+      current?.addPoint([at.x, at.y, performance.now()])
+      animate()
     },
-    draw(target, dpr) {
-      if (trail.length < 2) {
+    end() {
+      if (!current) {
         return
       }
-      const { viewport } = rt.ctx.state.appState
-      const now = performance.now()
-      target.save()
-      applyViewportTransform(target, viewport, dpr)
-      target.lineCap = 'round'
-      target.lineJoin = 'round'
-      target.strokeStyle = LASER_COLOR
-      target.lineWidth = LASER_WIDTH
-      for (let i = 1; i < trail.length; i++) {
-        const a = trail[i - 1]!
-        const b = trail[i]!
-        const alpha = Math.max(0, 1 - (now - Math.max(a.t, b.t)) / LASER_FADE_MS)
-        if (alpha <= 0) {
-          continue
-        }
-        target.globalAlpha = alpha
-        target.beginPath()
-        target.moveTo(a.x, a.y)
-        target.lineTo(b.x, b.y)
-        target.stroke()
+      current.close()
+      past.push(current)
+      current = null
+      animate()
+    },
+    draw(target, dpr) {
+      const strokes = current ? [...past, current] : past
+      if (strokes.length === 0) {
+        return
       }
+      const size = sceneSize()
+      const path = strokes.map((stroke) => svgPathFromOutline(stroke.getStrokeOutline(size))).join(' ').trim()
+      if (!path) {
+        return
+      }
+      target.save()
+      applyViewportTransform(target, rt.ctx.state.appState.viewport, dpr)
+      target.fillStyle = LASER_COLOR
+      target.fill(new Path2D(path))
       target.restore()
     },
   }
