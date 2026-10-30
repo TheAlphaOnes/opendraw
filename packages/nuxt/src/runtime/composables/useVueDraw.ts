@@ -8,6 +8,7 @@ import {
   selectedGroupIds,
   stylePayloadOf,
   type Alignment,
+  type Arrowhead,
   type FlipAxis,
   type StylePayload,
   exportToDataURL,
@@ -109,6 +110,8 @@ export interface VueDrawContext {
   changeTextStyle: (style: Partial<TextStyle>) => void
   /** Corner treatment for the selected rectangles/diamonds, else new-shape default. */
   changeRoundness: (roundness: Roundness | null) => void
+  /** Sets one end's head on the selected arrows (or the next arrow's). */
+  changeArrowhead: (position: 'start' | 'end', arrowhead: Arrowhead | null) => void
   /** Mod+Shift+> / Mod+Shift+< — steps selected text 10% bigger/smaller. */
   stepFontSize: (direction: 1 | -1) => void
   /** Mod+Alt+C — remembers the first selected element's style. */
@@ -359,6 +362,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
     changeTextStyle: (style) => doc.changeTextStyle(style),
     changeRoundness: (roundness) => doc.changeRoundness(roundness),
     stepFontSize: (direction) => doc.stepFontSize(direction),
+    changeArrowhead: (position, arrowhead) => doc.changeArrowhead(position, arrowhead),
     copyStyles: () => {
       const first = doc.getSelectedElements()[0]
       if (first) {

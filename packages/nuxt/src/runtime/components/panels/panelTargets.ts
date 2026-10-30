@@ -14,6 +14,7 @@ export interface PanelTargets {
   strokeShape: boolean
   sloppiness: boolean
   corners: boolean
+  arrowheads: boolean
   text: boolean
 }
 
@@ -24,6 +25,7 @@ const HIDDEN: PanelTargets = {
   strokeShape: false,
   sloppiness: false,
   corners: false,
+  arrowheads: false,
   text: false,
 }
 
@@ -58,6 +60,7 @@ export function panelTargets(selected: readonly VueDrawElement[], tool: ToolId):
     strokeShape: any(STROKE_SHAPED),
     sloppiness: any(SLOPPY),
     corners: any(CORNERED),
+    arrowheads: types.includes('arrow'),
     text: types.includes('text'),
   }
 }

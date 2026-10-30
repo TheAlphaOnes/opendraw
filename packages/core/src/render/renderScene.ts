@@ -35,6 +35,7 @@ import type {
   VueDrawTextElement,
 } from '../types.js'
 import { applyViewportTransform, screenToScene } from '../viewport.js'
+import { arrowheadDrawables } from './arrowheads.js'
 import { themeColor, UI } from './theme.js'
 
 /**
@@ -169,8 +170,13 @@ const generator = rough.generator()
 interface CachedShape {
   /** Theme the drawables were colored for — a theme switch regenerates. */
   dark: boolean
+  /** Canvas background outline arrowheads were filled with. */
+  background: string
   drawables: readonly Drawable[]
 }
+
+/** Background assumed when a caller has none (standalone element draws). */
+const DEFAULT_BACKGROUND = '#ffffff'
 
 /** Elements are immutable, so reference identity is a valid cache key. */
 const shapeCache = new WeakMap<VueDrawElement, CachedShape>()
@@ -309,39 +315,10 @@ function isClosedLoop(points: readonly Point[]): boolean {
   return Math.hypot(first.x - last.x, first.y - last.y) <= LOOP_MAX_DISTANCE
 }
 
-/** Chevron angle and length, in Excalidraw's proportions. */
-const ARROWHEAD_ANGLE = 20 * (Math.PI / 180)
-const ARROWHEAD_SIZE = 30
-
-function buildArrowhead(element: VueDrawLinearElement, options: Options): Drawable[] {
-  const points = element.points
-  const tip = points[points.length - 1]
-  const previous = points[points.length - 2]
-  if (!tip || !previous) {
-    return []
-  }
-  const dx = tip.x - previous.x
-  const dy = tip.y - previous.y
-  const segmentLength = Math.hypot(dx, dy)
-  if (segmentLength === 0) {
-    return []
-  }
-  const direction = Math.atan2(dy, dx)
-  const length = Math.min((ARROWHEAD_SIZE * element.strokeWidth) / 2, segmentLength / 2)
-  const strokeOptions: Options = { ...options, fill: undefined }
-  const drawables: Drawable[] = []
-  for (const offset of [-ARROWHEAD_ANGLE, ARROWHEAD_ANGLE]) {
-    const angle = direction + Math.PI + offset
-    const endX = tip.x + Math.cos(angle) * length
-    const endY = tip.y + Math.sin(angle) * length
-    drawables.push(generator.line(tip.x, tip.y, endX, endY, strokeOptions))
-  }
-  return drawables
-}
-
 function buildLinearShape(
   element: VueDrawLineElement | VueDrawArrowElement,
   dark: boolean,
+  background: string,
 ): Drawable[] {
   const points = toRoughPoints(element.points)
   if (isClosedLoop(element.points)) {
@@ -350,30 +327,39 @@ function buildLinearShape(
   }
   const strokeOptions: Options = { ...buildRoughOptions(element, dark), fill: undefined }
   const drawables: Drawable[] = [generator.linearPath(points, strokeOptions)]
+  // Only arrows render heads (Excalidraw's lines carry the fields unused).
   if (element.type === 'arrow') {
-    drawables.push(...buildArrowhead(element, strokeOptions))
+    const stroke = themeColor(element.strokeColor, dark)
+    // Outline heads punch the canvas color through; the background is user
+    // data that is never dark-filtered, so it fills unfiltered too.
+    const fill = background
+    for (const [position, head] of [['start', element.startArrowhead], ['end', element.endArrowhead]] as const) {
+      if (head) {
+        drawables.push(...arrowheadDrawables(generator, element, position, head, strokeOptions, stroke, fill))
+      }
+    }
   }
   return drawables
 }
 
-function buildShape(element: VueDrawElement, dark: boolean): readonly Drawable[] {
+function buildShape(element: VueDrawElement, dark: boolean, background: string): readonly Drawable[] {
   if (isBoxLike(element)) {
     return buildBoxShape(element, dark)
   }
   if (isLinearType(element)) {
-    return buildLinearShape(element, dark)
+    return buildLinearShape(element, dark, background)
   }
   // Freedraw and text never render through rough.js.
   return []
 }
 
-function getShape(element: VueDrawElement, dark: boolean): readonly Drawable[] {
+function getShape(element: VueDrawElement, dark: boolean, background: string): readonly Drawable[] {
   const cached = shapeCache.get(element)
-  if (cached && cached.dark === dark) {
+  if (cached && cached.dark === dark && cached.background === background) {
     return cached.drawables
   }
-  const drawables = buildShape(element, dark)
-  shapeCache.set(element, { dark, drawables })
+  const drawables = buildShape(element, dark, background)
+  shapeCache.set(element, { dark, background, drawables })
   return drawables
 }
 
@@ -385,8 +371,9 @@ function getShape(element: VueDrawElement, dark: boolean): readonly Drawable[] {
 export function getElementDrawables(
   element: VueDrawElement,
   dark: boolean,
+  background: string = DEFAULT_BACKGROUND,
 ): readonly Drawable[] {
-  return getShape(element, dark)
+  return getShape(element, dark, background)
 }
 
 // ---------------------------------------------------------------------------
@@ -517,7 +504,8 @@ function drawElement(
   rc: ReturnType<typeof rough.canvas>,
   element: VueDrawElement,
   dark: boolean,
-  resolveImage?: SceneImageResolver,
+  resolveImage: SceneImageResolver | undefined,
+  background: string,
 ): void {
   ctx.save()
   ctx.translate(element.x, element.y)
@@ -537,7 +525,7 @@ function drawElement(
     case 'ellipse':
     case 'line':
     case 'arrow': {
-      for (const drawable of getShape(element, dark)) {
+      for (const drawable of getShape(element, dark, background)) {
         // rough.js resets some ctx state per opset — re-apply alpha so
         // multi-drawable elements (arrowheads) stay uniformly faded.
         ctx.globalAlpha = element.opacity / 100
@@ -717,7 +705,7 @@ export function renderScene(ctx: CanvasRenderingContext2D, input: SceneRenderInp
   // One RoughCanvas per render call; drawables come from the shared generator.
   const rc = rough.canvas(ctx.canvas)
   for (const element of renderableElements(elements, editingId)) {
-    drawElement(ctx, rc, element, dark, input.resolveImage)
+    drawElement(ctx, rc, element, dark, input.resolveImage, viewBackgroundColor)
   }
   ctx.restore()
 }
@@ -735,8 +723,9 @@ export function renderElementShape(
   element: VueDrawElement,
   dark: boolean,
   resolveImage?: SceneImageResolver,
+  background: string = DEFAULT_BACKGROUND,
 ): void {
-  drawElement(ctx, rough.canvas(ctx.canvas), element, dark, resolveImage)
+  drawElement(ctx, rough.canvas(ctx.canvas), element, dark, resolveImage, background)
 }
 
 /**
@@ -750,6 +739,7 @@ export function exportElementShape(
   element: VueDrawElement,
   dark: boolean,
   resolveImage?: SceneImageResolver,
+  background: string = DEFAULT_BACKGROUND,
 ): void {
-  renderElementShape(ctx, element, dark, resolveImage)
+  renderElementShape(ctx, element, dark, resolveImage, background)
 }

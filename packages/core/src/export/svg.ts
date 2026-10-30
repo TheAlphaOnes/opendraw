@@ -144,7 +144,7 @@ function textToSvg(element: VueDrawTextElement, dark: boolean): string {
  * One element as a positioned `<g>`: translate to the element origin, rotate
  * around its center — the same transform the canvas renderer applies.
  */
-function elementToSvg(element: VueDrawElement, dark: boolean): string {
+function elementToSvg(element: VueDrawElement, dark: boolean, background: string): string {
   const rotate =
     element.angle !== 0
       ? ` rotate(${formatNumber((element.angle * 180) / Math.PI)} ${formatNumber(element.width / 2)} ${formatNumber(element.height / 2)})`
@@ -157,7 +157,7 @@ function elementToSvg(element: VueDrawElement, dark: boolean): string {
     case 'ellipse':
     case 'line':
     case 'arrow': {
-      for (const drawable of getElementDrawables(element, dark)) {
+      for (const drawable of getElementDrawables(element, dark, background)) {
         body += drawableToSvgPaths(drawable)
       }
       break
@@ -223,7 +223,9 @@ export function exportToSvg(
 
   let body = backgroundRect
   for (const element of elements) {
-    body += elementToSvg(element, dark)
+    // Outline arrowheads fill with the canvas color; a transparent export
+    // has none, so they fall back to white like Excalidraw's export.
+    body += elementToSvg(element, dark, background.toLowerCase() === TRANSPARENT ? '#ffffff' : background)
   }
 
   return (

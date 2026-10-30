@@ -23,6 +23,8 @@ import {
   ArrowUpToLine,
   BringToFront,
   Brush,
+  ChevronDown,
+  ChevronRight,
   Circle,
   ClipboardPaste,
   Copy,
@@ -68,6 +70,7 @@ import {
   Square,
   Sun,
   Trash2,
+  Triangle,
   Type,
   Undo2,
   Ungroup,
@@ -151,6 +154,13 @@ export type IconName =
   | 'alignLeft'
   | 'alignCenter'
   | 'alignRight'
+  | 'arrowheadNone'
+  | 'arrowheadArrow'
+  | 'arrowheadBar'
+  | 'arrowheadCircle'
+  | 'arrowheadTriangle'
+  | 'arrowheadDiamond'
+  | 'chevronDown'
 
 export const iconRegistry: Record<IconName, Component> = {
   // tools
@@ -230,4 +240,12 @@ export const iconRegistry: Record<IconName, Component> = {
   alignLeft: AlignLeft,
   alignCenter: AlignCenter,
   alignRight: AlignRight,
+  // Arrowhead glyphs; the picker rotates/fills them per head kind.
+  arrowheadNone: Minus,
+  arrowheadArrow: ChevronRight,
+  arrowheadBar: Minus,
+  arrowheadCircle: Circle,
+  arrowheadTriangle: Triangle,
+  arrowheadDiamond: Diamond,
+  chevronDown: ChevronDown,
 }

@@ -9,6 +9,7 @@
 
 import { isElementType } from '../elements/factories.js'
 import type {
+  Arrowhead,
   FillStyle,
   Opacity,
   Roughness,
@@ -67,6 +68,21 @@ function linearBinding(value: unknown): VueDrawBinding | null {
   return { elementId: value.elementId }
 }
 
+const ARROWHEADS: readonly Arrowhead[] = [
+  'arrow', 'bar', 'circle', 'circle_outline', 'triangle', 'triangle_outline', 'diamond', 'diamond_outline',
+]
+
+/** Coerces an arrowhead: a known kind, else the fallback. Excalidraw's legacy `dot` reads as a circle. */
+function arrowhead(value: unknown, fallback: Arrowhead | null): Arrowhead | null {
+  if (value === 'dot') {
+    return 'circle'
+  }
+  if (value === null) {
+    return null
+  }
+  return ARROWHEADS.includes(value as Arrowhead) ? (value as Arrowhead) : fallback
+}
+
 /**
  * Coerces unknown data into a valid element, or null when it isn't one.
  * Unknown props are dropped; invalid values fall back to defaults.
@@ -106,6 +122,10 @@ export function coerceElement(input: unknown): VueDrawElement | null {
       points: points(input.points),
       startBinding: linearBinding(input.startBinding),
       endBinding: linearBinding(input.endBinding),
+      startArrowhead: arrowhead(input.startArrowhead, null),
+      // Files from before arrowheads were configurable: arrows always had
+      // an end head, so absent means 'arrow' for them.
+      endArrowhead: arrowhead(input.endArrowhead, type === 'arrow' && !('endArrowhead' in input) ? 'arrow' : null),
     }
   }
   if (type === 'freedraw') {
@@ -136,6 +156,26 @@ export function coerceElement(input: unknown): VueDrawElement | null {
     return { ...base, type, name: str(input.name, 'Frame') }
   }
   return { ...base, type: 'ellipse' }
+}
+
+/**
+ * Fills fields newer than the element's author knew about, keeping the
+ * same reference when nothing is missing — the cheap repair for elements a
+ * host app builds by hand (full coercion is for untrusted files).
+ */
+export function normalizeElement(element: VueDrawElement): VueDrawElement {
+  const missingGroups = !Array.isArray(element.groupIds)
+  const linear = element.type === 'line' || element.type === 'arrow'
+  const missingHeads = linear && (!('startArrowhead' in element) || !('endArrowhead' in element))
+  if (!missingGroups && !missingHeads) {
+    return element
+  }
+  const repaired = { ...element, groupIds: missingGroups ? [] : element.groupIds } as VueDrawElement
+  if (missingHeads && (repaired.type === 'line' || repaired.type === 'arrow')) {
+    repaired.startArrowhead = repaired.startArrowhead ?? null
+    repaired.endArrowhead = repaired.endArrowhead === undefined ? (repaired.type === 'arrow' ? 'arrow' : null) : repaired.endArrowhead
+  }
+  return repaired
 }
 
 /** Builds a scene file from elements (+ document background). */

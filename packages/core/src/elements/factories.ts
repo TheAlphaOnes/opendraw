@@ -7,6 +7,7 @@
 
 import { layoutText, type TextLayout } from '../geometry/text.js'
 import type {
+  Arrowhead,
   ElementOf,
   ElementStyle,
   Point,
@@ -67,6 +68,9 @@ export interface NewElementOptions {
 
 export interface NewLinearElementOptions extends NewElementOptions {
   points?: Point[]
+  /** Defaults: arrows get an end `arrow` head, lines none (Excalidraw). */
+  startArrowhead?: Arrowhead | null
+  endArrowhead?: Arrowhead | null
 }
 
 export interface NewFreedrawOptions extends NewElementOptions {
@@ -158,6 +162,8 @@ export function newLinearElement(
     // Lines and arrows bind alike (Excalidraw's LinearElement).
     startBinding: null,
     endBinding: null,
+    startArrowhead: opts.startArrowhead ?? null,
+    endArrowhead: opts.endArrowhead === undefined ? (type === 'arrow' ? 'arrow' : null) : opts.endArrowhead,
   } as VueDrawLineElement | VueDrawArrowElement
 }
 

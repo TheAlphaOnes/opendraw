@@ -35,6 +35,7 @@ import type { ElementPatch } from '../elements/mutate.js'
 import { forcePatchElement, patchElement } from '../elements/mutate.js'
 import { DEFAULT_ELEMENT_STYLE, DEFAULT_TEXT_STYLE } from '../elements/defaults.js'
 import type {
+  Arrowhead,
   ElementStyle,
   ReorderAction,
   StylePayload,
@@ -48,7 +49,7 @@ import type {
   VueDrawStateListener,
 } from '../types.js'
 import { layoutText, type TextLayout } from '../geometry/text.js'
-import { parseFile } from '../export/serialize.js'
+import { normalizeElement, parseFile } from '../export/serialize.js'
 import type { Point, Viewport } from '../types.js'
 import { type HistorySnapshot, SceneHistory } from './history.js'
 
@@ -74,6 +75,7 @@ export const DEFAULT_APP_STATE: VueDrawAppState = {
   style: { ...DEFAULT_ELEMENT_STYLE },
   textStyle: { ...DEFAULT_TEXT_STYLE },
   shapeRoundness: null,
+  arrowheads: { start: null, end: 'arrow' },
 }
 
 export class VueDrawDocument {
@@ -87,10 +89,8 @@ export class VueDrawDocument {
   private openStep: HistorySnapshot | null = null
 
   constructor(options: VueDrawDocumentOptions = {}) {
-    // Hand-built elements from older versions may predate `groupIds`.
-    this.elements = (options.elements ?? []).map((el) =>
-      Array.isArray(el.groupIds) ? el : { ...el, groupIds: [] },
-    )
+    // Hand-built elements may predate newer fields (groups, arrowheads).
+    this.elements = (options.elements ?? []).map(normalizeElement)
     this.elementsMap = new Map(this.elements.map((el) => [el.id, el]))
     this.appState = { ...DEFAULT_APP_STATE, ...options.appState }
     if (options.appState?.viewport) {
@@ -772,6 +772,26 @@ export class VueDrawDocument {
       })
       return changed ? next : null
     })
+  }
+
+  /**
+   * Sets one end's arrowhead on every selected arrow (one undo step); with
+   * no arrow selected it becomes the head for the next arrow drawn.
+   */
+  changeArrowhead(position: 'start' | 'end', arrowhead: Arrowhead | null): void {
+    const ids = this.getSelectedElements()
+      .filter((el) => el.type === 'arrow')
+      .map((el) => el.id)
+    if (ids.length === 0) {
+      this.commitAppState({
+        ...this.appState,
+        arrowheads: { ...this.appState.arrowheads, [position]: arrowhead },
+      })
+      return
+    }
+    const patch: ElementPatch<VueDrawLinearElement> =
+      position === 'start' ? { startArrowhead: arrowhead } : { endArrowhead: arrowhead }
+    this.updateElements<VueDrawLinearElement>(ids, patch)
   }
 
   /**

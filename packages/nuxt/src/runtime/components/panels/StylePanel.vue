@@ -20,6 +20,7 @@ import {
 
 import { useVueDraw } from '../../composables/useVueDraw.js'
 import { panelTargets, type PanelTargets } from './panelTargets.js'
+import ArrowheadPicker from './ArrowheadPicker.vue'
 import SelectionActions from './SelectionActions.vue'
 import StyleSection from './StyleSection.vue'
 import UiPanel from '../ui/UiPanel.vue'
@@ -175,6 +176,9 @@ const alignOptions: UiSegmentedOption[] = [
           ariaLabel="Corner style"
           @update:model-value="ctx.changeRoundness($event === 'round' ? 'round' : null)"
         />
+      </StyleSection>
+      <StyleSection v-if="targets.arrowheads" label="Arrowheads">
+        <ArrowheadPicker />
       </StyleSection>
       <template v-if="targets.text">
         <StyleSection label="Font family">

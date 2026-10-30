@@ -49,9 +49,19 @@ export function eraseAlong(rt: CanvasRuntime, from: Point, to: Point): void {
 }
 
 function draftElement(rt: CanvasRuntime, tool: string, at: Point): VueDrawElement {
-  const { style, shapeRoundness } = rt.ctx.appState.value
-  if (tool === 'line' || tool === 'arrow') {
+  const { style, shapeRoundness, arrowheads } = rt.ctx.appState.value
+  if (tool === 'line') {
     return newLinearElement(tool, { x: at.x, y: at.y, style, points: [{ x: 0, y: 0 }] })
+  }
+  if (tool === 'arrow') {
+    return newLinearElement(tool, {
+      x: at.x,
+      y: at.y,
+      style,
+      points: [{ x: 0, y: 0 }],
+      startArrowhead: arrowheads.start,
+      endArrowhead: arrowheads.end,
+    })
   }
   if (tool === 'frame') {
     return newFrameElement({ x: at.x, y: at.y, style })

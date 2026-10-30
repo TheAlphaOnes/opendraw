@@ -99,10 +99,25 @@ export interface VueDrawElementBase {
   groupIds: readonly string[]
 }
 
+/** Excalidraw's arrowhead kinds (the cardinality markers aside). */
+export type Arrowhead =
+  | 'arrow'
+  | 'bar'
+  | 'circle'
+  | 'circle_outline'
+  | 'triangle'
+  | 'triangle_outline'
+  | 'diamond'
+  | 'diamond_outline'
+
 /** Elements whose geometry is a polyline in local element space. */
 export interface VueDrawLinearElement extends VueDrawElementBase {
   type: 'line' | 'arrow'
   points: Point[]
+  /** Head drawn at the first point, or null. Only arrows render heads. */
+  startArrowhead: Arrowhead | null
+  /** Head drawn at the last point, or null. */
+  endArrowhead: Arrowhead | null
   /** Shape the start tip is docked to, or null when loose. */
   startBinding: VueDrawBinding | null
   /** Shape the end tip is docked to, or null when loose. */
@@ -277,6 +292,8 @@ export interface VueDrawAppState {
   textStyle: TextStyle
   /** Corner style applied to newly created rectangles and diamonds. */
   shapeRoundness: Roundness | null
+  /** Heads given to newly drawn arrows. */
+  arrowheads: { start: Arrowhead | null; end: Arrowhead | null }
 }
 
 // ---------------------------------------------------------------------------
