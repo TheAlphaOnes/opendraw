@@ -12,9 +12,22 @@ appleKeyDisplay.subscribe((value) => {
   apple.value = value
 })
 
-export function useKeyDisplay(): { apple: Readonly<Ref<boolean>>; format: (keys: readonly string[]) => string[] } {
+export interface KeyDisplay {
+  apple: Readonly<Ref<boolean>>
+  /** One display string per key ("⌘", "Shift", "Z"). */
+  format: (keys: readonly string[]) => string[]
+  /** The whole combo as one hint: "⌘⇧E" on Apple, "Ctrl+Shift+E" elsewhere. */
+  text: (keys: readonly string[]) => string
+}
+
+export function useKeyDisplay(): KeyDisplay {
+  const format = (keys: readonly string[]): string[] => formatKeys(keys, apple.value)
   return {
     apple,
-    format: (keys) => formatKeys(keys, apple.value),
+    format,
+    text: (keys) => {
+      const parts = format(keys)
+      return parts.join(parts.some((key) => key.length > 1) ? '+' : '')
+    },
   }
 }

@@ -21,8 +21,9 @@ const props = withDefaults(
     /** Overrides the action's label (state-dependent wording). */
     label?: string
     active?: boolean
+    size?: 'md' | 'lg'
   }>(),
-  { icon: undefined, label: undefined, active: false },
+  { icon: undefined, label: undefined, active: false, size: 'md' },
 )
 
 const ctx = useOpenDraw()
@@ -35,8 +36,7 @@ const accessibleName = computed(() => {
   if (!shortcut) {
     return base
   }
-  const display = keys.format(shortcut)
-  return `${base} (${display.join(display.some((key) => key.length > 1) ? '+' : '')})`
+  return `${base} (${keys.text(shortcut)})`
 })
 
 const enabled = computed(() => {
@@ -53,6 +53,7 @@ const enabled = computed(() => {
     :active="props.active"
     :disabled="!enabled"
     :danger="definition.danger"
+    :size="props.size"
     @click="runAction(ctx.editor, props.action)"
   />
 </template>

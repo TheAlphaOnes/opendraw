@@ -158,6 +158,10 @@ export interface OpenDrawContext {
   // grid
   gridSize: ComputedRef<number | null>
   setGridSize: (size: number | null) => void
+
+  // canvas background
+  viewBackgroundColor: ComputedRef<string>
+  setViewBackgroundColor: (color: string) => void
 }
 
 export type CreateOpenDrawOptions = CreateEditorOptions
@@ -268,6 +272,9 @@ export function createOpenDrawContext(
 
     gridSize: read(() => editor.gridSize),
     setGridSize: (size) => editor.setGridSize(size),
+
+    viewBackgroundColor: read(() => editor.viewBackgroundColor),
+    setViewBackgroundColor: (color) => editor.setViewBackgroundColor(color),
   }
 }
 

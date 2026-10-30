@@ -25,6 +25,7 @@ const icon = computed<Component>(() => iconRegistry[props.name])
     :is="icon"
     class="ui-icon"
     :size="props.size"
+    :stroke-width="1.75"
     :fill="props.filled ? 'currentColor' : 'none'"
     :style="props.rotate ? { transform: `rotate(${props.rotate}deg)` } : undefined"
     aria-hidden="true"

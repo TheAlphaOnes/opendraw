@@ -184,7 +184,8 @@ class TextEditingSession {
 
   private onKeyDown(event: KeyboardEvent): void {
     event.stopPropagation()
-    if (event.key === 'Escape') {
+    // Escape, or Mod+Enter, finishes editing (Excalidraw's text_editing hint).
+    if (event.key === 'Escape' || (event.key === 'Enter' && (event.metaKey || event.ctrlKey))) {
       event.preventDefault()
       // The textarea is about to go: hand focus back to the canvas so the
       // very next shortcut still reaches the editor instead of <body> —

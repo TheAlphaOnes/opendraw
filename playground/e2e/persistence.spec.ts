@@ -10,6 +10,7 @@ import {
   scene,
   test,
   tipOf,
+  runMenuItem,
 } from './helpers'
 
 /**
@@ -41,7 +42,7 @@ test('restores a shape and its bound arrow across a page reload', async ({ page 
   expect(arrowBefore.endBinding).toMatchObject({ elementId: rectId })
 
   // Theme rides along in the persisted chrome state.
-  await page.getByRole('button', { name: 'Dark theme' }).click()
+  await runMenuItem(page, /^Dark mode/)
 
   // The debounced save lands under the stable key — wait until it reflects
   // everything drawn above (the first save may predate the theme switch).

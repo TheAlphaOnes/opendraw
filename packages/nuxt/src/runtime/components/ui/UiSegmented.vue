@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { IconName } from '../../constants/icons.js'
+import type { StyleGlyphName } from './StyleGlyph.vue'
 
 export interface UiSegmentedOption {
   /** Stable value emitted on selection. */
@@ -8,12 +9,15 @@ export interface UiSegmentedOption {
   label: string
   /** Optional registry icon — icon options render as 32x32 hit areas. */
   icon?: IconName
+  /** A drawing of the style value itself (fill, stroke, sloppiness, edges). */
+  glyph?: StyleGlyphName
   /** Shorter visible text when the label is too long for the track. */
   text?: string
 }
 </script>
 
 <script setup lang="ts">
+import StyleGlyph from './StyleGlyph.vue'
 import UiIcon from './UiIcon.vue'
 
 const props = withDefaults(
@@ -67,75 +71,63 @@ function onKeyDown(event: KeyboardEvent): void {
       :title="option.label"
       @click="select(option)"
     >
-      <UiIcon v-if="option.icon" :name="option.icon" :size="16" />
+      <StyleGlyph v-if="option.glyph" :name="option.glyph" />
+      <UiIcon v-else-if="option.icon" :name="option.icon" :size="16" />
       <span v-else class="ui-segmented__label">{{ option.text ?? option.label }}</span>
     </button>
   </div>
 </template>
 
 <style scoped>
-/* Compact pill track; active option raises above it. */
+/* Excalidraw's .buttonList: separate 32px outline buttons, 8px apart; the
+   checked one fills with the selected tone. */
 .ui-segmented {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  border-radius: 10px;
-  background: var(--od-hover);
-}
-
-.ui-segmented--block {
   display: flex;
-  width: 100%;
-}
-
-.ui-segmented--block .ui-segmented__option {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 0 4px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .ui-segmented__option {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  padding: 0 8px;
-  border: none;
-  border-radius: var(--od-radius-m);
-  background: transparent;
-  color: var(--od-ink-soft);
+  min-width: var(--od-button);
+  height: var(--od-button);
+  padding: 0;
+  border: 1px solid var(--od-border);
+  border-radius: var(--od-radius-l);
+  background: var(--od-surface);
+  color: var(--od-ink);
   cursor: pointer;
   transition:
-    background-color 150ms var(--od-ease),
-    color 150ms var(--od-ease),
-    box-shadow 150ms var(--od-ease),
-    transform var(--od-fast) var(--od-ease);
+    background-color var(--od-fast) ease-out,
+    border-color var(--od-fast) ease-out,
+    transform 90ms var(--od-ease);
 }
 
 .ui-segmented__option:hover {
-  color: var(--od-ink);
+  background: var(--od-hover);
 }
 
 .ui-segmented__option:active {
-  transform: scale(0.96);
+  transform: scale(0.94);
+  border-color: var(--od-brand-active);
 }
 
 .ui-segmented__option:focus-visible {
-  outline: 2px solid var(--od-accent);
-  outline-offset: 1px;
+  outline: none;
+  box-shadow: 0 0 0 1px var(--od-accent);
 }
 
 .ui-segmented__option.is-active {
-  background: var(--od-surface-raised);
-  color: var(--od-ink);
-  box-shadow: var(--od-shadow-1);
+  background: var(--od-accent-soft);
+  border-color: var(--od-accent-soft);
+  color: var(--od-on-accent-soft);
 }
 
 .ui-segmented__label {
-  font-size: 12px;
-  font-weight: 500;
+  padding: 0 4px;
+  font-size: 14px;
   line-height: 1;
   white-space: nowrap;
 }

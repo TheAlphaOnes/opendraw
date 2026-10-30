@@ -98,37 +98,37 @@ const customBackgroundColors = computed(() => mostUsedCustomColors(ctx.elements.
 const showFill = computed(() => targets.value.fill && style.value.backgroundColor !== TRANSPARENT)
 
 const fillOptions: UiSegmentedOption[] = [
-  { value: 'hachure', label: 'Hachure fill', icon: 'fillHachure' },
-  { value: 'cross-hatch', label: 'Cross-hatch fill', icon: 'fillCrossHatch' },
-  { value: 'solid', label: 'Solid fill', icon: 'fillSolid' },
+  { value: 'hachure', label: 'Hachure', glyph: 'fillHachure' },
+  { value: 'cross-hatch', label: 'Cross-hatch', glyph: 'fillCrossHatch' },
+  { value: 'solid', label: 'Solid', glyph: 'fillSolid' },
 ]
 const strokeWidthOptions: UiSegmentedOption[] = [
-  { value: String(STROKE_WIDTHS.thin), label: 'Thin stroke', icon: 'strokeThin' },
-  { value: String(STROKE_WIDTHS.medium), label: 'Bold stroke', icon: 'strokeMedium' },
-  { value: String(STROKE_WIDTHS.bold), label: 'Extra bold stroke', icon: 'strokeBold' },
+  { value: String(STROKE_WIDTHS.thin), label: 'Thin', glyph: 'strokeThin' },
+  { value: String(STROKE_WIDTHS.medium), label: 'Bold', glyph: 'strokeBold' },
+  { value: String(STROKE_WIDTHS.bold), label: 'Extra bold', glyph: 'strokeExtraBold' },
 ]
 const strokeStyleOptions: UiSegmentedOption[] = [
-  { value: 'solid', label: 'Solid line', text: 'Solid' },
-  { value: 'dashed', label: 'Dashed line', text: 'Dashed' },
-  { value: 'dotted', label: 'Dotted line', text: 'Dotted' },
+  { value: 'solid', label: 'Solid', glyph: 'strokeSolid' },
+  { value: 'dashed', label: 'Dashed', glyph: 'strokeDashed' },
+  { value: 'dotted', label: 'Dotted', glyph: 'strokeDotted' },
 ]
 const roughnessOptions: UiSegmentedOption[] = [
-  { value: String(ROUGHNESS_LEVELS.architect), label: 'Architect' },
-  { value: String(ROUGHNESS_LEVELS.artist), label: 'Artist' },
-  { value: String(ROUGHNESS_LEVELS.cartoonist), label: 'Cartoonist' },
+  { value: String(ROUGHNESS_LEVELS.architect), label: 'Architect', glyph: 'sloppinessArchitect' },
+  { value: String(ROUGHNESS_LEVELS.artist), label: 'Artist', glyph: 'sloppinessArtist' },
+  { value: String(ROUGHNESS_LEVELS.cartoonist), label: 'Cartoonist', glyph: 'sloppinessCartoonist' },
 ]
 const cornerOptions: UiSegmentedOption[] = [
-  { value: 'sharp', label: 'Sharp corners', icon: 'cornerSharp' },
-  { value: 'round', label: 'Rounded corners', icon: 'cornerRound' },
+  { value: 'sharp', label: 'Sharp', glyph: 'edgeSharp' },
+  { value: 'round', label: 'Round', glyph: 'edgeRound' },
 ]
 const arrowTypeOptions: UiSegmentedOption[] = [
   { value: 'sharp', label: 'Sharp arrow', icon: 'arrowSharp' },
   { value: 'round', label: 'Curved arrow', icon: 'arrowRound' },
 ]
 const fontFamilyOptions: UiSegmentedOption[] = [
-  { value: 'hand', label: 'Hand-drawn font', text: 'Hand' },
-  { value: 'normal', label: 'Normal font', text: 'Normal' },
-  { value: 'code', label: 'Code font', text: 'Code' },
+  { value: 'hand', label: 'Hand-drawn', icon: 'fontHand' },
+  { value: 'normal', label: 'Normal', icon: 'fontNormal' },
+  { value: 'code', label: 'Code', icon: 'fontCode' },
 ]
 // Excalidraw's S / M / L / XL presets.
 const fontSizeOptions: UiSegmentedOption[] = [
@@ -171,7 +171,6 @@ const alignOptions: UiSegmentedOption[] = [
       </StyleSection>
       <StyleSection v-if="showFill" label="Fill">
         <UiSegmented
-          block
           :options="fillOptions"
           :model-value="style.fillStyle"
           ariaLabel="Fill style"
@@ -180,7 +179,6 @@ const alignOptions: UiSegmentedOption[] = [
       </StyleSection>
       <StyleSection v-if="targets.strokeShape" label="Stroke width">
         <UiSegmented
-          block
           :options="strokeWidthOptions"
           :model-value="String(style.strokeWidth)"
           ariaLabel="Stroke width"
@@ -189,7 +187,6 @@ const alignOptions: UiSegmentedOption[] = [
       </StyleSection>
       <StyleSection v-if="targets.strokeShape" label="Stroke style">
         <UiSegmented
-          block
           :options="strokeStyleOptions"
           :model-value="style.strokeStyle"
           ariaLabel="Stroke style"
@@ -198,7 +195,6 @@ const alignOptions: UiSegmentedOption[] = [
       </StyleSection>
       <StyleSection v-if="targets.sloppiness" label="Sloppiness">
         <UiSegmented
-          block
           :options="roughnessOptions"
           :model-value="String(style.roughness)"
           ariaLabel="Sloppiness"
@@ -207,7 +203,6 @@ const alignOptions: UiSegmentedOption[] = [
       </StyleSection>
       <StyleSection v-if="targets.corners" label="Edges">
         <UiSegmented
-          block
           :options="cornerOptions"
           :model-value="roundness"
           ariaLabel="Corner style"
@@ -216,7 +211,6 @@ const alignOptions: UiSegmentedOption[] = [
       </StyleSection>
       <StyleSection v-if="targets.arrowheads" label="Arrow type">
         <UiSegmented
-          block
           :options="arrowTypeOptions"
           :model-value="arrowType"
           ariaLabel="Arrow type"
@@ -229,8 +223,7 @@ const alignOptions: UiSegmentedOption[] = [
       <template v-if="targets.text">
         <StyleSection label="Font family">
           <UiSegmented
-            block
-            :options="fontFamilyOptions"
+              :options="fontFamilyOptions"
             :model-value="textStyle.fontFamily"
             ariaLabel="Font family"
             @update:model-value="ctx.changeTextStyle({ fontFamily: $event as FontFamily })"
@@ -238,8 +231,7 @@ const alignOptions: UiSegmentedOption[] = [
         </StyleSection>
         <StyleSection label="Font size">
           <UiSegmented
-            block
-            :options="fontSizeOptions"
+              :options="fontSizeOptions"
             :model-value="String(textStyle.fontSize)"
             ariaLabel="Font size"
             @update:model-value="ctx.changeTextStyle({ fontSize: Number($event) })"
@@ -247,8 +239,7 @@ const alignOptions: UiSegmentedOption[] = [
         </StyleSection>
         <StyleSection label="Text align">
           <UiSegmented
-            block
-            :options="alignOptions"
+              :options="alignOptions"
             :model-value="textStyle.textAlign"
             ariaLabel="Text alignment"
             @update:model-value="ctx.changeTextStyle({ textAlign: $event as TextAlign })"
@@ -269,10 +260,10 @@ const alignOptions: UiSegmentedOption[] = [
 </template>
 
 <style scoped>
+/* Excalidraw's .selected-shape-actions: sections 8px apart. */
 .style-panel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 4px;
+  gap: 8px;
 }
 </style>

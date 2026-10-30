@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 
-import { at, canvasBox, drag, expect, openEditor, pickFill, pickTool, scene, test, type MirroredElement } from './helpers'
+import { at, canvasBox, drag, expect, openEditor, pickFill, pickTool, scene, test, type MirroredElement, pickMoreTool } from './helpers'
 
 /**
  * Frames behave like Excalidraw's: a container, not a shape. Elements drawn
@@ -20,7 +20,7 @@ async function frameAndChildren(page: Page): Promise<{ frame: MirroredElement; o
 
 async function drawFrame(page: Page, x1: number, y1: number, x2: number, y2: number): Promise<void> {
   const box = await canvasBox(page)
-  await pickTool(page, 'Frame (F)')
+  await pickMoreTool(page, 'Frame tool')
   await drag(page, at(box, x1, y1), at(box, x2, y2))
 }
 

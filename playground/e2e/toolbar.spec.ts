@@ -1,16 +1,15 @@
 /**
  * Toolbar e2e — the top-center tool island must match Excalidraw's
- * arrangement: the full tool set, in Excalidraw's order, split into the
- * same groups (tool lock | hand+selection | shapes |
- * freedraw/text/sticky note/image/eraser | frame/laser).
+ * arrangement: the tool lock, every main tool with its key hint, and the
+ * "More tools" dropdown holding the frame tool and the laser pointer.
  */
 import type { Page } from '@playwright/test'
 
-import { expect, openEditor, test } from './helpers'
+import { expect, openEditor, pickMoreTool, test } from './helpers'
 
-/** Excalidraw's island order, one entry per dock button. */
 const TOOL_LOCK = 'Keep selected tool active after drawing (Q)'
 
+/** Excalidraw's island order, one entry per toolbar button. */
 const TOOL_ORDER = [
   TOOL_LOCK,
   'Hand (H)',
@@ -25,26 +24,8 @@ const TOOL_ORDER = [
   'Sticky note (N)',
   'Image (9)',
   'Eraser (E)',
-  'Frame (F)',
-  'Laser (K)',
+  'More tools',
 ] as const
-
-/** Excalidraw's visual groups, separated by dividers in the island. */
-const TOOL_GROUPS: ReadonlyArray<readonly string[]> = [
-  [TOOL_LOCK],
-  ['Hand (H)', 'Selection (1)'],
-  ['Rectangle (2)', 'Diamond (3)', 'Ellipse (4)', 'Arrow (5)', 'Line (6)'],
-  ['Freedraw (P)', 'Text (T)', 'Sticky note (N)', 'Image (9)', 'Eraser (E)'],
-  ['Frame (F)', 'Laser (K)'],
-]
-
-function groupMembers(index: number): readonly string[] {
-  const members = TOOL_GROUPS[index]
-  if (!members) {
-    throw new Error(`no expected members for group ${index}`)
-  }
-  return members
-}
 
 async function dockBox(page: Page): Promise<{ x: number; y: number; width: number }> {
   const box = await page.locator('.tool-dock').boundingBox()
@@ -76,36 +57,26 @@ test('renders every tool in the top-center island in Excalidraw order', async ({
   expect(Math.abs(box.x + box.width / 2 - viewport.width / 2)).toBeLessThanOrEqual(2)
 })
 
-test('splits the tools into Excalidraw groups separated by dividers', async ({ page }) => {
+test('shows each tool key in the button corner, number keys first', async ({ page }) => {
   await openEditor(page)
+  const dock = page.getByRole('toolbar', { name: 'Drawing tools' })
+  await expect(dock.getByRole('button', { name: 'Selection (1)' })).toContainText('1')
+  await expect(dock.getByRole('button', { name: 'Freedraw (P)' })).toContainText('7')
+  await expect(dock.getByRole('button', { name: 'Sticky note (N)' })).toContainText('N')
+})
 
-  const groups = page.locator('.tool-dock__group')
-  await expect(groups).toHaveCount(TOOL_GROUPS.length)
+test('keeps the frame tool and laser pointer under "More tools"', async ({ page }) => {
+  await openEditor(page)
+  const more = page.getByRole('button', { name: 'More tools' })
+  await more.click()
+  const menu = page.getByRole('menu', { name: 'More tools' })
+  await expect(menu.getByRole('menuitem')).toHaveText([/Frame tool\s*F/, /Laser pointer\s*K/])
+  await page.keyboard.press('Escape')
+  await expect(menu).toBeHidden()
 
-  // Each group holds exactly its expected members, in order, and the
-  // groups themselves run left to right across the island.
-  const groupBoxes: Array<{ x: number; right: number }> = []
-  for (let index = 0; index < TOOL_GROUPS.length; index += 1) {
-    const group = groups.nth(index)
-    const labels = await group.getByRole('button').evaluateAll((buttons) =>
-      buttons.map((button) => button.getAttribute('aria-label')),
-    )
-    expect(labels).toEqual([...groupMembers(index)])
-
-    const box = await group.boundingBox()
-    if (!box) {
-      throw new Error(`group ${index} did not render`)
-    }
-    groupBoxes.push({ x: box.x, right: box.x + box.width })
-  }
-  for (let index = 1; index < groupBoxes.length; index += 1) {
-    const previous = groupBoxes[index - 1]
-    const current = groupBoxes[index]
-    if (!previous || !current) {
-      throw new Error(`group ${index} missing a bounding box`)
-    }
-    expect(current.x).toBeGreaterThan(previous.right)
-  }
+  // An extra tool in use lights the trigger up.
+  await pickMoreTool(page, 'Frame tool')
+  await expect(more).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('starts on selection and marks the clicked tool active', async ({ page }) => {

@@ -15,42 +15,45 @@ defineProps<{
 </template>
 
 <style scoped>
-/* Floating surface: radius 12, hairline border, two layered neutral shadows,
-   6px backdrop blur (inside the <= 8px performance budget). Panels are
-   positioned inside the editor root (absolute, not fixed) so an embedded
-   editor keeps its chrome within its own box — Excalidraw's container. */
+/* Excalidraw's .Island: opaque, 8px radius, the three-layer island shadow.
+   Panels are positioned inside the editor root (absolute, not fixed) so an
+   embedded editor keeps its chrome within its own box. */
 .ui-panel {
   position: absolute;
   z-index: 10;
-  max-width: calc(100% - 32px);
-  max-height: calc(100% - 32px);
+  max-width: calc(100% - 2 * var(--od-gutter));
+  max-height: calc(100% - 2 * var(--od-gutter));
   overflow-y: auto;
-  padding: 8px;
-  background: var(--od-surface-float);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid var(--od-border);
+  padding: 4px;
+  background: var(--od-surface);
   border-radius: var(--od-radius-l);
   box-shadow: var(--od-shadow-1), var(--od-shadow-2);
+  animation: ui-panel-in 180ms var(--od-ease) both;
+}
+
+@keyframes ui-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
 }
 
 .ui-panel--left {
   top: 50%;
-  left: 16px;
+  left: var(--od-gutter);
   transform: translateY(-50%);
 }
 
 .ui-panel--right {
   top: 50%;
-  right: 16px;
+  right: var(--od-gutter);
   transform: translateY(-50%);
 }
 
-/* Centered with auto margins, not left:50% + translate — a fixed box at
-   left:50% can only shrink-to-fit into HALF the viewport, which wraps a
-   wide island long before the screen runs out of room. */
+/* Centered with auto margins, not left:50% + translate — a box at left:50%
+   can only shrink-to-fit into HALF the viewport. */
 .ui-panel--bottom {
-  bottom: 16px;
+  bottom: var(--od-gutter);
   left: 0;
   right: 0;
   width: fit-content;
@@ -58,12 +61,12 @@ defineProps<{
 }
 
 .ui-panel--top-left {
-  top: 16px;
-  left: 16px;
+  top: var(--od-gutter);
+  left: var(--od-gutter);
 }
 
 .ui-panel--top-center {
-  top: 16px;
+  top: var(--od-gutter);
   left: 0;
   right: 0;
   width: fit-content;
@@ -71,24 +74,25 @@ defineProps<{
 }
 
 .ui-panel--bottom-left {
-  bottom: 16px;
-  left: 16px;
+  bottom: var(--od-gutter);
+  left: var(--od-gutter);
 }
 
-/* Excalidraw's properties island: top-left column, clear of the zoom
-   island below it; on phones it becomes a bottom sheet over the canvas. */
+/* Excalidraw's selected-shape actions: a 12px-padded column under the main
+   menu trigger, clear of the footer; a bottom sheet on phones. */
 .ui-panel--properties {
-  top: 16px;
-  left: 16px;
-  width: 232px;
-  max-height: calc(100% - 112px);
+  top: calc(var(--od-gutter) * 2 + var(--od-button-lg));
+  left: var(--od-gutter);
+  width: 202px;
+  max-height: calc(100% - var(--od-gutter) * 4 - var(--od-button-lg) * 2);
+  padding: 12px;
 }
 
 @media (max-width: 640px) {
   .ui-panel--properties {
     top: auto;
-    right: 16px;
-    bottom: 76px;
+    right: var(--od-gutter);
+    bottom: calc(var(--od-gutter) * 2 + var(--od-button-lg));
     width: auto;
     max-height: 40%;
   }

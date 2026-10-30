@@ -1,39 +1,75 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { actionById, runAction } from '@opendraw/editor'
+
+import { useHelpDialog } from '../../composables/useHelpDialog.js'
+import { useKeyDisplay } from '../../composables/useKeyDisplay.js'
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
+import UiIcon from './UiIcon.vue'
 
 /**
- * WelcomeScreen — Excalidraw's empty-canvas welcome (parity copy from
- * `packages/excalidraw/components/welcome-screen/`):
- * a centered heading plus a hint under the tool dock. Purely decorative:
- * it never intercepts pointer events and disappears as soon as the first
- * element lands on the canvas.
+ * WelcomeScreen — Excalidraw's empty-canvas welcome (components/
+ * welcome-screen): the wordmark, a line about local storage and two quick
+ * actions in the center, plus hand-drawn hints pointing at the main menu,
+ * the toolbar and the help button. It leaves with the first element.
  *
- * The entrance is deliberately segmented — heading, underline stroke and
- * dock hint each animate on their own duration/easing so the composition
- * settles in stages instead of one monotone fade.
+ * Each piece enters on its own clock — center first, then the toolbar
+ * hint, then the corner hints — so the screen settles in stages.
  */
 const ctx = useOpenDraw()
+const help = useHelpDialog()
+const keys = useKeyDisplay()
 
 const visible = computed(() => ctx.elements.value.length === 0)
+const openKeys = computed(() => keys.text(actionById('openFile').keys ?? []))
+
+function openHelp(): void {
+  help.value = true
+}
 </script>
 
 <template>
   <Transition name="welcome">
-    <section v-if="visible" class="welcome" aria-hidden="true">
-      <h1 class="welcome__heading">
-        <span class="welcome__line">Diagrams.</span>
-        <span class="welcome__line">Made.</span>
-        <span class="welcome__line">Simple.</span>
-        <svg class="welcome__underline" viewBox="0 0 220 14" preserveAspectRatio="none">
-          <path d="M4 9 C 48 3, 92 12, 136 6 S 204 4, 216 8" />
+    <div v-if="visible" class="welcome">
+      <div class="welcome__hint welcome__hint--menu" aria-hidden="true">
+        <svg viewBox="0 0 41 94" class="welcome__arrow welcome__arrow--menu">
+          <path d="M38.5 83.5c-14-2-17.5-9-21-16.5S12 51.5 12.5 41 17 10 17 10M17 10l-8.5 9.5M17 10l8 9.5" />
         </svg>
-      </h1>
+        <span>Export, preferences, and more...</span>
+      </div>
 
-      <p class="welcome__dock-hint">Pick a tool & Start drawing!</p>
-      <p class="welcome__zoom-hint">Zoom & undo live here</p>
-    </section>
+      <div class="welcome__hint welcome__hint--toolbar" aria-hidden="true">
+        <svg viewBox="0 0 38 78" class="welcome__arrow welcome__arrow--toolbar">
+          <path d="M1 77c14.5-5 23-17 27-29s4-24 3-35M31 13l-8 7.5M31 13l6 9" />
+        </svg>
+        <span>Pick a tool &amp;<br />Start drawing!</span>
+      </div>
+
+      <div class="welcome__hint welcome__hint--help" aria-hidden="true">
+        <span>Shortcuts &amp; help</span>
+        <svg viewBox="0 0 38 78" class="welcome__arrow welcome__arrow--help">
+          <path d="M1 1c14.5 5 23 17 27 29s4 24 3 35M31 65l-8-7.5M31 65l6-9" />
+        </svg>
+      </div>
+
+      <section class="welcome__center" aria-label="Welcome">
+        <h1 class="welcome__logo">opendraw</h1>
+        <p class="welcome__heading">All your data is saved locally in your browser.</p>
+        <div class="welcome__menu">
+          <button type="button" class="welcome__item" @click="runAction(ctx.editor, 'openFile')">
+            <UiIcon name="open" :size="16" />
+            <span class="welcome__item-text">Open</span>
+            <span class="welcome__item-shortcut">{{ openKeys }}</span>
+          </button>
+          <button type="button" class="welcome__item" @click="openHelp">
+            <UiIcon name="help" :size="16" />
+            <span class="welcome__item-text">Help</span>
+            <span class="welcome__item-shortcut">?</span>
+          </button>
+        </div>
+      </section>
+    </div>
   </Transition>
 </template>
 
@@ -42,129 +78,222 @@ const visible = computed(() => ctx.elements.value.length === 0)
   position: absolute;
   inset: 0;
   z-index: 5;
+  pointer-events: none;
+  color: var(--od-keybinding);
+  font-family: 'Excalifont', 'Virgil', 'Segoe Print', 'Bradley Hand', cursive;
+}
+
+/* --- center ------------------------------------------------------------ */
+
+.welcome__center {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  pointer-events: none;
-  color: var(--od-ink-soft);
-  font: 500 22px/1.35 'Virgil', 'Segoe UI', -apple-system, sans-serif;
+  gap: 32px;
+  padding: 0 16px;
+}
+
+.welcome__logo {
+  margin: 0;
+  font-size: 36px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: var(--od-accent);
+  animation: welcome-rise 520ms var(--od-ease) 60ms both;
 }
 
 .welcome__heading {
-  position: relative;
+  margin: -12px 0 0;
+  font-size: 18px;
+  line-height: 1.3;
+  text-align: center;
+  animation: welcome-rise 560ms var(--od-ease) 160ms both;
+}
+
+.welcome__menu {
   display: flex;
   flex-direction: column;
+  gap: 2px;
+  width: min(300px, 100%);
+  font-family: var(--od-font-ui);
+  animation: welcome-rise 600ms var(--od-ease) 260ms both;
+}
+
+.welcome__item {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 0;
-  font-size: 44px;
-  font-weight: 700;
-  line-height: 1.15;
-  color: var(--od-ink);
-  text-align: center;
-}
-
-/* Each word rises and fades on its own clock: 120ms of drift apart,
-   the underline stroke then draws itself over a slower 700ms. */
-.welcome__line {
-  opacity: 0;
-  animation: welcome-line 480ms var(--od-ease) forwards;
-}
-
-.welcome__line:nth-child(1) { animation-delay: 80ms }
-.welcome__line:nth-child(2) { animation-delay: 220ms }
-.welcome__line:nth-child(3) { animation-delay: 360ms }
-
-@keyframes welcome-line {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.welcome__line {
-  transform: translateY(10px);
-}
-
-.welcome__underline {
-  position: absolute;
-  bottom: -12px;
-  left: 50%;
-  width: 220px;
-  height: 14px;
-  overflow: visible;
-  transform: translateX(-50%);
-}
-
-.welcome__underline path {
-  fill: none;
-  stroke: var(--od-accent);
-  stroke-width: 3.5;
-  stroke-linecap: round;
-  stroke-dasharray: 240;
-  stroke-dashoffset: 240;
-  animation: welcome-stroke 700ms var(--od-ease) 520ms forwards;
-}
-
-@keyframes welcome-stroke {
-  to { stroke-dashoffset: 0 }
-}
-
-.welcome__dock-hint {
-  margin: 26px 0 0;
-  padding-top: 14px;
+  gap: 10px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--od-radius-l);
+  background: transparent;
+  color: var(--od-ink-soft);
+  font: inherit;
   font-size: 14px;
-  opacity: 0;
-  animation: welcome-hint 420ms var(--od-ease) 720ms forwards;
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    background-color var(--od-fast) ease-out,
+    color var(--od-fast) ease-out;
 }
 
-.welcome__zoom-hint {
-  position: absolute;
-  bottom: 56px;
-  left: 20px;
-  margin: 0;
+.welcome__item:hover {
+  background: var(--od-hover);
+  color: var(--od-ink);
+}
+
+.welcome__item:active {
+  border-color: var(--od-brand-active);
+}
+
+.welcome__item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--od-accent);
+}
+
+.welcome__item-text {
+  flex: 1;
+  text-align: left;
+}
+
+.welcome__item-shortcut {
+  opacity: 0.7;
   font-size: 13px;
-  opacity: 0;
-  animation: welcome-hint 480ms var(--od-ease) 940ms forwards;
 }
 
-@keyframes welcome-hint {
-  from { transform: translateY(6px) }
-  to {
-    opacity: 0.85;
-    transform: translateY(0);
+/* --- hints ------------------------------------------------------------- */
+
+.welcome__hint {
+  position: absolute;
+  display: flex;
+  gap: 8px;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.welcome__arrow {
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.welcome__arrow path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 160;
+  stroke-dashoffset: 160;
+  animation: welcome-draw 700ms var(--od-ease) forwards;
+}
+
+.welcome__hint--menu {
+  top: calc(var(--od-gutter) + var(--od-button-lg) + 4px);
+  left: calc(var(--od-gutter) + 6px);
+  align-items: flex-end;
+  animation: welcome-fade 520ms ease-out 520ms both;
+}
+
+.welcome__hint--menu span {
+  margin-bottom: 4px;
+  max-width: 180px;
+}
+
+.welcome__arrow--menu {
+  width: 30px;
+  height: 70px;
+}
+
+.welcome__arrow--menu path {
+  animation-delay: 560ms;
+}
+
+.welcome__hint--toolbar {
+  top: calc(var(--od-gutter) + var(--od-button-lg) + 40px);
+  left: 50%;
+  align-items: flex-end;
+  transform: translateX(-110px);
+  animation: welcome-fade 480ms ease-out 380ms both;
+}
+
+.welcome__arrow--toolbar {
+  width: 28px;
+  height: 60px;
+  transform: scaleX(-1);
+}
+
+.welcome__arrow--toolbar path {
+  animation-delay: 420ms;
+}
+
+.welcome__hint--help {
+  right: calc(var(--od-gutter) + 6px);
+  bottom: calc(var(--od-gutter) + var(--od-button-lg) + 8px);
+  align-items: flex-start;
+  animation: welcome-fade 560ms ease-out 640ms both;
+}
+
+.welcome__hint--help span {
+  margin-top: 4px;
+}
+
+.welcome__arrow--help {
+  width: 28px;
+  height: 60px;
+}
+
+.welcome__arrow--help path {
+  animation-delay: 680ms;
+}
+
+@keyframes welcome-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 }
 
-/* Leave as one motion: the whole composition sinks away on first stroke. */
+@keyframes welcome-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes welcome-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Leaves as one motion on the first stroke — and goes inert at once, so
+   its fading buttons never catch the next gesture. */
 .welcome-leave-active {
-  transition: opacity 300ms var(--od-ease);
+  transition: opacity 220ms ease-out;
+}
+
+.welcome-leave-active .welcome__item {
+  pointer-events: none;
 }
 
 .welcome-leave-to {
   opacity: 0;
 }
 
-/* Hand-drawn headings shout on phones; the hints duplicate visible chrome. */
-@media (max-width: 640px) {
-  .welcome__heading {
-    font-size: 30px;
-  }
-
-  .welcome__zoom-hint {
+/* Excalidraw hides the corner hints on short or narrow screens. */
+@media (max-height: 780px), (max-width: 1024px) {
+  .welcome__hint--menu,
+  .welcome__hint--help {
     display: none;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .welcome__line,
-  .welcome__underline path,
-  .welcome__dock-hint,
-  .welcome__zoom-hint {
-    animation-duration: 1ms;
-    animation-delay: 0ms;
+@media (max-width: 640px) {
+  .welcome__hint--toolbar {
+    display: none;
   }
 }
 </style>

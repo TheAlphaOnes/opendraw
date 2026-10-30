@@ -203,13 +203,13 @@ test('draws rounded rectangles by default and toggles their edges', async ({ pag
   await settleFrames(page)
   expect(await staticInkPixels(page, 300, 150, 6, 6)).toBeLessThanOrEqual(3)
 
-  await page.getByRole('radio', { name: 'Sharp corners' }).click()
+  await page.getByRole('radio', { name: 'Sharp', exact: true }).click()
   await expect.poll(async () => (await scene(page)).elements[0]!.roundness ?? null).toBe(null)
   // Sharp corners: both edges run straight through the corner window.
   await settleFrames(page)
   expect(await staticInkPixels(page, 300, 150, 6, 6)).toBeGreaterThan(8)
 
-  await page.getByRole('radio', { name: 'Rounded corners' }).click()
+  await page.getByRole('radio', { name: 'Round', exact: true }).click()
   await expect.poll(async () => (await scene(page)).elements[0]!.roundness).toBe('round')
 })
 

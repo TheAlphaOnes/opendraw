@@ -1,14 +1,15 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
+import { useKeyDisplay } from '../../composables/useKeyDisplay.js'
 import type { IconName } from '../../constants/icons.js'
 
 import UiIcon from './UiIcon.vue'
-import UiKbd from './UiKbd.vue'
 
 /**
- * UiMenuItem — one row of a menu: optional icon, label, shortcut hint.
- * Hover eases in (never instant); the press depresses; keyboard focus is
- * an instant focus-visible ring with no motion (keyboard nav never
- * animates).
+ * UiMenuItem — Excalidraw's dropdown-menu-item: a 32px row with a 16px
+ * icon, a 14px label and the shortcut at half opacity on the right. With
+ * `href` it is a link (opening a new tab for external URLs).
  */
 const props = withDefaults(
   defineProps<{
@@ -17,28 +18,40 @@ const props = withDefaults(
     keys?: readonly string[]
     danger?: boolean
     disabled?: boolean
+    /** Highlighted as the current choice. */
+    selected?: boolean
+    href?: string
   }>(),
-  { icon: undefined, keys: undefined, danger: false, disabled: false },
+  { icon: undefined, keys: undefined, danger: false, disabled: false, selected: false, href: undefined },
 )
 
 const emit = defineEmits<{ select: [] }>()
+
+const keyDisplay = useKeyDisplay()
+const shortcut = computed(() => (props.keys && props.keys.length > 0 ? keyDisplay.text(props.keys) : ''))
+const external = computed(() => !!props.href && /^https?:/.test(props.href))
 </script>
 
 <template>
-  <button
-    type="button"
+  <component
+    :is="props.href ? 'a' : 'button'"
+    :type="props.href ? undefined : 'button'"
+    :href="props.href"
+    :target="external ? '_blank' : undefined"
+    :rel="external ? 'noopener noreferrer' : undefined"
     role="menuitem"
     class="ui-menu-item"
-    :class="{ 'is-danger': props.danger }"
-    :disabled="props.disabled"
+    :class="{ 'is-danger': props.danger, 'is-selected': props.selected }"
+    :disabled="props.href ? undefined : props.disabled"
+    :aria-disabled="props.disabled || undefined"
     @click="emit('select')"
   >
     <span class="ui-menu-item__icon">
       <UiIcon v-if="props.icon" :name="props.icon" :size="16" />
     </span>
     <span class="ui-menu-item__label">{{ props.label }}</span>
-    <UiKbd v-if="props.keys && props.keys.length > 0" :keys="props.keys" inline />
-  </button>
+    <span v-if="shortcut" class="ui-menu-item__shortcut">{{ shortcut }}</span>
+  </component>
 </template>
 
 <style scoped>
@@ -47,18 +60,18 @@ const emit = defineEmits<{ select: [] }>()
   align-items: center;
   gap: 10px;
   width: 100%;
-  min-height: 32px;
-  padding: 0 10px 0 8px;
+  height: 32px;
+  padding: 0 8px;
   border: none;
   border-radius: var(--od-radius-m);
   background: transparent;
   color: var(--od-ink);
-  font-size: 13px;
+  font: inherit;
+  font-size: 14px;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
-  transition:
-    background-color var(--od-fast) ease-out,
-    transform var(--od-fast) var(--od-ease);
+  transition: background-color var(--od-fast) ease-out;
 }
 
 .ui-menu-item:hover {
@@ -66,13 +79,17 @@ const emit = defineEmits<{ select: [] }>()
 }
 
 .ui-menu-item:active {
-  transform: scale(0.98);
+  box-shadow: inset 0 0 0 1px var(--od-brand-active);
 }
 
 .ui-menu-item:focus-visible {
-  outline: 2px solid var(--od-accent);
-  outline-offset: -2px;
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--od-accent);
   transition: none;
+}
+
+.ui-menu-item.is-selected {
+  background: var(--od-accent-soft);
 }
 
 .ui-menu-item.is-danger {
@@ -83,23 +100,28 @@ const emit = defineEmits<{ select: [] }>()
   background: var(--od-danger-soft);
 }
 
-.ui-menu-item:disabled {
-  opacity: 0.4;
+.ui-menu-item:disabled,
+.ui-menu-item[aria-disabled='true'] {
+  opacity: 0.5;
   pointer-events: none;
 }
 
 .ui-menu-item__icon {
   display: inline-flex;
   width: 16px;
-  color: var(--od-ink-soft);
-}
-
-.ui-menu-item.is-danger .ui-menu-item__icon {
-  color: inherit;
 }
 
 .ui-menu-item__label {
   flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ui-menu-item__shortcut {
+  margin-inline-start: auto;
+  padding-left: 12px;
+  opacity: 0.5;
+  font-size: 13px;
 }
 </style>

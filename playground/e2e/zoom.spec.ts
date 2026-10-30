@@ -23,8 +23,8 @@ test('zoom controls live in the bottom-left corner and report 100% initially', a
 
   const island = page.locator('.zoom-controls')
   await expect(island).toBeVisible()
-  await expect(island.getByRole('button', { name: 'Zoom out' })).toBeVisible()
-  await expect(island.getByRole('button', { name: 'Zoom in' })).toBeVisible()
+  await expect(island.getByRole('button', { name: /^Zoom out/ })).toBeVisible()
+  await expect(island.getByRole('button', { name: /^Zoom in/ })).toBeVisible()
   await expect(readout(page)).toHaveText('100%')
 
   // Bottom-left placement (Excalidraw parity): near the left edge, low on
@@ -39,11 +39,11 @@ test('zoom controls live in the bottom-left corner and report 100% initially', a
 test('the percentage readout tracks button zoom and resets on click', async ({ page }) => {
   await openEditor(page)
 
-  await page.getByRole('button', { name: 'Zoom in' }).click()
+  await page.getByRole('button', { name: /^Zoom in/ }).click()
   await expect(readout(page)).toHaveText('125%')
-  await page.getByRole('button', { name: 'Zoom in' }).click()
+  await page.getByRole('button', { name: /^Zoom in/ }).click()
   await expect(readout(page)).toHaveText('156%')
-  await page.getByRole('button', { name: 'Zoom out' }).click()
+  await page.getByRole('button', { name: /^Zoom out/ }).click()
   await expect(readout(page)).toHaveText('125%')
 
   await readout(page).click()

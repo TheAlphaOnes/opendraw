@@ -18,9 +18,11 @@ import {
 import OpenDrawCanvas from './OpenDrawCanvas.vue'
 import ToolDock from './toolbar/ToolDock.vue'
 import StylePanel from './panels/StylePanel.vue'
-import ActionsPanel from './panels/ActionsPanel.vue'
 import ZoomControls from './panels/ZoomControls.vue'
+import FooterRight from './panels/FooterRight.vue'
 import ContextMenu from './menus/ContextMenu.vue'
+import MainMenu, { type MainMenuLink } from './menus/MainMenu.vue'
+import { provideHelpDialog } from '../composables/useHelpDialog.js'
 import ShortcutsDialog from './ui/ShortcutsDialog.vue'
 import WelcomeScreen from './ui/WelcomeScreen.vue'
 
@@ -32,6 +34,10 @@ import WelcomeScreen from './ui/WelcomeScreen.vue'
  * `ui` gates the chrome: "full" adds dock + panels + context menu,
  * "minimal" keeps only the tool dock, "none" is a pure canvas for
  * building your own UI with useOpenDraw().
+ *
+ * Slots place host content in Excalidraw's layout: `top-right` (beside the
+ * toolbar, e.g. a Docs link) and `footer` (bottom-right, before the help
+ * button). `menuLinks` adds the host's links to the main menu.
  */
 export interface OpenDrawProps {
   /**
@@ -49,6 +55,8 @@ export interface OpenDrawProps {
    * `false` disables persistence.
    */
   persist?: boolean | string
+  /** The host's own links in the main menu (docs, repository, ...). */
+  menuLinks?: readonly MainMenuLink[]
 }
 
 const props = withDefaults(defineProps<OpenDrawProps>(), {
@@ -57,6 +65,7 @@ const props = withDefaults(defineProps<OpenDrawProps>(), {
   grid: false,
   initialElements: () => [],
   persist: true,
+  menuLinks: () => [],
 })
 
 const emit = defineEmits<{
@@ -74,6 +83,7 @@ const ctx = createOpenDrawContext({
   appState: { theme: props.theme === 'system' ? 'light' : resolveThemeDefault(props.theme) },
 })
 provideOpenDraw(ctx)
+provideHelpDialog()
 
 // Prop → context sync. `'system'` is a first-load default, not a live state
 // to push — after mount the editor owns the theme (and persists it).
@@ -137,10 +147,18 @@ const themeAttr = computed(() => ctx.theme.value)
 <template>
   <div class="opendraw-root" data-opendraw-root :data-theme="themeAttr">
     <OpenDrawCanvas @contextmenu="openMenu" />
+    <div v-if="ui === 'full'" class="opendraw-root__top-left">
+      <MainMenu :links="menuLinks" />
+    </div>
     <ToolDock v-if="ui !== 'none'" />
+    <div v-if="ui === 'full' && $slots['top-right']" class="opendraw-root__top-right">
+      <slot name="top-right" />
+    </div>
     <StylePanel v-if="ui === 'full'" />
-    <ActionsPanel v-if="ui !== 'none'" />
     <ZoomControls v-if="ui !== 'none'" />
+    <FooterRight v-if="ui === 'full'">
+      <slot name="footer" />
+    </FooterRight>
     <ContextMenu
       v-if="ui === 'full'"
       :x="menu.x"
@@ -156,4 +174,21 @@ const themeAttr = computed(() => ctx.theme.value)
 
 <style>
 @import '../styles/opendraw.css';
+
+.opendraw-root__top-left {
+  position: absolute;
+  z-index: 11;
+  top: var(--od-gutter);
+  left: var(--od-gutter);
+}
+
+.opendraw-root__top-right {
+  position: absolute;
+  z-index: 11;
+  top: var(--od-gutter);
+  right: var(--od-gutter);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 </style>

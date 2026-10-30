@@ -54,10 +54,14 @@ const ACTIONS: readonly ActionId[] = ['duplicate', 'deleteSelection', 'group', '
 </template>
 
 <style scoped>
-/* Five 40px buttons per line fill the 232px island exactly. */
+/* Excalidraw's buttonList: 32px outline buttons, 8px apart. */
 .selection-actions__row {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px;
+  gap: 8px;
+}
+
+.selection-actions__row :deep(.ui-icon-button) {
+  border: 1px solid var(--od-border);
 }
 </style>

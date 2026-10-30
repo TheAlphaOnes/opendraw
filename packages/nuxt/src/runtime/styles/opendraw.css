@@ -4,74 +4,113 @@
  * Every chrome component consumes these custom properties. Themes switch by
  * setting `data-theme="dark"` on the `.opendraw-root` container.
  *
- * Aesthetic law (Maya / userinterface-wiki):
- * - flat surfaces + hairlines, no gradients, no heavy glass;
- * - two layered shadows, neutral #495057 tones, one light direction;
- * - blur capped at 6px (performance budget: blur <= 8px);
- * - one easing curve and a fast/standard duration pair for all chrome motion.
+ * Values are Excalidraw's (packages/excalidraw/css/theme.scss): solid
+ * islands with the three-layer --shadow-island, 8px radii, the lavender
+ * surface-high hover, the #e0dfff selected tone and the Assistant UI font.
+ * No backdrop blur — Excalidraw's islands are opaque.
  */
 
+@font-face {
+  font-family: 'Assistant';
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/Assistant-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Assistant';
+  font-weight: 500;
+  font-display: swap;
+  src: url('../assets/fonts/Assistant-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Assistant';
+  font-weight: 600;
+  font-display: swap;
+  src: url('../assets/fonts/Assistant-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Assistant';
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/Assistant-Bold.woff2') format('woff2');
+}
+
 .opendraw-root {
-  /* Surfaces */
+  /* Surfaces — --island-bg-color, --color-surface-low/-high */
   --od-surface: #ffffff;
   --od-surface-raised: #ffffff;
-  /* Floating panels keep a little translucency so the capped 6px backdrop
-     blur reads as quiet glass rather than fog. */
-  --od-surface-float: rgba(255, 255, 255, 0.92);
+  --od-surface-float: #ffffff;
+  --od-surface-low: #ececf4;
+  --od-surface-high: #f1f0ff;
 
-  /* Ink */
-  --od-ink: #1e1e1e;
-  --od-ink-soft: #6c757d;
-  --od-border: rgba(30, 30, 30, 0.12);
+  /* Ink — --color-on-surface, --color-gray-50, --keybinding-color */
+  --od-ink: #1b1b1f;
+  --od-ink-soft: #707070;
+  --od-keybinding: #b8b8b8;
+  --od-border: #f1f0ff;
+  --od-divider: #e9ecef;
 
-  /* Accents & intents — Excalidraw's --color-primary / --color-primary-light */
+  /* Accents & intents — --color-primary, --color-surface-primary-container */
   --od-accent: #6965db;
-  --od-accent-soft: #e3e2fe;
+  --od-accent-soft: #e0dfff;
+  --od-on-accent-soft: #030064;
+  --od-brand-active: #4440bf;
   --od-danger: #e03131;
   --od-danger-soft: rgba(224, 49, 49, 0.1);
-  --od-hover: rgba(30, 30, 30, 0.06);
+  --od-hover: #f1f0ff;
 
-  /* Elevation — two layered depths, neutral tone, shared light direction */
-  --od-shadow-1: 0 1px 2px rgba(73, 80, 87, 0.08);
-  --od-shadow-2: 0 4px 12px rgba(73, 80, 87, 0.12);
+  /* Elevation — Excalidraw's --shadow-island, split in two layers */
+  --od-shadow-1: 0 0 1px 0 rgba(0, 0, 0, 0.17), 0 0 3px 0 rgba(0, 0, 0, 0.08);
+  --od-shadow-2: 0 7px 14px 0 rgba(0, 0, 0, 0.05);
 
-  /* Radii */
+  /* Radii — --border-radius-md / -lg */
   --od-radius-s: 4px;
-  --od-radius-m: 8px;
-  --od-radius-l: 12px;
-  --od-radius-xl: 20px;
+  --od-radius-m: 6px;
+  --od-radius-l: 8px;
+  --od-radius-xl: 12px;
+
+  /* Sizes — --default-button-size, --lg-button-size, --editor-container-padding */
+  --od-button: 32px;
+  --od-button-lg: 36px;
+  --od-gutter: 16px;
 
   /* Motion */
   --od-ease: cubic-bezier(0.19, 1, 0.22, 1);
   --od-fast: 120ms;
   --od-transition: 180ms;
 
+  --od-font-ui: Assistant, system-ui, BlinkMacSystemFont, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
   position: relative;
   width: 100%;
   height: 100%;
   color: var(--od-ink);
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+  font-family: var(--od-font-ui);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 .opendraw-root[data-theme='dark'] {
-  --od-surface: #1e1e1e;
-  --od-surface-raised: #2a2a2a;
-  --od-surface-float: rgba(30, 30, 30, 0.92);
-  --od-ink: #e9ecef;
-  --od-ink-soft: #adb5bd;
-  --od-border: rgba(233, 236, 239, 0.12);
-  --od-hover: rgba(233, 236, 239, 0.08);
+  --od-surface: #232329;
+  --od-surface-raised: #2e2d39;
+  --od-surface-float: #232329;
+  --od-surface-low: hsl(240, 8%, 15%);
+  --od-surface-high: #2e2d39;
+  --od-ink: #e3e3e8;
+  --od-ink-soft: #9a9aa5;
+  --od-keybinding: #7a7a85;
+  --od-border: #2e2d39;
+  --od-divider: #3a3946;
   --od-accent: #a8a5ff;
-  --od-accent-soft: #4f4d6f;
+  --od-accent-soft: #403e6a;
+  --od-on-accent-soft: #e0dfff;
+  --od-brand-active: #d0ccff;
+  --od-hover: #2e2d39;
+  --od-shadow-1: 0 0 1px 0 rgba(0, 0, 0, 0.17), 0 0 3px 0 rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.15);
+  --od-shadow-2: 0 7px 14px 0 rgba(0, 0, 0, 0.05);
 }
 
 /* Box-sizing reset scoped to the editor so host pages stay untouched. */

@@ -1,4 +1,4 @@
-import { at, canvasBox, expect, nonTransparentPixels, openEditor, pickTool, scene, settleFrames, test } from './helpers'
+import { at, canvasBox, expect, nonTransparentPixels, openEditor, scene, settleFrames, test, pickMoreTool } from './helpers'
 
 /**
  * The laser is overlay ink only (Excalidraw's LaserTrails): one filled,
@@ -8,7 +8,7 @@ test.describe('laser pointer', () => {
   test('draws a fading trail and never touches the document', async ({ page }) => {
     await openEditor(page)
     const box = await canvasBox(page)
-    await pickTool(page, 'Laser (K)')
+    await pickMoreTool(page, 'Laser pointer')
     const start = at(box, 100, 200)
     await page.mouse.move(start.x, start.y)
     await page.mouse.down()

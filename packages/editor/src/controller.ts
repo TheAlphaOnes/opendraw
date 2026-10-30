@@ -177,6 +177,10 @@ export class EditorController {
     return this.snapshot.appState.gridSize
   }
 
+  get viewBackgroundColor(): string {
+    return this.snapshot.appState.viewBackgroundColor
+  }
+
   get editingId(): string | null {
     return this.snapshot.appState.editingId
   }
@@ -261,6 +265,11 @@ export class EditorController {
 
   setGridSize(size: number | null): void {
     this.doc.setAppState({ gridSize: size })
+  }
+
+  /** The canvas background — user data, never dark-filtered (main menu picks). */
+  setViewBackgroundColor(color: string): void {
+    this.doc.setAppState({ viewBackgroundColor: color })
   }
 
   // -------------------------------------------------------------------------

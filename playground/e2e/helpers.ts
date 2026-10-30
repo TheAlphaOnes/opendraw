@@ -136,6 +136,18 @@ export async function pickTool(page: Page, label: string): Promise<void> {
   await page.getByRole('button', { name: label }).click()
 }
 
+/** Arms a tool from the toolbar's "More tools" dropdown (frame, laser). */
+export async function pickMoreTool(page: Page, name: 'Frame tool' | 'Laser pointer'): Promise<void> {
+  await page.getByRole('button', { name: 'More tools' }).click()
+  await page.getByRole('menuitem', { name: new RegExp(`^${name}`) }).click()
+}
+
+/** Runs a main-menu (hamburger) item by its visible label. */
+export async function runMenuItem(page: Page, label: RegExp | string): Promise<void> {
+  await page.getByRole('button', { name: 'Main menu' }).click()
+  await page.getByRole('menuitem', { name: label }).click()
+}
+
 /**
  * Give newly drawn shapes an opaque fill. Unfilled shapes only hit-test on
  * their outline, and the binding/grab specs press the interior — the fill

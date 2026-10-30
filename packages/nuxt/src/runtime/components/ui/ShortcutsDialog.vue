@@ -7,9 +7,10 @@
  * dispatches — so the dialog can never advertise a shortcut that does
  * nothing.
  */
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted } from 'vue'
 
 import { TOOLS, actionById, isTypingTarget, type ActionId } from '@opendraw/editor'
+import { useHelpDialog } from '../../composables/useHelpDialog.js'
 import UiIconButton from './UiIconButton.vue'
 import UiKbd from './UiKbd.vue'
 
@@ -85,7 +86,7 @@ const groups: ShortcutGroup[] = [
   },
 ]
 
-const open = ref(false)
+const open = useHelpDialog()
 
 function onKeydown(event: KeyboardEvent): void {
   if (isTypingTarget(event.target)) {

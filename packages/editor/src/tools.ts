@@ -18,6 +18,8 @@ export interface ToolDefinition {
    * the file picker, so it never shows a persistent active state.
    */
   opensPicker?: boolean
+  /** Listed under the toolbar's "More tools" dropdown (Excalidraw's extra tools). */
+  more?: boolean
 }
 
 /** Tools in Excalidraw's island order, grouped by the dock's dividers. */
@@ -41,8 +43,8 @@ export const TOOL_GROUPS: readonly (readonly ToolDefinition[])[] = [
     { tool: 'eraser', icon: 'eraser', name: 'Eraser', keys: ['e', '0'] },
   ],
   [
-    { tool: 'frame', icon: 'frameTool', name: 'Frame', keys: ['f'] },
-    { tool: 'laser', icon: 'laserTool', name: 'Laser', keys: ['k'] },
+    { tool: 'frame', icon: 'frameTool', name: 'Frame tool', keys: ['f'], more: true },
+    { tool: 'laser', icon: 'laserTool', name: 'Laser pointer', keys: ['k'], more: true },
   ],
 ]
 
@@ -56,4 +58,13 @@ export const TOOL_BY_KEY: ReadonlyMap<string, ToolDefinition> = new Map(
 /** "Selection (1)" — the accessible name and tooltip of a dock button. */
 export function toolLabel(def: ToolDefinition): string {
   return `${def.name} (${def.keys[0]!.toUpperCase()})`
+}
+
+/**
+ * The key hint a toolbar button shows in its corner: the number key when
+ * the tool has one, else its letter (Excalidraw's numericKey ?? letterKey).
+ */
+export function toolKeyHint(def: ToolDefinition): string {
+  const key = def.keys.find((k) => /^\d$/.test(k)) ?? def.keys[0]!
+  return key.toUpperCase()
 }

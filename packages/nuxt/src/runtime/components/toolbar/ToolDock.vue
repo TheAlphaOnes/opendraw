@@ -1,15 +1,26 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
+import { TOOLS, toolKeyHint, toolLabel, type ToolDefinition } from '@opendraw/editor'
+
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
-import { TOOL_GROUPS, toolLabel, type ToolDefinition } from '@opendraw/editor'
+import UiDropdown from '../ui/UiDropdown.vue'
 import UiIconButton from '../ui/UiIconButton.vue'
-import UiPanel from '../ui/UiPanel.vue'
+import UiMenuItem from '../ui/UiMenuItem.vue'
+import ToolHint from './ToolHint.vue'
 
 /**
- * The top-center tool island, in Excalidraw's order and grouping, led by
- * the tool lock (Q) exactly like Excalidraw's toolbar.
+ * The top-center toolbar — Excalidraw's shapes section: the tool lock, a
+ * divider, every tool with its key hint, another divider and the "More
+ * tools" dropdown (frame, laser). An extra tool in use takes over the
+ * dropdown trigger's glyph, as in Excalidraw. The contextual hint sits
+ * under the island.
  */
-
 const ctx = useOpenDraw()
+
+const mainTools = TOOLS.filter((def) => !def.more)
+const moreTools = TOOLS.filter((def) => def.more)
+const activeMore = computed(() => moreTools.find((def) => def.tool === ctx.activeTool.value) ?? null)
 
 function activate(entry: ToolDefinition): void {
   if (entry.opensPicker) {
@@ -21,60 +32,103 @@ function activate(entry: ToolDefinition): void {
 </script>
 
 <template>
-  <UiPanel position="top-center" role="toolbar" aria-label="Drawing tools">
-    <div class="tool-dock">
-      <div class="tool-dock__group">
-        <UiIconButton
-          icon="toolLock"
-          label="Keep selected tool active after drawing (Q)"
-          :active="ctx.toolLocked.value"
-          @click="ctx.toggleToolLock()"
-        />
-      </div>
-      <div v-for="(group, groupIndex) in TOOL_GROUPS" :key="groupIndex" class="tool-dock__group">
-        <UiIconButton
-          v-for="entry in group"
-          :key="entry.tool"
-          :icon="entry.icon"
-          :label="toolLabel(entry)"
-          :active="!entry.opensPicker && ctx.activeTool.value === entry.tool"
-          @click="activate(entry)"
-        />
-      </div>
+  <div class="tool-dock-stack">
+    <div class="tool-dock" role="toolbar" aria-label="Drawing tools">
+      <UiIconButton
+        size="lg"
+        :icon="ctx.toolLocked.value ? 'lock' : 'unlock'"
+        label="Keep selected tool active after drawing (Q)"
+        :active="ctx.toolLocked.value"
+        @click="ctx.toggleToolLock()"
+      />
+      <span class="tool-dock__divider" aria-hidden="true" />
+      <UiIconButton
+        v-for="entry in mainTools"
+        :key="entry.tool"
+        size="lg"
+        :icon="entry.icon"
+        :label="toolLabel(entry)"
+        :keybinding="toolKeyHint(entry)"
+        :active="!entry.opensPicker && ctx.activeTool.value === entry.tool"
+        @click="activate(entry)"
+      />
+      <span class="tool-dock__divider" aria-hidden="true" />
+      <UiDropdown label="More tools" align="center" :width="200">
+        <template #trigger="{ toggle, open }">
+          <UiIconButton
+            size="lg"
+            :icon="activeMore?.icon ?? 'moreTools'"
+            label="More tools"
+            :active="open || activeMore !== null"
+            @click="toggle"
+          />
+        </template>
+        <template #default="{ close }">
+          <UiMenuItem
+            v-for="entry in moreTools"
+            :key="entry.tool"
+            :icon="entry.icon"
+            :label="entry.name"
+            :keys="[entry.keys[0]!.toUpperCase()]"
+            :selected="ctx.activeTool.value === entry.tool"
+            @select="() => { activate(entry); close() }"
+          />
+        </template>
+      </UiDropdown>
     </div>
-  </UiPanel>
+    <ToolHint />
+  </div>
 </template>
 
 <style scoped>
+.tool-dock-stack {
+  position: absolute;
+  z-index: 10;
+  top: var(--od-gutter);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-inline: auto;
+  width: fit-content;
+  max-width: calc(100% - 2 * var(--od-gutter));
+  pointer-events: none;
+}
+
+/* Excalidraw's toolbar island: 4px padding, 4px between tools. */
 .tool-dock {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-  /* Narrow viewports wrap instead of overflowing the island. */
   flex-wrap: wrap;
-  justify-content: center;
-  max-width: calc(100vw - 32px);
-}
-
-.tool-dock__group {
-  display: flex;
-  flex-direction: row;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  padding: 4px;
+  background: var(--od-surface);
+  border-radius: var(--od-radius-l);
+  box-shadow: var(--od-shadow-1), var(--od-shadow-2);
+  pointer-events: auto;
+  animation: tool-dock-in 260ms var(--od-ease) both;
 }
 
-/* The visual divider: extra air between tool groups. */
-.tool-dock__group + .tool-dock__group {
-  margin-left: 8px;
-  padding-left: 8px;
-  border-left: 1px solid var(--od-border);
+@keyframes tool-dock-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.tool-dock__divider {
+  align-self: stretch;
+  width: 1px;
+  margin: 6px 2px;
+  background: var(--od-divider);
 }
 
 @media (max-width: 640px) {
-  .tool-dock__group + .tool-dock__group {
-    margin-left: 4px;
-    padding-left: 4px;
+  .tool-dock {
+    gap: 2px;
   }
 }
 </style>

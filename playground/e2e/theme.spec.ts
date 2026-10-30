@@ -1,4 +1,4 @@
-import { at, canvasBox, openEditor, pickTool, pixelAt, settleFrames, test } from './helpers'
+import { at, canvasBox, openEditor, pickTool, pixelAt, settleFrames, test, runMenuItem } from './helpers'
 import { expect } from './helpers'
 
 test('switches the scene to dark and back', async ({ page }) => {
@@ -8,12 +8,12 @@ test('switches the scene to dark and back', async ({ page }) => {
   expect(await pixelAt(page, 6, 6)).toEqual([255, 255, 255])
   await expect(page.locator('.opendraw-root')).toHaveAttribute('data-theme', 'light')
 
-  await page.getByRole('button', { name: 'Dark theme' }).click()
+  await runMenuItem(page, /^Dark mode/)
   await expect(page.locator('.opendraw-root')).toHaveAttribute('data-theme', 'dark')
   await settleFrames(page)
   expect(await pixelAt(page, 6, 6)).toEqual([18, 18, 18])
 
-  await page.getByRole('button', { name: 'Light theme' }).click()
+  await runMenuItem(page, /^Light mode/)
   await expect(page.locator('.opendraw-root')).toHaveAttribute('data-theme', 'light')
   await settleFrames(page)
   expect(await pixelAt(page, 6, 6)).toEqual([255, 255, 255])
@@ -23,7 +23,7 @@ test('the wysiwyg editor types in the dark theme ink', async ({ page }) => {
   await openEditor(page)
   const box = await canvasBox(page)
 
-  await page.getByRole('button', { name: 'Dark theme' }).click()
+  await runMenuItem(page, /^Dark mode/)
   await expect(page.locator('.opendraw-root')).toHaveAttribute('data-theme', 'dark')
 
   await pickTool(page, 'Text (T)')
