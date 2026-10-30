@@ -2,3 +2,7 @@ packages:
   - packages/*
   - playground
   - test/*
+
+# pnpm 10 runs no dependency install scripts unless listed here.
+onlyBuiltDependencies:
+  - esbuild
