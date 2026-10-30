@@ -15,3 +15,5 @@ export {
   type ScenePersistenceProps,
 } from './useOpenDrawEditor.js'
 export { createEditor, type EditorController } from '@opendrawjs/editor'
+// The scene types an app handles in callbacks, so it needs no direct core install.
+export type { OpenDrawAppState, OpenDrawElement, OpenDrawFile, OpenDrawState } from '@opendrawjs/core'

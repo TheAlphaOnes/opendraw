@@ -10,3 +10,5 @@ export { default as Footer } from './Footer.svelte'
 export { default as ArrowTypePicker } from './ArrowTypePicker.svelte'
 export { EditorState, editorState } from './editorState.js'
 export { createEditor, type EditorController } from '@opendrawjs/editor'
+// The scene types an app handles in callbacks, so it needs no direct core install.
+export type { OpenDrawAppState, OpenDrawElement, OpenDrawFile, OpenDrawState } from '@opendrawjs/core'
