@@ -223,8 +223,13 @@ export class EditorController {
   // Tools & theme
   // -------------------------------------------------------------------------
 
+  /**
+   * Excalidraw parity (App.setActiveTool): arming any tool but selection
+   * drops the selection, so the properties panel shows the new tool's
+   * defaults rather than the last shape's.
+   */
   setActiveTool(tool: ToolId): void {
-    this.doc.setAppState({ activeTool: tool })
+    this.doc.setAppState(tool === 'selection' ? { activeTool: tool } : { activeTool: tool, selectedIds: {}, editingGroupId: null })
   }
 
   toggleToolLock(): void {
