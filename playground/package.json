@@ -8,7 +8,8 @@
     "preview": "nuxt preview",
     "typecheck": "nuxt prepare >/dev/null && vue-tsc --noEmit -p .nuxt/tsconfig.json && vue-tsc --noEmit -p tsconfig.e2e.json",
     "e2e": "playwright test",
-    "generate": "nuxt generate"
+    "generate": "nuxt generate",
+    "assets": "node scripts/capture-assets.mjs"
   },
   "dependencies": {
     "@opendrawjs/core": "workspace:*",
