@@ -1,6 +1,5 @@
 import type { Point, OpenDrawElement } from '@opendraw/core'
 import {
-  bindableShapeAt,
   elementsUnderEraser,
   findElementAt,
   handleAt,
@@ -11,13 +10,14 @@ import {
   linearMidpointHandle,
   linearPointHandles,
   localPointOf,
-  maxBindingDistance,
+  isLinearElement,
   newElement,
   newFreedrawElement,
   newFrameElement,
   newLinearElement,
   pointInSelectionFrame,
   pointsPatch,
+  resolveTipBinding,
   selectableTarget,
   selectionFrameOf,
   startRotationAngle,
@@ -33,6 +33,7 @@ import {
   snapshotSelection,
 } from './selectionHits.js'
 import { createTextAt, editContainerText } from './textEntry.js'
+import { tipModifiers } from './tipBinding.js'
 import type { LaserTrail } from './laserTrail.js'
 
 /** Shape tools that draft by dragging. */
@@ -108,7 +109,7 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
   setModifiers(rt, event)
   // A new gesture starts from a clean slate — a stale highlight must not
   // survive into the next interaction.
-  rt.bindingCandidates.value = []
+  rt.suggestedBinding.value = null
 
   const scenePoint = rt.toScene(event)
   const tool = ctx.activeTool
@@ -181,18 +182,24 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
   if (SHAPE_TOOLS.has(tool)) {
     const element = draftElement(rt, tool, scenePoint)
     ctx.doc.beginStep()
+    // Starting a new element drops the current selection (Excalidraw) — its
+    // chrome would otherwise sit over the binding affordances.
+    ctx.setEditingGroup(null)
+    ctx.select(null)
     ctx.doc.addElement(element)
     rt.interaction.value = { kind: 'creating', elementId: element.id, originScene: scenePoint }
-    // A drag starting on a shape highlights it from the first frame — the
-    // start tip is a binding candidate exactly like the dragged one.
-    if (tool === 'line' || tool === 'arrow') {
-      const shape = bindableShapeAt(
-        ctx.elements,
-        scenePoint,
-        maxBindingDistance(ctx.viewport.zoom),
-        element.id,
-      )
-      rt.bindingCandidates.value = shape ? [shape] : []
+    // The start tip binds where the drag begins (Excalidraw's initial
+    // binding): inside a shape at the press point, near one in orbit. Its
+    // position settles once the end tip gives it a direction.
+    if (isLinearElement(element)) {
+      const mods = tipModifiers(event)
+      const start = mods.skip
+        ? null
+        : resolveTipBinding(element, 'start', scenePoint, ctx.elements, ctx.viewport.zoom, { inside: mods.inside })
+      if (start?.binding) {
+        ctx.doc.forceUpdateElement(element.id, { startBinding: start.binding })
+      }
+      rt.suggestedBinding.value = start?.shape ? { shape: start.shape, pointer: scenePoint } : null
     }
     return
   }
@@ -206,6 +213,7 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
       points: [[0, 0, pressureOf(event)]],
     })
     ctx.doc.beginStep()
+    ctx.select(null)
     ctx.doc.addElement(element)
     rt.interaction.value = { kind: 'freedrawing', elementId: element.id }
     return

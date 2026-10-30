@@ -135,13 +135,28 @@ export interface OpenDrawLinearElement extends OpenDrawElementBase {
 }
 
 /**
- * A bound linear tip: the tip docks onto the shape's edge and follows the
- * shape around (Excalidraw's `startBinding`/`endBinding` — lines and arrows
- * both bind).
+ * Where inside a shape a bound tip aims, as ratios of the shape's
+ * (unrotated) width and height — [0.5, 0.5] is the center. Survives the
+ * shape moving, resizing and rotating (Excalidraw's FixedPoint).
+ */
+export type FixedPoint = readonly [number, number]
+
+/**
+ * `orbit`: the tip stops on the shape's outline (plus a gap), on the line
+ * toward its fixed point. `inside`: the tip goes all the way to the fixed
+ * point (Excalidraw's BindMode, without its transient "skip").
+ */
+export type BindMode = 'orbit' | 'inside'
+
+/**
+ * A bound linear tip (Excalidraw's FixedPointBinding) — lines and arrows
+ * bind alike through `startBinding` / `endBinding`.
  */
 export interface OpenDrawBinding {
-  /** Id of the shape the tip is docked to. */
+  /** Id of the shape the tip is bound to. */
   elementId: string
+  fixedPoint: FixedPoint
+  mode: BindMode
 }
 
 export interface OpenDrawLineElement extends OpenDrawLinearElement {

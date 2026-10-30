@@ -118,7 +118,7 @@ test('advertises every grab zone with the right cursor', async ({ page }) => {
   expect(await cursorAt(page, box, 600, 100)).toBe('crosshair')
 })
 
-test('outlines the start shape while a drag crosses onto the end shape', async ({ page }) => {
+test('outlines only the shape under the dragged tip, like excalidraw', async ({ page }) => {
   await openEditor(page)
   const box = await canvasBox(page)
 
@@ -149,13 +149,13 @@ test('outlines the start shape while a drag crosses onto the end shape', async (
   await page.mouse.move(at(box, 470, 210).x, at(box, 470, 210).y)
   await settleFrames(page)
 
-  // BOTH shapes carry the docking outline while the drag is in flight.
+  // Excalidraw's suggestedBinding is the one shape the dragged tip would
+  // bind to — outlined in BINDING_HIGHLIGHT_RGB; the start shape is not.
   const startEdge = await overlayPixelAt(page, 190, 150)
   const endEdge = await overlayPixelAt(page, 470, 150)
-  expect(startEdge[3]).toBe(255)
-  expect(startEdge.slice(0, 3)).toEqual([105, 101, 219])
+  expect(startEdge[3]).toBe(0)
   expect(endEdge[3]).toBe(255)
-  expect(endEdge.slice(0, 3)).toEqual([105, 101, 219])
+  expect(endEdge.slice(0, 3)).toEqual([106, 189, 252])
 
   await page.mouse.up()
   await settleFrames(page)
@@ -165,8 +165,8 @@ test('outlines the start shape while a drag crosses onto the end shape', async (
 
   // The released arrow binds BOTH tips, not just the dragged one.
   const arrow = (await scene(page)).elements.find((el) => el.type === 'arrow')!
-  expect(arrow.startBinding).toEqual({ elementId: startId })
-  expect(arrow.endBinding).toEqual({ elementId: endId })
+  expect(arrow.startBinding).toMatchObject({ elementId: startId })
+  expect(arrow.endBinding).toMatchObject({ elementId: endId })
 })
 
 test('outlines a hoverable shape before the drag even starts', async ({ page }) => {
@@ -190,7 +190,7 @@ test('outlines a hoverable shape before the drag even starts', async ({ page }) 
   await settleFrames(page)
   const hovering = await overlayPixelAt(page, 390, 150)
   expect(hovering[3]).toBe(255)
-  expect(hovering.slice(0, 3)).toEqual([105, 101, 219])
+  expect(hovering.slice(0, 3)).toEqual([106, 189, 252])
 
   // Moving off the shape clears the outline without any press.
   await page.mouse.move(at(box, 650, 210).x, at(box, 650, 210).y)
@@ -207,19 +207,20 @@ test('docks a diagonal arrow on the diamond\'s own edge, not its bounds box', as
   await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
   const diamondId = (await scene(page)).elements[0]!.id
 
-  // An arrow from empty space, diagonally into the diamond's middle.
+  // An arrow from empty space, dropped just outside the diamond's
+  // upper-left slanted edge (clear of its corner snaps).
   await pickTool(page, 'Arrow (5)')
-  await drag(page, at(box, 240, 90), at(box, 480, 170))
+  await drag(page, at(box, 240, 90), at(box, 425, 140))
   await expect.poll(async () => (await scene(page)).elements.length).toBe(2)
 
-  // The tip retracts onto the upper-left slanted edge (~423,151) — about
-  // 40px inside where the bounds-box dock used to land on the border
-  // (394,141), right under the selection frame.
+  // The tip orbits the slanted edge itself — well inside the bounds box
+  // (400..560 × 120..220), where a box dock would have put it.
   const arrow = (await scene(page)).elements.find((el) => el.type === 'arrow')!
-  expect(arrow.endBinding).toEqual({ elementId: diamondId })
+  expect(arrow.endBinding).toMatchObject({ elementId: diamondId, mode: 'orbit' })
   const tip = tipOf(arrow, 'end')
-  expect(tip.x).toBeGreaterThan(410)
-  expect(tip.x).toBeLessThan(440)
-  expect(tip.y).toBeGreaterThan(140)
-  expect(tip.y).toBeLessThan(165)
+  // Distance from the slanted edge's line (400,170)-(480,120) is the gap.
+  const edgeDistance = Math.abs(50 * tip.x + 80 * tip.y - 50 * 400 - 80 * 170) / Math.hypot(50, 80)
+  expect(edgeDistance).toBeLessThan(8)
+  expect(tip.x).toBeGreaterThan(400)
+  expect(tip.y).toBeGreaterThan(120)
 })

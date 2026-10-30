@@ -20,7 +20,7 @@ function sceneFixture() {
   const rect: OpenDrawRectangleElement = newRectangleElement({ x: 10, y: 20, width: 120, height: 80 })
   const arrow = newLinearElement('arrow', { x: 0, y: 0 }) as OpenDrawArrowElement
   arrow.startBinding = null
-  arrow.endBinding = { elementId: rect.id }
+  arrow.endBinding = { elementId: rect.id, fixedPoint: [0.5001, 0.5001], mode: 'orbit' }
   const text = newTextElement({ x: 5, y: 5, text: 'hello' })
   return { rect, arrow, text }
 }

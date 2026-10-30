@@ -7,6 +7,7 @@
  * editor down with it.
  */
 
+import { normalizeFixedPoint } from '../elements/binding.js'
 import { isElementType } from '../elements/factories.js'
 import type {
   Arrowhead,
@@ -63,12 +64,20 @@ function freedrawPoints(value: unknown): number[][] {
     .map((p) => [num(p[0], 0), num(p[1], 0), num(p[2], 0.5)])
 }
 
-/** Coerces a linear tip binding: a record with a string elementId, else null. */
+/**
+ * Coerces a linear tip binding into Excalidraw's fixed-point shape. Older
+ * files stored only the shape id: they read as an orbit around the center.
+ */
 function linearBinding(value: unknown): OpenDrawBinding | null {
   if (!isRecord(value) || typeof value.elementId !== 'string') {
     return null
   }
-  return { elementId: value.elementId }
+  const fixed = Array.isArray(value.fixedPoint) ? value.fixedPoint.map((n) => num(n, 0.5)) : [0.5, 0.5]
+  return {
+    elementId: value.elementId,
+    fixedPoint: normalizeFixedPoint(fixed),
+    mode: value.mode === 'inside' ? 'inside' : 'orbit',
+  }
 }
 
 const ARROWHEADS: readonly Arrowhead[] = [

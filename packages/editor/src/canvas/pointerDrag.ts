@@ -2,6 +2,7 @@ import type { Bounds, Point, OpenDrawElement } from '@opendraw/core'
 import {
   bindableShapeAt,
   bindingFollowPatches,
+  boundTipsPatch,
   draftLinePoints,
   draftShapeRect,
   duplicateElements,
@@ -19,10 +20,10 @@ import {
 } from '@opendraw/core'
 
 import { trackDraftPointer } from './linearDraft.js'
+import { dragTipTo, tipModifiers } from './tipBinding.js'
 import type { Interaction } from './runtime.js'
 import { eraseAlong, pressureOf } from './pointerPress.js'
 import { setModifiers, type CanvasRuntime } from './runtime.js'
-import { mergeBindingCandidates } from './selectionHits.js'
 import type { LaserTrail } from './laserTrail.js'
 
 /**
@@ -67,10 +68,12 @@ function handleIdleHover(rt: CanvasRuntime, scenePoint: Point): void {
   rt.hoverScene.value = scenePoint
   const tool = ctx.activeTool
   if (tool === 'line' || tool === 'arrow') {
+    // Hovering with a line/arrow tool previews the binding a press here
+    // would make.
     const shape = bindableShapeAt(ctx.elements, scenePoint, maxBindingDistance(ctx.viewport.zoom))
-    rt.bindingCandidates.value = shape ? [shape] : []
-  } else if (rt.bindingCandidates.value.length > 0) {
-    rt.bindingCandidates.value = []
+    rt.suggestedBinding.value = shape ? { shape, pointer: scenePoint } : null
+  } else if (rt.suggestedBinding.value) {
+    rt.suggestedBinding.value = null
   }
 }
 
@@ -119,21 +122,15 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
         return
       }
       if (isLinearElement(el)) {
+        // Shift locks the angle; the end tip then binds (or not) and every
+        // bound tip snaps live — the draft is never rotated, so the scene
+        // tip is origin + point.
         const points = draftLinePoints(current.originScene, scenePoint, modifiers)
+        // Lay the draft's two points down first (a fresh draft holds only
+        // its start), then let the end tip bind.
         ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points))
-        // Connect feedback: outline every shape the line would bind — the
-        // one under the dragged tip AND the one the drag started on.
-        // The draft is never rotated, so scene position is origin + point.
-        const tip = points[points.length - 1]!
-        const distance = maxBindingDistance(ctx.viewport.zoom)
-        const startShape = bindableShapeAt(ctx.elements, current.originScene, distance, el.id)
-        const tipShape = bindableShapeAt(
-          ctx.elements,
-          { x: el.x + tip.x, y: el.y + tip.y },
-          distance,
-          el.id,
-        )
-        rt.bindingCandidates.value = mergeBindingCandidates([startShape, tipShape])
+        const end = points[points.length - 1]!
+        dragTipTo(rt, el.id, 'end', { x: el.x + end.x, y: el.y + end.y }, tipModifiers(event))
       } else {
         ctx.doc.forceUpdateElement(el.id, draftShapeRect(current.originScene, scenePoint, modifiers))
       }
@@ -170,22 +167,25 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
       if (!el || !isLinearElement(el)) {
         return
       }
-      ctx.doc.forceUpdateElement(el.id, moveLinearPoint(el, current.index, scenePoint))
-      // Binding feedback while a tip is dragged: outline the shape it
-      // would dock onto.
       if (current.end) {
-        const shape = bindableShapeAt(
-          ctx.elements,
-          scenePoint,
-          maxBindingDistance(ctx.viewport.zoom),
-          el.id,
-        )
-        rt.bindingCandidates.value = shape ? [shape] : []
+        // A tip: it binds (or unbinds) as it moves, like Excalidraw's
+        // endpoint drag.
+        dragTipTo(rt, el.id, current.end, scenePoint, tipModifiers(event))
+        return
+      }
+      // An inner point: bound tips re-aim at the new neighbor.
+      ctx.doc.forceUpdateElement(el.id, moveLinearPoint(el, current.index, scenePoint))
+      const moved = ctx.doc.getElement(el.id)
+      if (moved && isLinearElement(moved)) {
+        const snapped = boundTipsPatch(moved, ctx.elements, { dragging: true })
+        if (snapped) {
+          ctx.doc.forceUpdateElement(el.id, snapped)
+        }
       }
       return
     }
     case 'draftingLinear':
-      trackDraftPointer(rt, scenePoint)
+      trackDraftPointer(rt, scenePoint, tipModifiers(event))
       return
     case 'resizing': {
       if (current.originals.length === 1) {

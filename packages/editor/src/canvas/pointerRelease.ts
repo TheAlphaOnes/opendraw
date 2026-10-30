@@ -1,10 +1,4 @@
-import {
-  computeLinearBindings,
-  computeTipBinding,
-  isFreedrawElement,
-  isLinearElement,
-  maxBindingDistance,
-} from '@opendraw/core'
+import { isFreedrawElement, isLinearElement, rebindAfterDrag } from '@opendraw/core'
 
 import type { CanvasRuntime } from './runtime.js'
 
@@ -17,7 +11,7 @@ export function onCanvasPointerUp(rt: CanvasRuntime, event: PointerEvent): void 
   const current = rt.interaction.value
   rt.interaction.value = { kind: 'none' }
   rt.marquee.value = null
-  rt.bindingCandidates.value = []
+  rt.suggestedBinding.value = null
   const host = rt.host
   if (host?.hasPointerCapture(event.pointerId)) {
     host.releasePointerCapture(event.pointerId)
@@ -42,14 +36,8 @@ export function onCanvasPointerUp(rt: CanvasRuntime, event: PointerEvent): void 
         ctx.doc.cancelStep()
         return
       }
-      if (isLinearElement(el)) {
-        // Tips dropped over (or near) a shape dock onto it before the
-        // creation step closes — the bind is part of the draw's undo entry.
-        const binding = computeLinearBindings(el, ctx.elements, maxBindingDistance(ctx.viewport.zoom))
-        if (binding) {
-          ctx.doc.updateElement(el.id, binding)
-        }
-      }
+      // A line/arrow was bound live while its end was dragged; the binding
+      // is already part of the draw's undo step.
       ctx.doc.endStep()
       // A locked tool keeps drawing, so nothing gets selected in between
       // (App.tsx selects the new element only when the tool reverts).
@@ -71,6 +59,23 @@ export function onCanvasPointerUp(rt: CanvasRuntime, event: PointerEvent): void 
       return
     }
     case 'moving': {
+      // A line or arrow dragged on its own rebinds to whatever its tips
+      // landed on (or unbinds) — one moved with its bound shapes keeps
+      // its bindings. Folded into the drag's own undo step.
+      if (current.didDrag) {
+        const movedIds = new Set(current.originals.map((el) => el.id))
+        for (const original of current.originals) {
+          const el = ctx.doc.getElement(original.id)
+          if (!el || !isLinearElement(el)) {
+            continue
+          }
+          const bound = [el.startBinding, el.endBinding].filter((b) => b !== null)
+          if (bound.length > 0 && bound.every((b) => movedIds.has(b.elementId))) {
+            continue
+          }
+          ctx.doc.updateElement(el.id, rebindAfterDrag(el, ctx.elements, ctx.viewport.zoom))
+        }
+      }
       ctx.doc.endStep()
       // A no-drag click on an element inside a multi-selection narrows the
       // selection to it; a drag moved the whole group instead.
@@ -80,13 +85,7 @@ export function onCanvasPointerUp(rt: CanvasRuntime, event: PointerEvent): void 
       return
     }
     case 'movingPoint': {
-      const el = ctx.doc.getElement(current.elementId)
-      if (el && isLinearElement(el) && current.end) {
-        // Release-time docking: a tip dropped on (or near) a shape binds to
-        // it; dropped loose, any previous binding clears.
-        const patch = computeTipBinding(el, current.end, ctx.elements, maxBindingDistance(ctx.viewport.zoom))
-        ctx.doc.updateElement(el.id, patch)
-      }
+      // The dragged tip was bound (or unbound) live as it moved.
       ctx.doc.endStep()
       return
     }
@@ -109,6 +108,6 @@ export function onCanvasPointerLeave(rt: CanvasRuntime): void {
   // Mid-gesture the capture owns the pointer; only an idle leave clears.
   if (rt.interaction.value.kind === 'none') {
     rt.hoverScene.value = null
-    rt.bindingCandidates.value = []
+    rt.suggestedBinding.value = null
   }
 }

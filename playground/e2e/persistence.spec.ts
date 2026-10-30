@@ -38,7 +38,7 @@ test('restores a shape and its bound arrow across a page reload', async ({ page 
   const before = await scene(page)
   const arrowBefore = before.elements.find((el) => el.type === 'arrow')!
   const rectBefore = before.elements.find((el) => el.id === rectId)!
-  expect(arrowBefore.endBinding).toEqual({ elementId: rectId })
+  expect(arrowBefore.endBinding).toMatchObject({ elementId: rectId })
 
   // Theme rides along in the persisted chrome state.
   await page.getByRole('button', { name: 'Dark theme' }).click()
@@ -79,7 +79,7 @@ test('restores a shape and its bound arrow across a page reload', async ({ page 
   const rectAfter = after.elements.find((el) => el.id === rectId)!
   const arrowAfter = after.elements.find((el) => el.id === arrowBefore.id)!
   expect(rectAfter).toEqual(rectBefore)
-  expect(arrowAfter.endBinding).toEqual({ elementId: rectId })
+  expect(arrowAfter.endBinding).toMatchObject({ elementId: rectId })
   expect(tipOf(arrowAfter, 'end')).toEqual(tipOf(arrowBefore, 'end'))
 
   // The persisted theme is back too.

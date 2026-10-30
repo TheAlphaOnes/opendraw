@@ -3,7 +3,6 @@ import type {
   HandleDirection,
   Point,
   SelectionFrame,
-  OpenDrawBindableShape,
   OpenDrawElement,
   OpenDrawLinearElement,
 } from '@opendraw/core'
@@ -54,21 +53,6 @@ export function loneSelectedLinear(rt: CanvasRuntime): OpenDrawLinearElement | n
   const selected = rt.ctx.selectedElements
   const only = selected.length === 1 ? selected[0] : null
   return only && !only.locked && isLinearElement(only) ? only : null
-}
-
-/** Both-end probe results, deduped — a drag from a shape onto itself outlines it once. */
-export function mergeBindingCandidates(
-  shapes: ReadonlyArray<OpenDrawBindableShape | null>,
-): readonly OpenDrawBindableShape[] {
-  const merged: OpenDrawBindableShape[] = []
-  const seen = new Set<string>()
-  for (const shape of shapes) {
-    if (shape && !seen.has(shape.id)) {
-      seen.add(shape.id)
-      merged.push(shape)
-    }
-  }
-  return merged
 }
 
 /** Live copies of the selection — the pointerdown snapshot transforms read. */

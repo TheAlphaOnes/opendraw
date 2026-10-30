@@ -163,14 +163,14 @@ describe('duplicateElements', async () => {
     const other = rect(100)
     const line = {
       ...newLinearElement('arrow', { x: 0, y: 0, points: [{ x: 0, y: 0 }, { x: 50, y: 0 }] }),
-      startBinding: { elementId: shape.id },
-      endBinding: { elementId: other.id },
+      startBinding: { elementId: shape.id, fixedPoint: [0.25, 0.5] as const, mode: 'orbit' as const },
+      endBinding: { elementId: other.id, fixedPoint: [0.5001, 0.5001] as const, mode: 'orbit' as const },
     }
     const [shapeCopy, lineCopy] = duplicateElements([shape, line], { offset: { x: 5, y: 5 } })
     expect(shapeCopy!.x).toBe(5)
     expect(lineCopy!.type).toBe('arrow')
     if (lineCopy!.type === 'arrow') {
-      expect(lineCopy!.startBinding).toEqual({ elementId: shapeCopy!.id })
+      expect(lineCopy!.startBinding).toEqual({ elementId: shapeCopy!.id, fixedPoint: [0.25, 0.5], mode: 'orbit' })
       expect(lineCopy!.endBinding).toBeNull()
     }
   })

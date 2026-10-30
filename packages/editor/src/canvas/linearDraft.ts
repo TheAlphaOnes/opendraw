@@ -1,14 +1,8 @@
-import type { Point } from '@opendraw/core'
-import {
-  bindableShapeAt,
-  computeLinearBindings,
-  isLinearElement,
-  localPointOf,
-  maxBindingDistance,
-  pointsPatch,
-} from '@opendraw/core'
+import type { ElementPatch, OpenDrawLinearElement, Point } from '@opendraw/core'
+import { isLinearElement, localPointOf, pointsPatch, scenePointOf } from '@opendraw/core'
 
 import type { CanvasRuntime } from './runtime.js'
+import { dragTipTo, type TipModifiers } from './tipBinding.js'
 
 /**
  * Multi-point line/arrow drafting — Excalidraw's `multiElement` flow. A
@@ -64,6 +58,13 @@ export function appendDraftPoint(rt: CanvasRuntime, at: Point): void {
     }
     return
   }
+  // Excalidraw: a click while the temp tip orbits a shape other than the
+  // start's binds there and finishes the arrow immediately.
+  if (el.endBinding?.mode === 'orbit' && el.endBinding.elementId !== el.startBinding?.elementId) {
+    rt.interaction.value = { kind: 'draftingLinear', elementId: el.id, committedCount: draft.committedCount + 1 }
+    finishLinearDraft(rt)
+    return
+  }
   // Commit the temp where it parks and let a fresh temp follow the press.
   points.push({ ...local })
   rt.interaction.value = {
@@ -71,19 +72,13 @@ export function appendDraftPoint(rt: CanvasRuntime, at: Point): void {
     elementId: el.id,
     committedCount: draft.committedCount + 1,
   }
-  ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points))
-  // Binding feedback for the tip that just parked.
-  const shape = bindableShapeAt(
-    ctx.elements,
-    at,
-    maxBindingDistance(ctx.viewport.zoom),
-    el.id,
-  )
-  rt.bindingCandidates.value = shape ? [shape] : []
+  // The committed point is no tip any more: the fresh temp owns the end.
+  const committed: ElementPatch<OpenDrawLinearElement> = { ...pointsPatch(el, points), endBinding: null }
+  ctx.doc.forceUpdateElement(el.id, committed)
 }
 
-/** The trailing temp point follows the cursor between clicks. */
-export function trackDraftPointer(rt: CanvasRuntime, scenePoint: Point): void {
+/** The trailing temp point follows the cursor between clicks, binding live. */
+export function trackDraftPointer(rt: CanvasRuntime, scenePoint: Point, modifiers: TipModifiers): void {
   const { ctx } = rt
   const draft = rt.interaction.value
   if (draft.kind !== 'draftingLinear') {
@@ -102,13 +97,7 @@ export function trackDraftPointer(rt: CanvasRuntime, scenePoint: Point): void {
     points[points.length - 1] = local
   }
   ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points))
-  const shape = bindableShapeAt(
-    ctx.elements,
-    scenePoint,
-    maxBindingDistance(ctx.viewport.zoom),
-    el.id,
-  )
-  rt.bindingCandidates.value = shape ? [shape] : []
+  dragTipTo(rt, el.id, 'end', scenePoint, modifiers)
 }
 
 /**
@@ -123,7 +112,7 @@ export function finishLinearDraft(rt: CanvasRuntime): void {
     return
   }
   rt.interaction.value = { kind: 'none' }
-  rt.bindingCandidates.value = []
+  rt.suggestedBinding.value = null
   const el = ctx.doc.getElement(draft.elementId)
   if (!el || !isLinearElement(el)) {
     return
@@ -138,14 +127,14 @@ export function finishLinearDraft(rt: CanvasRuntime): void {
     ctx.doc.cancelStep()
     return
   }
+  const droppedTemp = points.length !== el.points.length
   ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points))
-  const binding = computeLinearBindings(
-    { ...el, points },
-    ctx.elements,
-    maxBindingDistance(ctx.viewport.zoom),
-  )
-  if (binding) {
-    ctx.doc.updateElement(el.id, binding)
+  // The temp's live binding went with it: the remaining last point binds
+  // where it parked, by the same rules as a dragged tip.
+  if (droppedTemp) {
+    const last = scenePointOf(el, points[points.length - 1]!)
+    dragTipTo(rt, el.id, 'end', last, { skip: false, inside: false })
+    rt.suggestedBinding.value = null
   }
   ctx.doc.endStep()
   if (!ctx.toolLocked) {

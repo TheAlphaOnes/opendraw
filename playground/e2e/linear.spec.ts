@@ -18,17 +18,25 @@ test('drags a selected arrow tip onto a shape and docks it', async ({ page }) =>
   const arrow = (await scene(page)).elements[1]!
   expect(tipOf(arrow, 'end').x).toBeCloseTo(480, 0)
 
-  // Grab the tip's point handle and drop it inside the rect: the tip
-  // moves alone (no whole-arrow scaling) and docks on release.
-  await drag(page, at(box, 480, 210), at(box, 240, 210))
+  // Grab the tip's point handle and drop it just outside the rect's right
+  // edge: the tip moves alone (no whole-arrow scaling) and orbits it.
+  await drag(page, at(box, 480, 210), at(box, 288, 190))
   await settleFrames(page)
 
   const docked = (await scene(page)).elements.find((el) => el.id === arrow.id)!
-  expect(docked.endBinding).toEqual({ elementId: rect.id })
+  expect(docked.endBinding).toMatchObject({ elementId: rect.id, mode: 'orbit' })
   const tip = tipOf(docked, 'end')
-  // Docked on the rect's own right edge, clear of it by the binding gap.
+  // On the rect's own right edge, clear of it by the binding gap.
   expect(tip.x).toBeCloseTo(286, 0)
-  expect(tip.y).toBeCloseTo(210, 0)
+
+  // Dropped inside instead, it points precisely at the drop spot
+  // (Excalidraw's inside binding).
+  await drag(page, at(box, tip.x, tip.y), at(box, 200, 230))
+  await settleFrames(page)
+  const precise = (await scene(page)).elements.find((el) => el.id === arrow.id)!
+  expect(precise.endBinding).toMatchObject({ elementId: rect.id, mode: 'inside' })
+  expect(tipOf(precise, 'end').x).toBeCloseTo(200, 0)
+  expect(tipOf(precise, 'end').y).toBeCloseTo(230, 0)
   // The start tip never moved and the tip count stayed at two.
   expect(tipOf(docked, 'start')).toEqual(tipOf(arrow, 'start'))
   expect(docked.points).toHaveLength(2)

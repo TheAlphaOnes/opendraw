@@ -55,6 +55,11 @@ export type Interaction =
       committedCount: number
     }
 
+export interface SuggestedBinding {
+  shape: OpenDrawBindableShape
+  pointer: Point
+}
+
 /** Keyboard modifiers sampled on every pointer and key event. */
 export interface CanvasModifiers {
   shift: boolean
@@ -75,8 +80,12 @@ export interface CanvasRuntime {
   modifiers: Cell<CanvasModifiers>
   /** Marquee rect while drag-selecting, in scene coords. */
   marquee: Cell<Bounds | null>
-  /** Shapes the live line/arrow probes would dock onto — outlined on the overlay. */
-  bindingCandidates: Cell<readonly OpenDrawBindableShape[]>
+  /**
+   * The shape a dragged line/arrow tip would bind to and the pointer over
+   * it — Excalidraw's suggestedBinding, highlighted on the overlay with its
+   * side-midpoint snap dots.
+   */
+  suggestedBinding: Cell<SuggestedBinding | null>
   /** Scene point under an idle pointer — drives the hover cursor + probes. */
   hoverScene: Cell<Point | null>
   /** Space bar held → temporary pan mode. */
@@ -100,7 +109,7 @@ export function createCanvasRuntime(ctx: EditorController, host: HTMLElement): C
     interaction: new Cell<Interaction>({ kind: 'none' }),
     modifiers: new Cell<CanvasModifiers>({ shift: false, alt: false }),
     marquee: new Cell<Bounds | null>(null),
-    bindingCandidates: new Cell<readonly OpenDrawBindableShape[]>([]),
+    suggestedBinding: new Cell<SuggestedBinding | null>(null),
     hoverScene: new Cell<Point | null>(null),
     spaceDown: new Cell(false),
     toHost,

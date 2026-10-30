@@ -84,16 +84,17 @@ test('binds an arrow dropped over a shape and follows it', async ({ page }) => {
   await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
   const rectId = (await scene(page)).elements[0]!.id
 
-  // An arrow drawn from empty space into the rectangle's middle.
+  // An arrow drawn from empty space, dropped just outside the left edge
+  // (clear of its midpoint snap): Excalidraw's orbit binding.
   await pickTool(page, 'Arrow (5)')
-  await drag(page, at(box, 160, 210), at(box, 390, 210))
+  await drag(page, at(box, 160, 190), at(box, 292, 190))
   await expect.poll(async () => (await scene(page)).elements.length).toBe(2)
 
   const arrow = (await scene(page)).elements.find((el) => el.type === 'arrow')!
   expect(arrow.startBinding).toBeNull()
-  expect(arrow.endBinding).toEqual({ elementId: rectId })
-  // The dropped tip retracted onto the shape's near edge, not its middle.
-  expect(tipOf(arrow, 'end').x).toBeLessThan(300)
+  expect(arrow.endBinding).toMatchObject({ elementId: rectId, mode: 'orbit' })
+  // The tip rests on the outline, one binding gap (5 + 1) outside it.
+  expect(tipOf(arrow, 'end').x).toBeCloseTo(294, 0)
   const looseStart = tipOf(arrow, 'start')
 
   // Move the rectangle away from under the arrow's tip.
@@ -109,7 +110,7 @@ test('binds an arrow dropped over a shape and follows it', async ({ page }) => {
     .poll(async () => tipOf((await scene(page)).elements.find((el) => el.id === arrow.id)!, 'end').x)
     .toBeGreaterThan(looseStart.x + 300)
   const moved = (await scene(page)).elements.find((el) => el.id === arrow.id)!
-  expect(moved.endBinding).toEqual({ elementId: rectId })
+  expect(moved.endBinding).toMatchObject({ elementId: rectId })
   expect(tipOf(moved, 'start').x).toBe(looseStart.x)
 })
 
@@ -124,16 +125,15 @@ test('binds a line dropped over a shape exactly like an arrow', async ({ page })
   await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
   const rectId = (await scene(page)).elements[0]!.id
 
-  // A line drawn from empty space into the rectangle's middle.
+  // A line drawn from empty space, dropped just outside the left edge.
   await pickTool(page, 'Line (6)')
-  await drag(page, at(box, 160, 210), at(box, 390, 210))
+  await drag(page, at(box, 160, 190), at(box, 292, 190))
   await expect.poll(async () => (await scene(page)).elements.length).toBe(2)
 
   const line = (await scene(page)).elements.find((el) => el.type === 'line')!
   expect(line.startBinding).toBeNull()
-  expect(line.endBinding).toEqual({ elementId: rectId })
-  // The dropped tip retracted onto the shape's near edge, not its middle.
-  expect(tipOf(line, 'end').x).toBeLessThan(300)
+  expect(line.endBinding).toMatchObject({ elementId: rectId, mode: 'orbit' })
+  expect(tipOf(line, 'end').x).toBeCloseTo(294, 0)
   const looseStart = tipOf(line, 'start')
 
   // Move the rectangle away from under the line's tip.
@@ -149,7 +149,7 @@ test('binds a line dropped over a shape exactly like an arrow', async ({ page })
     .poll(async () => tipOf((await scene(page)).elements.find((el) => el.id === line.id)!, 'end').x)
     .toBeGreaterThan(looseStart.x + 300)
   const movedLine = (await scene(page)).elements.find((el) => el.id === line.id)!
-  expect(movedLine.endBinding).toEqual({ elementId: rectId })
+  expect(movedLine.endBinding).toMatchObject({ elementId: rectId })
   expect(tipOf(movedLine, 'start').x).toBe(looseStart.x)
 })
 
@@ -177,10 +177,10 @@ test('outlines the shape an in-flight arrow tip would dock onto', async ({ page 
   await settleFrames(page)
 
   // The highlight strokes the shape's own outline in Excalidraw's
-  // selection color (#6965db).
+  // BINDING_HIGHLIGHT_RGB.
   const during = await overlayPixelAt(page, 390, 150)
   expect(during[3]).toBe(255)
-  expect(during.slice(0, 3)).toEqual([105, 101, 219])
+  expect(during.slice(0, 3)).toEqual([106, 189, 252])
 
   await page.mouse.up()
   await settleFrames(page)

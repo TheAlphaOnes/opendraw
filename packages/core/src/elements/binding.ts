@@ -1,29 +1,34 @@
 /**
- * Linear bindings — Excalidraw-style magnetic connections for lines and arrows.
+ * Linear bindings — Excalidraw's fixed-point binding model
+ * (packages/element/src/binding.ts, "simple" strategy), for lines and
+ * arrows alike.
  *
- * A bound tip records the id of the shape it docks onto
- * (`startBinding` / `endBinding` on the linear element, nothing on the shape)
- * and follows that shape around. The reverse lookup is a scene scan, which is
- * cheap for canvas-scale scenes and keeps the base element model untouched.
+ * A bound tip records the shape, a FIXED POINT (where inside the shape the
+ * tip aims, as ratios of the shape's size) and a MODE:
+ *   — `inside`: the tip sits exactly at the fixed point — what you get by
+ *     dropping a tip inside a shape (or holding Alt);
+ *   — `orbit`: the tip stops on the outline, dilated by a small gap, where
+ *     the line from the fixed point toward the other end crosses it — what
+ *     you get by dropping a tip just outside a shape. Its fixed point is a
+ *     side midpoint when the tip lands near one, else the drop point
+ *     projected onto the shape's diagonals.
+ * Fixed points survive the shape moving, resizing and rotating, so an
+ * arrow keeps aiming at the spot the user chose — no predefined zones.
  *
- * Behavioral reference: .context/excalidraw/packages/element/src/binding.ts
- *   — gap between a docked tip and the shape edge:
- *       BASE_BINDING_GAP + strokeWidth / 2
- *   — magnetic radius around a shape at which a tip still binds:
- *       maxBindingDistance(zoom), base max(BASE_BINDING_GAP, 15)
- *   — where a docked tip sits: on the shape's OWN outline (diamond edges,
- *       ellipse curve, rectangle box), dilated by the gap — never the
- *       bounds box, which glues tips to the border the selection frame
- *       draws on (see `intersectElementWithLineSegment` in the reference)
+ * Constants and rules follow the reference: BASE_BINDING_GAP,
+ * maxBindingDistance_simple, BASE_ARROW_MIN_LENGTH, normalizeFixedPoint,
+ * calculateFixedPointForNonElbowArrowBinding, getSnapOutlineMidPoint,
+ * projectFixedPointOntoDiagonal and updateBoundPoint.
  */
-
 import { getElementBounds, pointInBounds } from '../geometry/bounds.js'
+import { cornerRadius } from '../geometry/corners.js'
 import { rotatePoint, unrotatePoint } from '../geometry/points.js'
 import { isLinearElement } from './factories.js'
+import { isPointInsideElement } from './hitTest.js'
 import type { ElementPatch } from './mutate.js'
 import type {
-  Bounds,
-  Point,
+  BindMode,
+  FixedPoint,
   OpenDrawBinding,
   OpenDrawDiamondElement,
   OpenDrawEllipseElement,
@@ -31,17 +36,28 @@ import type {
   OpenDrawLinearElement,
   OpenDrawRectangleElement,
   OpenDrawTextElement,
+  Point,
 } from '../types.js'
 
-/** Shapes an arrow tip can dock onto (Excalidraw's bindable set, unlocked). */
+/** Shapes a line or arrow tip can bind to (Excalidraw's bindable set, unlocked). */
 export type OpenDrawBindableShape =
   | OpenDrawRectangleElement
   | OpenDrawDiamondElement
   | OpenDrawEllipseElement
   | OpenDrawTextElement
 
-/** Gaps exclude the shape's stroke width (must stay > 0, per Excalidraw). */
+/** Excalidraw's BASE_BINDING_GAP. */
 export const BASE_BINDING_GAP = 5
+/** Excalidraw's BASE_ARROW_MIN_LENGTH — shorter arrows aim at the fixed point. */
+export const BASE_ARROW_MIN_LENGTH = 10
+/** Excalidraw's FOCUS_POINT_SIZE (screen px). */
+export const FOCUS_POINT_SIZE = 10 / 1.5
+/** Excalidraw's FIXED_POINT_BOUND — fixed points stay within ±10 sizes. */
+const FIXED_POINT_BOUND = 10
+/** Below this size a shape has no interior to anchor a ratio into. */
+const MIN_BINDABLE_SIZE = 1
+/** Rectangle diagonals are shrunk this much at each end (Excalidraw's OFFSET_PX). */
+const DIAGONAL_INSET = 15
 
 export function isBindableShape(element: OpenDrawElement): element is OpenDrawBindableShape {
   return (
@@ -49,16 +65,16 @@ export function isBindableShape(element: OpenDrawElement): element is OpenDrawBi
     (element.type === 'rectangle' ||
       element.type === 'diamond' ||
       element.type === 'ellipse' ||
-      element.type === 'text')
+      (element.type === 'text' && element.containerId === null))
   )
 }
 
-/** Kept clear of the shape edge by this much (scene px). */
+/** Excalidraw's getBindingGap: kept clear of the outline by this much. */
 export function bindingGap(shape: Pick<OpenDrawBindableShape, 'strokeWidth'>): number {
   return BASE_BINDING_GAP + shape.strokeWidth / 2
 }
 
-/** Magnetic radius around bindable shapes, loosened at low zoom. */
+/** Excalidraw's maxBindingDistance_simple: the magnetic radius, loosened at low zoom. */
 export function maxBindingDistance(zoom = 1): number {
   const base = Math.max(BASE_BINDING_GAP, 15)
   const zoomValue = zoom < 1 ? zoom : 1
@@ -66,11 +82,8 @@ export function maxBindingDistance(zoom = 1): number {
 }
 
 /**
- * Topmost bindable shape within `threshold` scene px of `point`.
- *
- * Probes the padded bounds rather than the precise outline hit-test: a tip
- * dropped inside an unfilled shape must still bind, and the magnetic radius
- * is boxy by design (Excalidraw compares against the padded box too).
+ * Topmost bindable shape within `threshold` scene px of `point` — the
+ * shape a tip at `point` would bind to.
  */
 export function bindableShapeAt(
   elements: readonly OpenDrawElement[],
@@ -99,301 +112,297 @@ export function bindableShapeAt(
 }
 
 // ---------------------------------------------------------------------------
-// Docking geometry
+// Fixed points
 // ---------------------------------------------------------------------------
 
-/** The shape's local box dilated by the binding gap, in element coordinates. */
-function dilatedLocalBounds(shape: OpenDrawBindableShape, gap: number): Bounds {
-  return {
-    x1: -gap,
-    y1: -gap,
-    x2: shape.width + gap,
-    y2: shape.height + gap,
+/**
+ * Excalidraw's normalizeFixedPoint: clamps to ±FIXED_POINT_BOUND and never
+ * lets a ratio sit exactly on 0.5, which would make the arrow's heading
+ * flip on floating-point noise.
+ */
+export function normalizeFixedPoint(fixedPoint: readonly number[]): FixedPoint {
+  if (fixedPoint.length !== 2 || !fixedPoint.every((value) => Number.isFinite(value))) {
+    return [0.5001, 0.5001]
   }
+  const clamp = (ratio: number): number => {
+    const bounded = Math.min(FIXED_POINT_BOUND, Math.max(-FIXED_POINT_BOUND, ratio))
+    return Math.abs(bounded - 0.5) < 0.0001 ? 0.5001 : bounded
+  }
+  return [clamp(fixedPoint[0]!), clamp(fixedPoint[1]!)]
+}
+
+function centerOf(element: OpenDrawElement): Point {
+  return { x: element.x + element.width / 2, y: element.y + element.height / 2 }
 }
 
 /**
- * Liang-Barsky clip of segment `from` -> `to` against `rect`: returns the
- * entry parameter, or the exit parameter when the segment starts inside.
+ * The fixed point for a scene point — Excalidraw's
+ * calculateFixedPointForNonElbowArrowBinding: the point un-rotated about
+ * the shape's center, as ratios of its size (floored at the binding gap so
+ * tiny shapes stay bounded).
  */
-function clipParam(from: Point, to: Point, rect: Bounds): number {
-  const dx = to.x - from.x
-  const dy = to.y - from.y
-  let tEntry = 0
-  let tExit = 1
-  for (const [p, q] of [
-    [-dx, from.x - rect.x1],
-    [dx, rect.x2 - from.x],
-    [-dy, from.y - rect.y1],
-    [dy, rect.y2 - from.y],
-  ] as Array<readonly [number, number]>) {
-    if (p === 0) {
-      continue
-    }
-    const r = q / p
-    if (p < 0) {
-      tEntry = Math.max(tEntry, r)
-    } else {
-      tExit = Math.min(tExit, r)
-    }
+export function fixedPointFor(shape: OpenDrawBindableShape, point: Point): FixedPoint {
+  if (shape.width < MIN_BINDABLE_SIZE || shape.height < MIN_BINDABLE_SIZE) {
+    return normalizeFixedPoint([0.5, 0.5])
   }
-  const inside =
-    from.x >= rect.x1 && from.x <= rect.x2 && from.y >= rect.y1 && from.y <= rect.y2
-  return inside ? tExit : tEntry
+  const local = shape.angle === 0 ? point : unrotatePoint(point, centerOf(shape), shape.angle)
+  const floor = bindingGap(shape)
+  return normalizeFixedPoint([
+    (local.x - shape.x) / Math.max(shape.width, floor),
+    (local.y - shape.y) / Math.max(shape.height, floor),
+  ])
 }
 
-/** Closest point on the rect's perimeter to `point`. */
-function nearestPerimeterPoint(point: Point, rect: Bounds): Point {
-  const left = point.x - rect.x1
-  const right = rect.x2 - point.x
-  const top = point.y - rect.y1
-  const bottom = rect.y2 - point.y
-  const min = Math.min(left, right, top, bottom)
-  if (min === left) {
-    return { x: rect.x1, y: point.y }
-  }
-  if (min === right) {
-    return { x: rect.x2, y: point.y }
-  }
-  if (min === top) {
-    return { x: point.x, y: rect.y1 }
-  }
-  return { x: point.x, y: rect.y2 }
+/** The scene point a binding aims at (getGlobalFixedPointForBindableElement). */
+export function focusPointOf(shape: OpenDrawBindableShape, binding: Pick<OpenDrawBinding, 'fixedPoint'>): Point {
+  const [fx, fy] = normalizeFixedPoint(binding.fixedPoint)
+  const point = { x: shape.x + shape.width * fx, y: shape.y + shape.height * fy }
+  return shape.angle === 0 ? point : rotatePoint(point, centerOf(shape), shape.angle)
+}
+
+/** A binding of `shape` aiming at the scene point `focus`. */
+export function bindingAt(shape: OpenDrawBindableShape, focus: Point, mode: BindMode): OpenDrawBinding {
+  return { elementId: shape.id, fixedPoint: fixedPointFor(shape, focus), mode }
+}
+
+// ---------------------------------------------------------------------------
+// Snap targets: side midpoints and diagonal projection
+// ---------------------------------------------------------------------------
+
+/**
+ * The shape's side midpoints in scene space (Excalidraw's getAllMidpoints):
+ * right, bottom, left, top — a diamond's are its four corners.
+ */
+export function shapeMidpoints(shape: OpenDrawBindableShape): Point[] {
+  const { width: w, height: h } = shape
+  const local: Point[] =
+    shape.type === 'diamond'
+      ? [
+          { x: w, y: h / 2 },
+          { x: w / 2, y: h },
+          { x: 0, y: h / 2 },
+          { x: w / 2, y: 0 },
+        ]
+      : [
+          { x: w, y: h / 2 },
+          { x: w / 2, y: h },
+          { x: 0, y: h / 2 },
+          { x: w / 2, y: 0 },
+        ]
+  return local.map((p) => scenePointOf(shape, p))
+}
+
+/** Distance under which a tip outside the shape snaps to a side midpoint. */
+export function midpointSnapDistance(shape: OpenDrawBindableShape, zoom: number): number {
+  return maxBindingDistance(zoom) + shape.strokeWidth / 2
 }
 
 /**
- * Line param where the infinite line `from -> toward` crosses segment
- * `a -> b`, or null when parallel or crossing outside the segment.
+ * The side midpoint a tip at `point` snaps to — only from OUTSIDE the
+ * shape, within the snap distance (getSnapOutlineMidPoint for simple
+ * arrows). Null when none is near.
  */
-function lineSegmentCrossing(from: Point, toward: Point, a: Point, b: Point): number | null {
-  const d = { x: toward.x - from.x, y: toward.y - from.y }
-  const e = { x: b.x - a.x, y: b.y - a.y }
-  const w = { x: a.x - from.x, y: a.y - from.y }
-  const denominator = d.x * e.y - d.y * e.x
+export function snappedMidpoint(shape: OpenDrawBindableShape, point: Point, zoom: number): Point | null {
+  if (isPointInsideElement(shape, point)) {
+    return null
+  }
+  const threshold = midpointSnapDistance(shape, zoom)
+  return shapeMidpoints(shape).find((mid) => Math.hypot(mid.x - point.x, mid.y - point.y) <= threshold) ?? null
+}
+
+/** Excalidraw's getDiagonalsForBindableElement, in scene space. */
+function shapeDiagonals(shape: OpenDrawBindableShape): Array<[Point, Point]> {
+  const { width: w, height: h } = shape
+  const shrink = ([a, b]: [Point, Point], inset: number): [Point, Point] => {
+    const length = Math.hypot(b.x - a.x, b.y - a.y) || 1
+    const ux = ((b.x - a.x) / length) * inset
+    const uy = ((b.y - a.y) / length) * inset
+    return [
+      { x: a.x + ux, y: a.y + uy },
+      { x: b.x - ux, y: b.y - uy },
+    ]
+  }
+  const rectangular = shape.type === 'rectangle' || shape.type === 'text'
+  const local: Array<[Point, Point]> = rectangular
+    ? [
+        [{ x: 0, y: 0 }, { x: w, y: h }],
+        [{ x: w, y: 0 }, { x: 0, y: h }],
+      ]
+    : [
+        [{ x: w / 2, y: 0 }, { x: w / 2, y: h }],
+        [{ x: 0, y: h / 2 }, { x: w, y: h / 2 }],
+      ]
+  return local.map(([a, b]) => shrink([scenePointOf(shape, a), scenePointOf(shape, b)], rectangular ? DIAGONAL_INSET : 0))
+}
+
+/** Intersection point of segments a→b and c→d, or null. */
+function segmentIntersection(a: Point, b: Point, c: Point, d: Point): Point | null {
+  const t = segmentCrossing(a, b, c, d)
+  return t === null ? null : { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }
+}
+
+/**
+ * Where a tip dropped just outside the shape aims — Excalidraw's
+ * projectFixedPointOntoDiagonal: a near side midpoint wins; else the line
+ * from `from` (the other end) through `point` is projected onto the shape's
+ * diagonals, keeping the crossing nearest `from` that lies inside the shape.
+ */
+export function projectOntoDiagonal(
+  shape: OpenDrawBindableShape,
+  point: Point,
+  from: Point,
+  zoom: number,
+): Point | null {
+  const mid = snappedMidpoint(shape, point, zoom)
+  if (mid) {
+    return mid
+  }
+  const dx = point.x - from.x
+  const dy = point.y - from.y
+  const length = Math.hypot(dx, dy)
+  if (length < 3) {
+    return null
+  }
+  const diagonals = shapeDiagonals(shape)
+  const longest = Math.max(...diagonals.map(([a, b]) => Math.hypot(b.x - a.x, b.y - a.y)))
+  const reach = (2 * length + longest) / length
+  const far = { x: from.x + dx * reach, y: from.y + dy * reach }
+  const hits = diagonals
+    .map(([a, b]) => segmentIntersection(far, from, a, b))
+    .filter((p): p is Point => p !== null)
+    .sort((p, q) => Math.hypot(p.x - from.x, p.y - from.y) - Math.hypot(q.x - from.x, q.y - from.y))
+  const projection = hits[0]
+  return projection && isPointInsideElement(shape, projection) ? projection : null
+}
+
+// ---------------------------------------------------------------------------
+// Outline intersection (Excalidraw's intersectElementWithLineSegment)
+// ---------------------------------------------------------------------------
+
+/** Parameter t∈[0,1] along a→b where it crosses segment c→d. */
+function segmentCrossing(a: Point, b: Point, c: Point, d: Point): number | null {
+  const r = { x: b.x - a.x, y: b.y - a.y }
+  const s = { x: d.x - c.x, y: d.y - c.y }
+  const denominator = r.x * s.y - r.y * s.x
   if (denominator === 0) {
     return null
   }
-  const t = (w.x * e.y - w.y * e.x) / denominator
-  const s = (w.x * d.y - w.y * d.x) / denominator
-  return s >= 0 && s <= 1 ? t : null
+  const w = { x: c.x - a.x, y: c.y - a.y }
+  const t = (w.x * s.y - w.y * s.x) / denominator
+  const u = (w.x * r.y - w.y * r.x) / denominator
+  return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? t : null
 }
 
-/** Closest point on segment `a -> b` to `p`. */
-function closestPointOnSegment(p: Point, a: Point, b: Point): Point {
-  const ex = b.x - a.x
-  const ey = b.y - a.y
-  const lengthSq = ex * ex + ey * ey
-  if (lengthSq === 0) {
-    return { ...a }
+/** Parameters t∈[0,1] along a→b where it crosses the ellipse (cx, cy, rx, ry). */
+function ellipseCrossings(a: Point, b: Point, cx: number, cy: number, rx: number, ry: number): number[] {
+  if (rx <= 0 || ry <= 0) {
+    return []
   }
-  const t = Math.max(0, Math.min(1, ((p.x - a.x) * ex + (p.y - a.y) * ey) / lengthSq))
-  return { x: a.x + ex * t, y: a.y + ey * t }
+  const dx = b.x - a.x
+  const dy = b.y - a.y
+  const ux = a.x - cx
+  const uy = a.y - cy
+  const qa = (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry)
+  if (qa === 0) {
+    return []
+  }
+  const qb = 2 * ((ux * dx) / (rx * rx) + (uy * dy) / (ry * ry))
+  const qc = (ux * ux) / (rx * rx) + (uy * uy) / (ry * ry) - 1
+  const discriminant = qb * qb - 4 * qa * qc
+  if (discriminant < 0) {
+    return []
+  }
+  const root = Math.sqrt(discriminant)
+  return [(-qb - root) / (2 * qa), (-qb + root) / (2 * qa)].filter((t) => t >= 0 && t <= 1)
 }
 
-/** The dilated rhombus vertices, clockwise from the top, in local coords. */
-function diamondVertices(shape: OpenDrawBindableShape, gap: number): readonly Point[] {
-  const cx = shape.width / 2
-  const cy = shape.height / 2
-  return [
-    { x: cx, y: -gap },
-    { x: shape.width + gap, y: cy },
-    { x: cx, y: shape.height + gap },
-    { x: -gap, y: cy },
+/** Crossings of a→b with the quarter of a corner circle facing (sx, sy). */
+function cornerArcCrossings(a: Point, b: Point, cx: number, cy: number, radius: number, sx: number, sy: number): number[] {
+  return ellipseCrossings(a, b, cx, cy, radius, radius).filter((t) => {
+    const x = a.x + (b.x - a.x) * t
+    const y = a.y + (b.y - a.y) * t
+    return (x - cx) * sx >= 0 && (y - cy) * sy >= 0
+  })
+}
+
+/** All crossings of local segment a→b with the shape's outline dilated by `gap`. */
+function localOutlineCrossings(shape: OpenDrawBindableShape, a: Point, b: Point, gap: number): number[] {
+  const { width: w, height: h } = shape
+  if (shape.type === 'ellipse') {
+    return ellipseCrossings(a, b, w / 2, h / 2, w / 2 + gap, h / 2 + gap)
+  }
+  if (shape.type === 'diamond') {
+    const vertices: Point[] = [
+      { x: w / 2, y: -gap },
+      { x: w + gap, y: h / 2 },
+      { x: w / 2, y: h + gap },
+      { x: -gap, y: h / 2 },
+    ]
+    return vertices.map((v, i) => segmentCrossing(a, b, v, vertices[(i + 1) % 4]!)).filter((t): t is number => t !== null)
+  }
+  // Rectangles (with their rounded corners) and free text frame a box.
+  const r = shape.type === 'rectangle' && shape.roundness === 'round' ? cornerRadius(Math.min(w, h), 'rectangle') : 0
+  const R = r + gap
+  const [x1, y1, x2, y2] = [-gap, -gap, w + gap, h + gap]
+  const edges: Array<[Point, Point]> = [
+    [{ x: x1 + R, y: y1 }, { x: x2 - R, y: y1 }],
+    [{ x: x2, y: y1 + R }, { x: x2, y: y2 - R }],
+    [{ x: x2 - R, y: y2 }, { x: x1 + R, y: y2 }],
+    [{ x: x1, y: y2 - R }, { x: x1, y: y1 + R }],
   ]
+  const crossings = edges.map(([c, d]) => segmentCrossing(a, b, c, d)).filter((t): t is number => t !== null)
+  if (r > 0) {
+    crossings.push(
+      ...cornerArcCrossings(a, b, r, r, R, -1, -1),
+      ...cornerArcCrossings(a, b, w - r, r, R, 1, -1),
+      ...cornerArcCrossings(a, b, w - r, h - r, R, 1, 1),
+      ...cornerArcCrossings(a, b, r, h - r, R, -1, 1),
+    )
+  }
+  return crossings
 }
 
 /**
- * Crossing of the infinite line `from -> toward` with the shape's dilated
- * outline (the smallest positive line param wins — the entry crossing when
- * `from` is outside, the exit when it starts inside), or null when the line
- * never crosses.
+ * Scene points where segment a→b crosses the shape's outline dilated by
+ * `gap` — rotation-aware (the segment is tested in the shape's local frame).
  */
-function outlineCrossing(
-  shape: OpenDrawBindableShape,
-  from: Point,
-  toward: Point,
-  gap: number,
-): Point | null {
-  let best: number | null = null
-  if (shape.type === 'diamond') {
-    const vertices = diamondVertices(shape, gap)
-    for (let i = 0; i < vertices.length; i++) {
-      const t = lineSegmentCrossing(
-        from,
-        toward,
-        vertices[i]!,
-        vertices[(i + 1) % vertices.length]!,
-      )
-      if (t !== null && t > 0 && (best === null || t < best)) {
-        best = t
-      }
-    }
-  } else if (shape.type === 'ellipse') {
-    const a = shape.width / 2 + gap
-    const b = shape.height / 2 + gap
-    const dx = toward.x - from.x
-    const dy = toward.y - from.y
-    const ux = from.x - shape.width / 2
-    const uy = from.y - shape.height / 2
-    const qa = (dx * dx) / (a * a) + (dy * dy) / (b * b)
-    if (qa > 0) {
-      const qb = 2 * ((ux * dx) / (a * a) + (uy * dy) / (b * b))
-      const qc = (ux * ux) / (a * a) + (uy * uy) / (b * b) - 1
-      const discriminant = qb * qb - 4 * qa * qc
-      if (discriminant >= 0) {
-        const root = Math.sqrt(discriminant)
-        for (const t of [(-qb - root) / (2 * qa), (-qb + root) / (2 * qa)]) {
-          if (t > 0 && (best === null || t < best)) {
-            best = t
-          }
-        }
-      }
-    }
-  } else {
-    // Rectangle (any corner rounding) and text frame a box.
-    const t = clipParam(from, toward, dilatedLocalBounds(shape, gap))
-    if (t > 0) {
-      best = t
-    }
-  }
-  if (best === null) {
-    return null
-  }
-  return {
-    x: from.x + (toward.x - from.x) * best,
-    y: from.y + (toward.y - from.y) * best,
-  }
-}
-
-/** Whether `point` (local coords) lies inside the shape's dilated outline. */
-function outlineContains(shape: OpenDrawBindableShape, point: Point, gap: number): boolean {
-  if (shape.type === 'ellipse') {
-    const a = shape.width / 2 + gap
-    const b = shape.height / 2 + gap
-    const ux = (point.x - shape.width / 2) / a
-    const uy = (point.y - shape.height / 2) / b
-    return ux * ux + uy * uy <= 1
-  }
-  if (shape.type === 'diamond') {
-    const vertices = diamondVertices(shape, gap)
-    for (let i = 0; i < vertices.length; i++) {
-      const a = vertices[i]!
-      const b = vertices[(i + 1) % vertices.length]!
-      const cross = (b.x - a.x) * (point.y - a.y) - (b.y - a.y) * (point.x - a.x)
-      if (cross < 0) {
-        return false
-      }
-    }
-    return true
-  }
-  const bounds = dilatedLocalBounds(shape, gap)
-  return (
-    point.x >= bounds.x1 &&
-    point.x <= bounds.x2 &&
-    point.y >= bounds.y1 &&
-    point.y <= bounds.y2
+export function outlineIntersections(shape: OpenDrawBindableShape, a: Point, b: Point, gap: number): Point[] {
+  const la = localPointOf(shape, a)
+  const lb = localPointOf(shape, b)
+  return localOutlineCrossings(shape, la, lb, gap).map((t) =>
+    scenePointOf(shape, { x: la.x + (lb.x - la.x) * t, y: la.y + (lb.y - la.y) * t }),
   )
 }
 
-/** The point on the shape's dilated outline nearest `point` (local coords). */
-function nearestOutlinePoint(shape: OpenDrawBindableShape, point: Point, gap: number): Point {
+/** Whether the scene point lies within the shape's outline dilated by `gap`. */
+function isInsideOutline(shape: OpenDrawBindableShape, point: Point, gap: number): boolean {
+  const p = localPointOf(shape, point)
+  const { width: w, height: h } = shape
   if (shape.type === 'ellipse') {
-    const a = shape.width / 2 + gap
-    const b = shape.height / 2 + gap
-    const cx = shape.width / 2
-    const cy = shape.height / 2
-    const dx = point.x - cx
-    const dy = point.y - cy
-    const length = Math.hypot(dx, dy)
-    if (length === 0) {
-      return { x: cx, y: cy - b }
-    }
-    // Radial projection: exact for circles, a hairline off for stretched
-    // ones — the inside case only anchors a tip already near the rim.
-    return { x: cx + (a * dx) / length, y: cy + (b * dy) / length }
+    const ux = (p.x - w / 2) / (w / 2 + gap)
+    const uy = (p.y - h / 2) / (h / 2 + gap)
+    return ux * ux + uy * uy <= 1
   }
   if (shape.type === 'diamond') {
-    const vertices = diamondVertices(shape, gap)
-    let nearest: Point | null = null
-    let bestDistanceSq = Infinity
-    for (let i = 0; i < vertices.length; i++) {
-      const candidate = closestPointOnSegment(
-        point,
-        vertices[i]!,
-        vertices[(i + 1) % vertices.length]!,
-      )
-      const distanceSq = (candidate.x - point.x) ** 2 + (candidate.y - point.y) ** 2
-      if (distanceSq < bestDistanceSq) {
-        bestDistanceSq = distanceSq
-        nearest = candidate
-      }
-    }
-    return nearest!
+    return Math.abs(p.x - w / 2) / (w / 2 + gap) + Math.abs(p.y - h / 2) / (h / 2 + gap) <= 1
   }
-  return nearestPerimeterPoint(point, dilatedLocalBounds(shape, gap))
-}
-
-/**
- * Where a tip docks on `shape`: the crossing of the ray from the opposite
- * tip toward the shape's center with the shape's OWN outline, dilated by
- * the binding gap — the diamond's slanted edges, the ellipse's curve, the
- * rectangle's box. Docking against the bounds box instead would glue tips
- * to the invisible border the selection frame draws on. When the focus
- * itself lies inside the dilated outline (a self-loop, or the shape
- * dragged over the loose end), the outline point nearest the tip's
- * current position wins, so the two tips can never collapse together.
- *
- * Geometry runs in the shape's unrotated local space — the same pivot the
- * hit-tester and retip math use — so rotated shapes dock on their true
- * rotated edges.
- */
-export function dockPoint(
-  shape: OpenDrawBindableShape,
-  focus: Point,
-  current?: Point,
-): Point {
-  const gap = bindingGap(shape)
-  const localFocus = localPointOf(shape, focus)
-  const center = { x: shape.width / 2, y: shape.height / 2 }
-  if (outlineContains(shape, localFocus, gap)) {
-    const anchor = current ? localPointOf(shape, current) : localFocus
-    return scenePointOf(shape, nearestOutlinePoint(shape, anchor, gap))
-  }
-  if (Math.abs(localFocus.x - center.x) < 0.5 && Math.abs(localFocus.y - center.y) < 0.5) {
-    // Degenerate ray (focus at the center): dock straight above it.
-    return scenePointOf(shape, { x: center.x, y: -gap })
-  }
-  const crossing = outlineCrossing(shape, localFocus, center, gap)
-  return scenePointOf(shape, crossing ?? { x: center.x, y: -gap })
+  return p.x >= -gap && p.x <= w + gap && p.y >= -gap && p.y <= h + gap
 }
 
 // ---------------------------------------------------------------------------
 // Scene <-> local space (same pivot as the hit-tester: x + width / 2)
 // ---------------------------------------------------------------------------
 
-function pivotOf(element: OpenDrawElement): Point {
-  return { x: element.x + element.width / 2, y: element.y + element.height / 2 }
-}
-
 /** Scene-space position of an element-local point, rotated about the pivot. */
 export function scenePointOf(element: OpenDrawElement, point: Point): Point {
   const base = { x: element.x + point.x, y: element.y + point.y }
-  return element.angle === 0 ? base : rotatePoint(base, pivotOf(element), element.angle)
+  return element.angle === 0 ? base : rotatePoint(base, centerOf(element), element.angle)
 }
 
 /** Element-local position of a scene point, un-rotated about the pivot. */
 export function localPointOf(element: OpenDrawElement, scene: Point): Point {
-  const base = element.angle === 0 ? scene : unrotatePoint(scene, pivotOf(element), element.angle)
+  const base = element.angle === 0 ? scene : unrotatePoint(scene, centerOf(element), element.angle)
   return { x: base.x - element.x, y: base.y - element.y }
-}
-
-/** Scene-space positions of the element's first and last tip. */
-function tipScenes(element: OpenDrawLinearElement): { start: Point; end: Point } {
-  const points = element.points
-  return {
-    start: scenePointOf(element, points[0]!),
-    end: scenePointOf(element, points[points.length - 1]!),
-  }
 }
 
 /**
@@ -402,10 +411,7 @@ function tipScenes(element: OpenDrawLinearElement): { start: Point; end: Point }
  * rotation pivot and must stay untouched. Every linear points write in
  * the app goes through here so the size fields never go stale.
  */
-export function pointsPatch(
-  element: OpenDrawLinearElement,
-  points: Point[],
-): ElementPatch<OpenDrawLinearElement> {
+export function pointsPatch(element: OpenDrawLinearElement, points: Point[]): ElementPatch<OpenDrawLinearElement> {
   const patch: ElementPatch<OpenDrawLinearElement> = { points }
   if (element.angle === 0) {
     const xs = points.map((point) => point.x)
@@ -416,160 +422,243 @@ export function pointsPatch(
   return patch
 }
 
-/**
- * Rewrite only the given tips, keeping every other point fixed in scene
- * space.
- */
-function retipPatch(
-  element: OpenDrawLinearElement,
-  tips: { start?: Point; end?: Point },
-): ElementPatch<OpenDrawLinearElement> {
-  const points = element.points.map((point) => ({ ...point }))
-  if (tips.start) {
-    points[0] = localPointOf(element, tips.start)
-  }
-  if (tips.end) {
-    points[points.length - 1] = localPointOf(element, tips.end)
-  }
-  return pointsPatch(element, points)
-}
-
-/**
- * Move one point of a linear element to a scene position, keeping every
- * other point fixed. This is the endpoint/midpoint drag: the point follows
- * the pointer exactly, and any re-docking happens on release via
- * {@link computeTipBinding}.
- */
-export function moveLinearPoint(
-  element: OpenDrawLinearElement,
-  index: number,
-  scene: Point,
-): ElementPatch<OpenDrawLinearElement> {
+/** Move one point of a linear element to a scene position, the rest fixed. */
+export function moveLinearPoint(element: OpenDrawLinearElement, index: number, scene: Point): ElementPatch<OpenDrawLinearElement> {
   const points = element.points.map((point) => ({ ...point }))
   points[index] = localPointOf(element, scene)
   return pointsPatch(element, points)
 }
 
 // ---------------------------------------------------------------------------
-// Binding passes
+// Choosing a binding for a dragged tip (the "simple" strategy)
 // ---------------------------------------------------------------------------
 
+type End = 'start' | 'end'
+
+export interface TipBindingOptions {
+  /** Alt held: bind inside at the exact point, whatever the position. */
+  inside?: boolean
+}
+
+export interface TipBindingResult {
+  /** The binding for the dragged tip, or null to leave it loose. */
+  binding: OpenDrawBinding | null
+  /** The shape it binds to (the binding highlight's target). */
+  shape: OpenDrawBindableShape | null
+  /**
+   * Replacement for the OTHER end's binding when the rules change it (both
+   * ends on one shape bind inside); undefined leaves it as it is.
+   */
+  other?: OpenDrawBinding | null
+}
+
 /**
- * Create-time binding for a freshly drawn line or arrow: any tip that ends
- * over (or within `threshold` of) a bindable shape docks onto it. Both tips
- * re-dock while intermediate points stay fixed. Returns null when neither tip
- * is near a shape.
+ * The binding a dragged tip takes at `tip` — Excalidraw's
+ * getBindingStrategyForDraggingBindingElementEndpoints_simple:
+ *   — no shape within the magnetic distance: loose;
+ *   — the other end already bound to the same shape: both ends bind
+ *     inside (the other at its own fixed point);
+ *   — Alt held, or the tip inside the shape: `inside` at the tip;
+ *   — otherwise `orbit`, aiming at a near side midpoint or at the tip's
+ *     projection onto the shape's diagonals (else the tip itself).
  */
-export function computeLinearBindings(
-  element: OpenDrawLinearElement,
+export function resolveTipBinding(
+  arrow: OpenDrawLinearElement,
+  end: End,
+  tip: Point,
   elements: readonly OpenDrawElement[],
-  threshold: number,
-): ElementPatch<OpenDrawLinearElement> | null {
-  const { start, end } = tipScenes(element)
-  const startShape = bindableShapeAt(elements, start, threshold, element.id)
-  const endShape = bindableShapeAt(elements, end, threshold, element.id)
-  if (!startShape && !endShape) {
+  zoom: number,
+  options: TipBindingOptions = {},
+): TipBindingResult {
+  const shape = bindableShapeAt(elements, tip, maxBindingDistance(zoom), arrow.id)
+  if (!shape) {
+    return { binding: null, shape: null }
+  }
+  const otherBinding = end === 'start' ? arrow.endBinding : arrow.startBinding
+  if (otherBinding && otherBinding.elementId === shape.id) {
+    return {
+      binding: bindingAt(shape, tip, 'inside'),
+      shape,
+      other: { ...otherBinding, mode: 'inside' },
+    }
+  }
+  if (options.inside || isPointInsideElement(shape, tip)) {
+    return { binding: bindingAt(shape, tip, 'inside'), shape }
+  }
+  const neighborIndex = end === 'start' ? 1 : arrow.points.length - 2
+  let from = scenePointOf(arrow, arrow.points[neighborIndex] ?? arrow.points[0]!)
+  if (arrow.points.length === 2 && otherBinding) {
+    const otherShape = elements.find((el) => el.id === otherBinding.elementId)
+    if (otherShape && isBindableShape(otherShape)) {
+      from = focusPointOf(otherShape, otherBinding)
+    }
+  }
+  const focus = projectOntoDiagonal(shape, tip, from, zoom) ?? tip
+  return { binding: bindingAt(shape, focus, 'orbit'), shape }
+}
+
+// ---------------------------------------------------------------------------
+// Bound tip positions (Excalidraw's updateBoundPoint)
+// ---------------------------------------------------------------------------
+
+function boundShape(binding: OpenDrawBinding | null, byId: ReadonlyMap<string, OpenDrawElement>): OpenDrawBindableShape | null {
+  if (!binding) {
     return null
   }
-  const mid = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 }
-  const selfLoop = startShape !== null && startShape.id === endShape?.id
-  // The opposite end drives the dock; self-loops use the midpoint so the
-  // two tips spread onto different edges.
-  const newStart = startShape ? dockPoint(startShape, selfLoop ? mid : end, start) : start
-  const newEnd = endShape ? dockPoint(endShape, selfLoop ? mid : start, end) : end
-  return {
-    ...retipPatch(element, { start: newStart, end: newEnd }),
-    startBinding: startShape ? { elementId: startShape.id } : null,
-    endBinding: endShape ? { elementId: endShape.id } : null,
-  }
-}
-
-/**
- * The shape a binding points at, narrowed: deleted or non-bindable targets
- * (a hand-edited file can bind anything) count as unbound.
- */
-function boundShape(
-  binding: OpenDrawBinding | null,
-  byId: Map<string, OpenDrawElement>,
-): OpenDrawBindableShape | undefined {
-  if (!binding) {
-    return undefined
-  }
   const target = byId.get(binding.elementId)
-  return target !== undefined && isBindableShape(target) ? target : undefined
+  return target !== undefined && isBindableShape(target) ? target : null
+}
+
+const area = (shape: OpenDrawBindableShape): number => shape.width * shape.height
+const distance = (a: Point, b: Point): number => Math.hypot(a.x - b.x, a.y - b.y)
+const nearestTo = (points: readonly Point[], target: Point): Point | null =>
+  points.reduce<Point | null>((best, p) => (best === null || distance(p, target) < distance(best, target) ? p : best), null)
+
+function asMap(elements: readonly OpenDrawElement[] | ReadonlyMap<string, OpenDrawElement>): ReadonlyMap<string, OpenDrawElement> {
+  return elements instanceof Map ? elements : new Map((elements as readonly OpenDrawElement[]).map((el) => [el.id, el]))
+}
+
+export interface BoundTipOptions {
+  /** True while the tip is being dragged — skips the nested-shape rule. */
+  dragging?: boolean
 }
 
 /**
- * Re-dock one tip after it was dragged: the tip docks onto the bindable
- * shape under (or within `threshold` of) it, or its binding clears when it
- * landed loose. Intermediate points and the opposite tip never move —
- * this is the release-time commit of an endpoint drag.
+ * Where a bound tip sits right now — Excalidraw's updateBoundPoint:
+ *   — `inside`: exactly at the fixed point;
+ *   — `orbit`: where the line from the fixed point toward the other end (its
+ *     fixed point when also bound and the arrow has two points, else the
+ *     neighboring point) crosses the dilated outline — falling back to the
+ *     fixed point when the arrow would be too short or would invert into a
+ *     smaller shape nested in this one.
+ * Null when the tip is unbound or its shape is gone.
  */
-export function computeTipBinding(
-  element: OpenDrawLinearElement,
-  end: 'start' | 'end',
-  elements: readonly OpenDrawElement[],
-  threshold: number,
-): ElementPatch<OpenDrawLinearElement> {
-  const { start, end: endTip } = tipScenes(element)
-  const tip = end === 'start' ? start : endTip
-  const opposite = end === 'start' ? endTip : start
-  const shape = bindableShapeAt(elements, tip, threshold, element.id)
-  const patch: ElementPatch<OpenDrawLinearElement> = {}
-  if (shape) {
-    // The opposite tip drives the dock; a self-loop spreads the two tips
-    // onto different edges of the same shape.
-    const byId = new Map(elements.map((el) => [el.id, el]))
-    const otherEnd =
-      end === 'start' ? boundShape(element.endBinding, byId) : boundShape(element.startBinding, byId)
-    const mid = { x: (start.x + endTip.x) / 2, y: (start.y + endTip.y) / 2 }
-    const selfLoop = otherEnd !== undefined && otherEnd.id === shape.id
-    const dock = dockPoint(shape, selfLoop ? mid : opposite, tip)
-    Object.assign(patch, retipPatch(element, end === 'start' ? { start: dock } : { end: dock }))
+export function boundTipPoint(
+  arrow: OpenDrawLinearElement,
+  end: End,
+  elements: readonly OpenDrawElement[] | ReadonlyMap<string, OpenDrawElement>,
+  options: BoundTipOptions = {},
+): Point | null {
+  const byId = asMap(elements)
+  const binding = end === 'start' ? arrow.startBinding : arrow.endBinding
+  const shape = boundShape(binding, byId)
+  if (!binding || !shape) {
+    return null
   }
-  patch.startBinding = end === 'start' ? (shape ? { elementId: shape.id } : null) : element.startBinding
-  patch.endBinding = end === 'end' ? (shape ? { elementId: shape.id } : null) : element.endBinding
-  return patch
+  const focus = focusPointOf(shape, binding)
+  if (binding.mode === 'inside') {
+    return focus
+  }
+
+  const otherBinding = end === 'start' ? arrow.endBinding : arrow.startBinding
+  const otherShape = boundShape(otherBinding, byId)
+  const otherFocus = otherShape && otherBinding ? focusPointOf(otherShape, otherBinding) : null
+  const neighbor = scenePointOf(arrow, arrow.points[end === 'start' ? 1 : arrow.points.length - 2] ?? arrow.points[0]!)
+  const toward = arrow.points.length === 2 ? (otherFocus ?? neighbor) : neighbor
+
+  const outline = nearestTo(outlineIntersections(shape, focus, toward, bindingGap(shape)), toward)
+  const otherOutline = otherShape ? nearestTo(outlineIntersections(otherShape, focus, toward, bindingGap(otherShape)), focus) : null
+  const hasHead = end === 'start' ? arrow.startArrowhead !== null : arrow.endArrowhead !== null
+  const noHeads = arrow.startArrowhead === null && arrow.endArrowhead === null
+  const resolved = noHeads || hasHead ? focus : (outline ?? focus)
+
+  // A smaller shape nested inside this one: snapping to the outline would
+  // invert the arrow, so aim at the fixed point instead.
+  if (
+    otherShape &&
+    outline &&
+    !options.dragging &&
+    area(otherShape) < area(shape) * 2 &&
+    isInsideOutline(otherShape, outline, bindingGap(otherShape))
+  ) {
+    return resolved
+  }
+
+  const otherTarget = otherShape ? (otherOutline ?? otherFocus ?? neighbor) : neighbor
+  const tooShort = distance(otherTarget, outline ?? focus) <= BASE_ARROW_MIN_LENGTH
+  if (!otherShape) {
+    return tooShort ? focus : (outline ?? focus)
+  }
+  if (tooShort) {
+    return resolved
+  }
+  return outline ?? focus
 }
 
 /**
- * Patches after elements move or resize:
- *   — a linear element bound to a moved shape re-docks that tip;
- *   — a moved linear element re-docks its own bound tips onto the
- *     stationary shapes, so the tip glides along the shape's edge.
- * Loose ends and intermediate points never move.
+ * The points patch that puts every bound tip of `arrow` where its binding
+ * says (a two-point arrow re-aims both ends; a polyline only its tips).
+ * Null when nothing is bound.
+ */
+export function boundTipsPatch(
+  arrow: OpenDrawLinearElement,
+  elements: readonly OpenDrawElement[] | ReadonlyMap<string, OpenDrawElement>,
+  options: BoundTipOptions = {},
+): ElementPatch<OpenDrawLinearElement> | null {
+  if (!arrow.startBinding && !arrow.endBinding) {
+    return null
+  }
+  const start = boundTipPoint(arrow, 'start', elements, options)
+  const end = boundTipPoint(arrow, 'end', elements, options)
+  if (!start && !end) {
+    return null
+  }
+  const points = arrow.points.map((point) => ({ ...point }))
+  if (start) {
+    points[0] = localPointOf(arrow, start)
+  }
+  if (end) {
+    points[points.length - 1] = localPointOf(arrow, end)
+  }
+  return pointsPatch(arrow, points)
+}
+
+/**
+ * Patches after shapes move, resize or rotate: every line or arrow bound to
+ * one of them re-aims its bound tips. A linear element that moved WITH all
+ * its bound shapes moved rigidly and needs nothing; one dragged on its own
+ * keeps its geometry until the drag ends (see `rebindAfterDrag`).
  */
 export function bindingFollowPatches(
   movedIds: ReadonlySet<string>,
   elements: readonly OpenDrawElement[],
 ): Map<string, ElementPatch<OpenDrawLinearElement>> {
   const patches = new Map<string, ElementPatch<OpenDrawLinearElement>>()
-  const byId = new Map(elements.map((element) => [element.id, element]))
+  const byId = asMap(elements)
   for (const element of elements) {
-    if (!isLinearElement(element)) {
+    if (!isLinearElement(element) || (!element.startBinding && !element.endBinding)) {
       continue
     }
-    const startShape = boundShape(element.startBinding, byId)
-    const endShape = boundShape(element.endBinding, byId)
-    const startMoved = startShape !== undefined && movedIds.has(startShape.id)
-    const endMoved = endShape !== undefined && movedIds.has(endShape.id)
-    const elementMoved = movedIds.has(element.id)
-    if (!elementMoved && !startMoved && !endMoved) {
+    const bound = [element.startBinding, element.endBinding].filter((b): b is OpenDrawBinding => b !== null)
+    if (!bound.some((b) => movedIds.has(b.elementId))) {
       continue
     }
-    const { start, end } = tipScenes(element)
-    const mid = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 }
-    const selfLoop = startShape !== undefined && startShape.id === endShape?.id
-    const tips: { start?: Point; end?: Point } = {}
-    if (startShape && (startMoved || elementMoved)) {
-      tips.start = dockPoint(startShape, selfLoop ? mid : end, start)
+    if (movedIds.has(element.id) && bound.every((b) => movedIds.has(b.elementId))) {
+      continue
     }
-    if (endShape && (endMoved || elementMoved)) {
-      tips.end = dockPoint(endShape, selfLoop ? mid : start, end)
+    const patch = boundTipsPatch(element, byId)
+    if (patch) {
+      patches.set(element.id, patch)
     }
-    patches.set(element.id, retipPatch(element, tips))
   }
   return patches
+}
+
+/**
+ * After a line or arrow is dragged on its own, each tip binds to whatever
+ * shape it now lands on (by the same rules as dragging a tip) or unbinds —
+ * Excalidraw's bindOrUnbindBindingElements at the end of a drag.
+ */
+export function rebindAfterDrag(
+  arrow: OpenDrawLinearElement,
+  elements: readonly OpenDrawElement[],
+  zoom: number,
+): ElementPatch<OpenDrawLinearElement> {
+  const loose = { ...arrow, startBinding: null, endBinding: null }
+  const start = resolveTipBinding(loose, 'start', scenePointOf(arrow, arrow.points[0]!), elements, zoom).binding
+  const end = resolveTipBinding({ ...loose, startBinding: start }, 'end', scenePointOf(arrow, arrow.points[arrow.points.length - 1]!), elements, zoom).binding
+  const rebound = { ...arrow, startBinding: start, endBinding: end }
+  return { startBinding: start, endBinding: end, ...(boundTipsPatch(rebound, elements) ?? {}) }
 }
 
 /**
@@ -585,17 +674,14 @@ export function orphanBindingPatches(
     if (!isLinearElement(element)) {
       continue
     }
-    const startOrphaned =
-      element.startBinding !== null && deletedIds.has(element.startBinding.elementId)
-    const endOrphaned =
-      element.endBinding !== null && deletedIds.has(element.endBinding.elementId)
-    if (!startOrphaned && !endOrphaned) {
-      continue
+    const startOrphaned = element.startBinding !== null && deletedIds.has(element.startBinding.elementId)
+    const endOrphaned = element.endBinding !== null && deletedIds.has(element.endBinding.elementId)
+    if (startOrphaned || endOrphaned) {
+      patches.set(element.id, {
+        startBinding: startOrphaned ? null : element.startBinding,
+        endBinding: endOrphaned ? null : element.endBinding,
+      })
     }
-    patches.set(element.id, {
-      startBinding: startOrphaned ? null : element.startBinding,
-      endBinding: endOrphaned ? null : element.endBinding,
-    })
   }
   return patches
 }

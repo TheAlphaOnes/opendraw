@@ -221,28 +221,8 @@ function toRoughPoints(points: readonly Point[]): [number, number][] {
   return points.map((p) => [p.x, p.y] as [number, number])
 }
 
-/**
- * Excalidraw's DEFAULT_PROPORTIONAL_RADIUS: corners at 25% of the side.
- * Diamonds (and lines) round proportionally.
- */
-export const PROPORTIONAL_RADIUS = 0.25
-
-/** Excalidraw's DEFAULT_ADAPTIVE_RADIUS — rectangles' fixed corner radius. */
-export const ADAPTIVE_RADIUS = 32
-
-/**
- * Excalidraw's getCornerRadius for a side of length `x`: rectangles use
- * the adaptive radius (a fixed 32px, proportional below the 128px cutoff),
- * diamonds the proportional one. Shared with the overlay so chrome traces
- * exactly the corners the renderer draws.
- */
-export function cornerRadius(x: number, type: 'rectangle' | 'diamond'): number {
-  if (type === 'diamond') {
-    return x * PROPORTIONAL_RADIUS
-  }
-  const cutoff = ADAPTIVE_RADIUS / PROPORTIONAL_RADIUS
-  return x <= cutoff ? x * PROPORTIONAL_RADIUS : ADAPTIVE_RADIUS
-}
+export { ADAPTIVE_RADIUS, cornerRadius, PROPORTIONAL_RADIUS } from '../geometry/corners.js'
+import { cornerRadius } from '../geometry/corners.js'
 
 /** Rounded-rectangle outline as an SVG path — Q curves at each corner. */
 function roundedRectPath(width: number, height: number, radius: number): string {

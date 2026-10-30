@@ -57,7 +57,8 @@ export function createCanvasSurface(
       pointer: 'mouse',
       marquee: rt.marquee.value,
       previewElements: [],
-      bindingCandidates: rt.bindingCandidates.value,
+      suggestedBinding: rt.suggestedBinding.value,
+      elements,
       groupChrome: groupSelectionChrome(elements, appState.selectedIds, appState.editingGroupId),
       canvasSize: size,
       dpr,
@@ -117,7 +118,7 @@ export function createCanvasSurface(
       scheduleRender()
     }),
     rt.marquee.subscribe(scheduleRender),
-    rt.bindingCandidates.subscribe(scheduleRender),
+    rt.suggestedBinding.subscribe(scheduleRender),
   ]
 
   scheduleRender()

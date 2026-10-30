@@ -34,7 +34,7 @@ export function duplicateElements(
   })
   const remapBinding = (binding: OpenDrawBinding | null): OpenDrawBinding | null => {
     const target = binding ? idMap.get(binding.elementId) : undefined
-    return target ? { elementId: target } : null
+    return binding && target ? { ...binding, elementId: target } : null
   }
   const rebound = copies.map((original): OpenDrawElement => {
     // A child copied with its frame moves into the copied frame; copied

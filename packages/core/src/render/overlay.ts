@@ -8,6 +8,16 @@
  */
 
 import type { OpenDrawBindableShape } from '../elements/binding.js'
+import {
+  FOCUS_POINT_SIZE,
+  focusPointOf,
+  isBindableShape,
+  midpointSnapDistance,
+  scenePointOf,
+  shapeMidpoints,
+  snappedMidpoint,
+} from '../elements/binding.js'
+import { isPointInsideElement } from '../elements/hitTest.js'
 import { isLinearElement } from '../elements/factories.js'
 import type { GroupSelectionChrome } from '../elements/groups.js'
 import { clamp } from '../geometry/points.js'
@@ -20,7 +30,7 @@ import {
   POINT_HANDLE_RADIUS,
   selectionFrameOf,
 } from '../interaction/handles.js'
-import type { Bounds, OpenDrawAppState, OpenDrawElement, OpenDrawLinearElement } from '../types.js'
+import type { Bounds, OpenDrawAppState, OpenDrawElement, OpenDrawLinearElement, Point } from '../types.js'
 import { applyViewportTransform } from '../viewport.js'
 import type { CanvasSize } from './renderScene.js'
 import { cornerRadius, renderElementShape } from './renderScene.js'
@@ -38,11 +48,12 @@ export interface OverlayRenderInput {
   /** Elements being created/dragged right now, drawn before the chrome. */
   previewElements: readonly OpenDrawElement[]
   /**
-   * Shapes the live line/arrow probes would dock onto right now — the tip
-   * being dragged, the shape the drag started on, or the shape under an
-   * idle hover. Empty when nothing probes.
+   * The shape a dragged (or hovering) line/arrow tip would bind to, and the
+   * pointer over it — Excalidraw's suggestedBinding. Null when none.
    */
-  bindingCandidates: readonly OpenDrawBindableShape[]
+  suggestedBinding?: { shape: OpenDrawBindableShape; pointer: Point } | null
+  /** Every element — the focus-point indicator looks bound shapes up here. */
+  elements?: readonly OpenDrawElement[]
   /**
    * Group-aware chrome (see `groupSelectionChrome`): per-element outlines
    * inside a multi-selection, dashed boxes for selected groups and the
@@ -64,7 +75,7 @@ const HANDLE_RADIUS_PX = 2
 const MARQUEE_FILL_ALPHA = 0.06
 
 export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRenderInput): void {
-  const { selectedElements, appState, pointer, marquee, previewElements, bindingCandidates, groupChrome } = input
+  const { selectedElements, appState, pointer, marquee, previewElements, suggestedBinding, groupChrome } = input
   const { theme, viewport, editingId } = appState
   const zoom = viewport.zoom
   const dark = theme === 'dark'
@@ -91,8 +102,10 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
   // Connect feedback: outline every shape the live line/arrow probes would
   // dock onto, before the selection chrome (a highlight never reads as a
   // selection). A drag from shape A to shape B outlines both at once.
-  for (const candidate of bindingCandidates) {
-    drawBindingHighlight(ctx, candidate, selectionColor, zoom)
+  if (suggestedBinding) {
+    const highlight = dark ? BINDING_HIGHLIGHT.dark : BINDING_HIGHLIGHT.light
+    drawBindingHighlight(ctx, suggestedBinding.shape, highlight, zoom)
+    drawMidpointIndicators(ctx, suggestedBinding.shape, suggestedBinding.pointer, highlight, dark, zoom)
   }
 
   // While text is being edited — free text, or a label inside its selected
@@ -149,6 +162,9 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
       // endpoint circles that drag tips, plus the hollow midpoint that
       // inserts a point — Excalidraw's selected-linear affordance.
       const only = selectedElements.length === 1 ? selectedElements[0]! : null
+      if (only && isLinearElement(only) && input.elements && !only.locked) {
+        drawFocusPointIndicators(ctx, only, input.elements, zoom, dark)
+      }
       if (only && isLinearElement(only)) {
         drawLinearPointHandles(ctx, only, zoom, dark)
       }
@@ -324,6 +340,95 @@ function drawPointDot(
     ctx.stroke()
   }
   ctx.restore()
+}
+
+// ---------------------------------------------------------------------------
+// Binding affordances (Excalidraw's interactiveScene)
+// ---------------------------------------------------------------------------
+
+/** Excalidraw's BINDING_HIGHLIGHT_RGB per theme. */
+const BINDING_HIGHLIGHT = { light: 'rgb(106, 189, 252)', dark: 'rgb(104, 182, 240)' } as const
+/** Excalidraw's BINDING_MIDPOINT_COLOR per theme. */
+const BINDING_MIDPOINT = { light: 'rgba(65, 65, 65, 0.5)', dark: 'rgba(237, 237, 237, 0.8)' } as const
+/** Midpoint dot radius, screen px. */
+const MIDPOINT_RADIUS_PX = 4
+
+/**
+ * The side-midpoint snap dots: from outside the shape, the midpoint nearest
+ * the pointer shows once the pointer is within twice the snap distance, in
+ * the highlight color when the tip actually snaps to it.
+ */
+function drawMidpointIndicators(
+  ctx: CanvasRenderingContext2D,
+  shape: OpenDrawBindableShape,
+  pointer: Point,
+  highlight: string,
+  dark: boolean,
+  zoom: number,
+): void {
+  if (isPointInsideElement(shape, pointer)) {
+    return
+  }
+  const threshold = midpointSnapDistance(shape, zoom)
+  const midpoints = shapeMidpoints(shape)
+  const closest = midpoints.reduce((a, b) =>
+    Math.hypot(a.x - pointer.x, a.y - pointer.y) <= Math.hypot(b.x - pointer.x, b.y - pointer.y) ? a : b,
+  )
+  if (Math.hypot(closest.x - pointer.x, closest.y - pointer.y) > threshold * 2) {
+    return
+  }
+  const snapped = snappedMidpoint(shape, pointer, zoom)
+  const isSnapped = snapped !== null && snapped.x === closest.x && snapped.y === closest.y
+  ctx.save()
+  ctx.fillStyle = isSnapped ? highlight : dark ? BINDING_MIDPOINT.dark : BINDING_MIDPOINT.light
+  ctx.beginPath()
+  ctx.arc(closest.x, closest.y, MIDPOINT_RADIUS_PX / zoom, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+}
+
+/**
+ * Excalidraw's focus-point indicator on a selected two-point line/arrow:
+ * for each bound end, a dashed connector from the tip to the point it aims
+ * at, and a small ringed circle there — hidden when the two overlap.
+ */
+function drawFocusPointIndicators(
+  ctx: CanvasRenderingContext2D,
+  linear: OpenDrawLinearElement,
+  elements: readonly OpenDrawElement[],
+  zoom: number,
+  dark: boolean,
+): void {
+  if (linear.points.length !== 2) {
+    return
+  }
+  for (const end of ['start', 'end'] as const) {
+    const binding = end === 'start' ? linear.startBinding : linear.endBinding
+    const shape = binding && elements.find((el) => el.id === binding.elementId)
+    if (!binding || !shape || !isBindableShape(shape)) {
+      continue
+    }
+    const focus = focusPointOf(shape, binding)
+    const tip = scenePointOf(linear, linear.points[end === 'start' ? 0 : 1]!)
+    if (Math.hypot(focus.x - tip.x, focus.y - tip.y) < (FOCUS_POINT_SIZE * 1.5) / zoom) {
+      continue
+    }
+    ctx.save()
+    ctx.strokeStyle = themeColor(UI.focus, dark)
+    ctx.lineWidth = 1 / zoom
+    ctx.setLineDash([4 / zoom, 4 / zoom])
+    ctx.beginPath()
+    ctx.moveTo(tip.x, tip.y)
+    ctx.lineTo(focus.x, focus.y)
+    ctx.stroke()
+    ctx.setLineDash([])
+    ctx.fillStyle = themeColor('rgba(255, 255, 255, 0.9)', dark)
+    ctx.beginPath()
+    ctx.arc(focus.x, focus.y, FOCUS_POINT_SIZE / 1.5 / zoom, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.stroke()
+    ctx.restore()
+  }
 }
 
 // ---------------------------------------------------------------------------
