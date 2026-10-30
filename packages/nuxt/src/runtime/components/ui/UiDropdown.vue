@@ -25,6 +25,7 @@ const anchorRef = ref<HTMLElement | null>(null)
 const panelRef = ref<HTMLElement | null>(null)
 const teleportTarget = ref<HTMLElement | null>(null)
 const position = ref({ left: 0, top: 0 })
+const above = ref(false)
 
 const GAP = 8
 const EDGE = 8
@@ -33,6 +34,10 @@ onMounted(() => {
   teleportTarget.value = anchorRef.value?.closest<HTMLElement>('.opendraw-root') ?? null
 })
 
+/**
+ * Below the trigger, aligned to it and kept inside the editor; flips above
+ * when there is no room below (phones, where the toolbar is the bottom bar).
+ */
 function place(): void {
   const anchor = anchorRef.value
   const root = teleportTarget.value
@@ -48,10 +53,14 @@ function place(): void {
       : props.align === 'end'
         ? startX + a.width - props.width
         : startX + a.width / 2 - props.width / 2
+  const height = panelRef.value?.offsetHeight ?? 0
+  const below = a.bottom - r.top + GAP
+  const fitsBelow = below + height <= r.height - EDGE
   position.value = {
     left: Math.max(EDGE, Math.min(left, r.width - props.width - EDGE)),
-    top: a.bottom - r.top + GAP,
+    top: fitsBelow ? below : Math.max(EDGE, a.top - r.top - GAP - height),
   }
+  above.value = !fitsBelow
 }
 
 async function show(): Promise<void> {
@@ -59,6 +68,8 @@ async function show(): Promise<void> {
   open.value = true
   document.addEventListener('pointerdown', onOutside, true)
   await nextTick()
+  // Measured now that it renders: flip above if it would overflow below.
+  place()
   panelRef.value?.querySelector<HTMLElement>('[role="menuitem"]')?.focus({ preventScroll: true })
 }
 
@@ -121,6 +132,7 @@ defineExpose({ close })
         v-if="open"
         ref="panelRef"
         class="ui-dropdown__panel"
+        :class="{ 'is-above': above }"
         role="menu"
         :aria-label="props.label"
         :style="{ left: `${position.left}px`, top: `${position.top}px`, width: `${props.width}px` }"
@@ -165,6 +177,11 @@ defineExpose({ close })
 .ui-dropdown-enter-from {
   opacity: 0;
   transform: translateY(-4px) scale(0.985);
+}
+
+/* Opening upward, it rises from the trigger instead. */
+.ui-dropdown__panel.is-above.ui-dropdown-enter-from {
+  transform: translateY(4px) scale(0.985);
 }
 
 .ui-dropdown-leave-to {

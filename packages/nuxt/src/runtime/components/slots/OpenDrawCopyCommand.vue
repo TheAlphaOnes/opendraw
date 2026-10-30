@@ -120,15 +120,29 @@ onBeforeUnmount(() => {
     </button>
     <Transition name="od-command-card">
       <div v-if="cardOpen" class="od-command__card" role="dialog" :aria-label="props.compactLabel">
-        <p class="od-command__card-title">{{ props.compactLabel }}</p>
+        <p class="od-command__card-head">
+          <UiIcon name="terminal" :size="14" />
+          <span>{{ props.compactLabel }}</span>
+        </p>
         <div class="od-command__card-row">
           <span v-if="props.prompt" class="od-command__prompt" aria-hidden="true">{{ props.prompt }}</span>
           <code class="od-command__card-text">{{ props.command }}</code>
+          <button
+            type="button"
+            class="od-command__copy od-command__card-copy"
+            :class="{ 'is-copied': copied }"
+            :aria-label="copied ? 'Copied' : 'Copy command'"
+            @click="copy"
+          >
+            <Transition name="od-command-icon" mode="out-in">
+              <UiIcon v-if="copied" key="check" name="check" :size="14" />
+              <UiIcon v-else key="copy" name="copy" :size="14" />
+            </Transition>
+          </button>
         </div>
-        <button type="button" class="od-command__card-copy" @click="copy">
-          <UiIcon :name="copied ? 'check' : 'copy'" :size="14" />
-          <span>{{ copied ? 'Copied' : 'Copy command' }}</span>
-        </button>
+        <p class="od-command__card-hint" :class="{ 'is-copied': copied }">
+          {{ copied ? 'Copied to clipboard' : 'Run it in your project' }}
+        </p>
       </div>
     </Transition>
 
@@ -324,65 +338,60 @@ onBeforeUnmount(() => {
   z-index: 30;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: min(300px, calc(100vw - 2 * var(--od-gutter, 12px)));
-  padding: 12px;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--od-gutter, 12px));
+  padding: 10px;
   border-radius: var(--od-radius-l, 8px);
   background: var(--od-surface);
   box-shadow: var(--od-shadow-1), var(--od-shadow-2);
 }
 
-.od-command__card-title {
+.od-command__card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin: 0;
+  padding: 0 2px;
   font-size: 12px;
+  font-weight: 500;
   color: var(--od-ink-soft);
 }
 
+/* The snippet: a bordered code row with its copy button inside. */
 .od-command__card-row {
   display: flex;
+  align-items: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 4px 4px 4px 10px;
+  border: 1px solid var(--od-divider);
   border-radius: 6px;
-  background: var(--od-surface-low);
+  background: color-mix(in srgb, var(--od-ink) 4%, var(--od-surface));
   font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   font-size: 13px;
 }
 
 .od-command__card-text {
+  flex: 1;
   color: var(--od-ink);
   overflow-wrap: anywhere;
   user-select: all;
 }
 
 .od-command__card-copy {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 36px;
-  border: none;
-  border-radius: 6px;
-  background: var(--od-accent);
-  color: #fff;
-  font: inherit;
-  font-size: 14px;
-  cursor: pointer;
-  transition:
-    background-color var(--od-fast, 120ms) ease-out,
-    transform 90ms var(--od-ease);
+  flex-shrink: 0;
 }
 
-.od-command__card-copy:hover {
-  background: var(--od-brand-active);
+.od-command__card-hint {
+  margin: 0;
+  padding: 0 2px;
+  font-size: 12px;
+  color: var(--od-ink-soft);
+  transition: color var(--od-fast, 120ms) ease-out;
 }
 
-.od-command__card-copy:active {
-  transform: scale(0.97);
-}
-
-.od-command__card-copy:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--od-accent);
+.od-command__card-hint.is-copied {
+  color: var(--od-accent);
 }
 
 .od-command-icon-enter-active {
