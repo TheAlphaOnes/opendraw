@@ -6,6 +6,7 @@
  *   actions      — the command registry (shortcuts, labels, predicates)
  *   tools/icons  — the tool table and the semantic icon contract
  *   persistence  — localStorage scene persistence, theme defaults
+ *   files        — several named drawings in one browser (index, previews)
  *   services     — file and image plumbing
  *
  * Framework adapters (@opendraw/nuxt, …) mirror the controller into their
@@ -29,6 +30,10 @@ export type { CanvasContextMenuRequest } from './canvas/viewportGestures.js'
 export * from './persistence/persistedScene.js'
 export * from './persistence/systemTheme.js'
 export * from './persistence/scenePersistence.js'
+
+export * from './files/fileIndex.js'
+export * from './files/thumbnail.js'
+export * from './files/drawingFiles.js'
 
 export * from './services/file.service.js'
 export * from './services/image.service.js'

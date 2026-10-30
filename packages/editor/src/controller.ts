@@ -71,8 +71,7 @@ export type EditorListener = (editor: EditorController) => void
 const ZOOM_STEP = 1.25
 
 /** The theme defaults — the canvas background swaps with the theme. */
-const LIGHT_BACKGROUND = '#ffffff'
-const DARK_BACKGROUND = '#121212'
+export const THEME_BACKGROUNDS = { light: '#ffffff', dark: '#121212' } as const satisfies Record<ThemeName, string>
 
 export class EditorController {
   /** The raw document — escape hatch for advanced use. */
@@ -257,10 +256,10 @@ export class EditorController {
    */
   setTheme(theme: ThemeName): void {
     const current = this.appState.viewBackgroundColor.toLowerCase()
-    const isThemeDefault = current === LIGHT_BACKGROUND || current === DARK_BACKGROUND
+    const isThemeDefault = current === THEME_BACKGROUNDS.light || current === THEME_BACKGROUNDS.dark
     this.doc.setAppState(
       isThemeDefault
-        ? { theme, viewBackgroundColor: theme === 'dark' ? DARK_BACKGROUND : LIGHT_BACKGROUND }
+        ? { theme, viewBackgroundColor: THEME_BACKGROUNDS[theme] }
         : { theme },
     )
   }

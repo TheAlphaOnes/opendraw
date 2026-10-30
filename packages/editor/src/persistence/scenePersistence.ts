@@ -1,9 +1,12 @@
-import type { EditorController } from '../controller.js'
+import { DEFAULT_APP_STATE, buildFile } from '@opendraw/core'
+
+import { THEME_BACKGROUNDS, type EditorController } from '../controller.js'
 import {
   DEFAULT_SCENE_STORAGE_KEY,
   LEGACY_SCENE_STORAGE_KEY,
   buildPersistedScene,
   parsePersistedScene,
+  type PersistedScene,
 } from './persistedScene.js'
 import { resolveThemeDefault, type ThemeDefault } from './systemTheme.js'
 
@@ -44,6 +47,14 @@ export interface ScenePersistence {
   restore: () => void
   /** Writes any pending save now. */
   flush: () => void
+  /**
+   * Points persistence at another scene key and loads that scene in place
+   * — how a drawing-files host opens a drawing. Unsaved edits are written
+   * to the key being left first. The theme is the user's, not the
+   * drawing's: it carries over, and the opened scene's default background
+   * follows it. A key with nothing saved opens an empty drawing.
+   */
+  switchTo: (storageKey: string) => void
   dispose: () => void
 }
 
@@ -54,10 +65,10 @@ export function attachScenePersistence(
   options: ScenePersistenceOptions = {},
 ): ScenePersistence {
   if (typeof window === 'undefined') {
-    return { restore: () => {}, flush: () => {}, dispose: () => {} }
+    return { restore: () => {}, flush: () => {}, switchTo: () => {}, dispose: () => {} }
   }
 
-  const storageKey = options.storageKey ?? DEFAULT_SCENE_STORAGE_KEY
+  let storageKey = options.storageKey ?? DEFAULT_SCENE_STORAGE_KEY
   const debounceMs = options.debounceMs ?? DEFAULT_DEBOUNCE_MS
   let pending: number | null = null
   let lastRev = editor.state.rev
@@ -113,35 +124,39 @@ export function attachScenePersistence(
     }
   }
 
-  function restore(): void {
+  /**
+   * The scene saved under `key`: null when nothing is saved, 'unreadable'
+   * when storage or the payload cannot be read (both logged).
+   */
+  function readScene(key: string): PersistedScene | null | 'unreadable' {
     let raw: string | null
     try {
-      raw = window.localStorage.getItem(storageKey)
+      raw = window.localStorage.getItem(key)
       // The default key migrates a scene saved before the opendraw rename;
       // the next save writes it under the new key.
-      if (raw === null && storageKey === DEFAULT_SCENE_STORAGE_KEY) {
+      if (raw === null && key === DEFAULT_SCENE_STORAGE_KEY) {
         raw = window.localStorage.getItem(LEGACY_SCENE_STORAGE_KEY)
       }
     } catch (error) {
-      console.error(`[opendraw] scene storage is not readable (${storageKey})`, error)
-      applyThemeDefault()
-      return
+      console.error(`[opendraw] scene storage is not readable (${key})`, error)
+      return 'unreadable'
     }
     if (raw === null) {
-      applyThemeDefault()
-      return
+      return null
     }
-    let parsed
     try {
-      parsed = parsePersistedScene(JSON.parse(raw))
+      return parsePersistedScene(JSON.parse(raw)) ?? 'unreadable'
     } catch (error) {
       // Expected degradation on a corrupted payload, not a failed save:
       // warn and keep the fresh scene.
-      console.warn(`[opendraw] ignoring a corrupted persisted scene (${storageKey})`, error)
-      applyThemeDefault()
-      return
+      console.warn(`[opendraw] ignoring a corrupted persisted scene (${key})`, error)
+      return 'unreadable'
     }
-    if (!parsed) {
+  }
+
+  function restore(): void {
+    const parsed = readScene(storageKey)
+    if (parsed === null || parsed === 'unreadable') {
       applyThemeDefault()
       return
     }
@@ -153,9 +168,39 @@ export function attachScenePersistence(
     editor.setGridSize(parsed.appState.gridSize)
   }
 
+  function switchTo(next: string): void {
+    if (next === storageKey) {
+      return
+    }
+    if (pending !== null) {
+      flush()
+    }
+    storageKey = next
+    const parsed = readScene(next)
+    const theme = editor.theme
+    if (parsed === null || parsed === 'unreadable') {
+      editor.loadFile(buildFile([], THEME_BACKGROUNDS[theme]))
+      editor.doc.setViewport({ ...DEFAULT_APP_STATE.viewport })
+    } else {
+      editor.loadFile(parsed.file)
+      editor.doc.setViewport(parsed.appState.viewport)
+      editor.setGridSize(parsed.appState.gridSize)
+    }
+    // Re-applying the session theme swaps a theme-default background saved
+    // under the other theme, so a drawing made in dark opens readable in light.
+    editor.setTheme(theme)
+    // The load itself is not an edit: the save it scheduled is dropped.
+    if (pending !== null) {
+      window.clearTimeout(pending)
+      pending = null
+    }
+    lastRev = editor.state.rev
+  }
+
   return {
     restore,
     flush,
+    switchTo,
     dispose() {
       unsubscribe()
       window.removeEventListener('beforeunload', flush)
