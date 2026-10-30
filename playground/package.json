@@ -11,10 +11,11 @@
   },
   "dependencies": {
     "@opendraw/core": "workspace:*",
+    "@opendraw/editor": "workspace:*",
+    "@opendraw/nuxt": "workspace:*",
     "nuxt": "^4.6.2",
     "vue": "^3.5.44",
-    "vue-router": "^4.5.0",
-    "@opendraw/nuxt": "workspace:*"
+    "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

@@ -1,11 +1,9 @@
-import { onBeforeUnmount, onMounted } from 'vue'
-
 import type { Point, OpenDrawElement } from '@opendraw/core'
 import { elementsInGroup, moveElements, parentEditingGroupId } from '@opendraw/core'
 
 import { dispatchActionKey } from '../actions/registry.js'
 import { isTypingTarget } from '../actions/keys.js'
-import { TOOL_BY_KEY } from '../constants/tools.js'
+import { TOOL_BY_KEY } from '../tools.js'
 import { finishLinearDraft } from './linearDraft.js'
 import { editTextOf } from './textEntry.js'
 import type { CanvasRuntime } from './runtime.js'
@@ -37,19 +35,19 @@ function isActivatable(target: EventTarget | null): boolean {
 }
 
 /**
- * Keys are handled on the whole editor (the `.opendraw-root` around the
- * canvas, or the canvas itself when mounted headless) — Excalidraw's
- * container-level onKeyDown — so a shortcut still works right after a
- * toolbar click moved focus onto a button.
+ * Keys are handled on the whole editor — `keyRoot`, the adapter's shell
+ * around the canvas (or the canvas itself when mounted headless) —
+ * Excalidraw's container-level onKeyDown, so a shortcut still works right
+ * after a toolbar click moved focus onto a button. Returns the cleanup.
  */
-export function useCanvasKeyboard(rt: CanvasRuntime): void {
+export function attachKeyboard(rt: CanvasRuntime, keyRoot: HTMLElement): () => void {
   const { ctx } = rt
 
   function nudge(direction: Point, large: boolean): void {
     // With a grid on, nudging steps one cell at a time.
-    const step = ctx.gridSize.value ?? (large ? NUDGE_STEP_LARGE : NUDGE_STEP)
+    const step = ctx.gridSize ?? (large ? NUDGE_STEP_LARGE : NUDGE_STEP)
     const delta = { x: direction.x * step, y: direction.y * step }
-    for (const { id, patch } of moveElements(ctx.selectedElements.value, delta)) {
+    for (const { id, patch } of moveElements(ctx.selectedElements, delta)) {
       // The selection mixes element kinds, so patches are base-union typed.
       ctx.doc.updateElement<OpenDrawElement>(id, patch)
     }
@@ -60,13 +58,13 @@ export function useCanvasKeyboard(rt: CanvasRuntime): void {
    * level (actionDeselect's parent-group walk); otherwise it deselects.
    */
   function stepOutOrDeselect(): void {
-    const editing = ctx.editingGroupId.value
+    const editing = ctx.editingGroupId
     if (!editing) {
       ctx.select(null)
       return
     }
-    const elements = ctx.elements.value
-    const selected = ctx.selectedElements.value
+    const elements = ctx.elements
+    const selected = ctx.selectedElements
     const keep = selected.length > 0 ? selected : elementsInGroup(elements, editing)
     ctx.setEditingGroup(parentEditingGroupId(keep, editing))
     ctx.selectGrouped(keep.map((el) => el.id))
@@ -75,7 +73,7 @@ export function useCanvasKeyboard(rt: CanvasRuntime): void {
   function onKeyDown(event: KeyboardEvent): void {
     // The text editor and other inputs handle their own keys; a nested
     // editor's own handler may also have consumed the event already.
-    if (ctx.editingId.value || event.defaultPrevented || isTypingTarget(event.target)) {
+    if (ctx.editingId || event.defaultPrevented || isTypingTarget(event.target)) {
       return
     }
     // A focused button keeps Space/Enter as its activation keys.
@@ -104,7 +102,7 @@ export function useCanvasKeyboard(rt: CanvasRuntime): void {
       return
     }
     // Enter on a lone text or shape starts editing its text (Excalidraw).
-    const selected = ctx.selectedElements.value
+    const selected = ctx.selectedElements
     if (event.key === 'Enter' && noModifier(event) && selected.length === 1 && editTextOf(rt, selected[0]!)) {
       event.preventDefault()
       return
@@ -113,7 +111,7 @@ export function useCanvasKeyboard(rt: CanvasRuntime): void {
       return
     }
     const direction = ARROW_DIRECTIONS[event.key]
-    if (direction && ctx.selectedElements.value.length > 0) {
+    if (direction && ctx.selectedElements.length > 0) {
       event.preventDefault()
       nudge(direction, event.shiftKey)
       return
@@ -136,7 +134,7 @@ export function useCanvasKeyboard(rt: CanvasRuntime): void {
 
   // Space is tracked window-wide so a pan can start with focus anywhere.
   function onWindowKeyDown(event: KeyboardEvent): void {
-    if (event.code === 'Space' && !ctx.editingId.value) {
+    if (event.code === 'Space' && !ctx.editingId) {
       rt.spaceDown.value = true
     }
   }
@@ -147,18 +145,12 @@ export function useCanvasKeyboard(rt: CanvasRuntime): void {
     }
   }
 
-  let keyRoot: HTMLElement | null = null
-
-  onMounted(() => {
-    const host = rt.hostRef.value
-    keyRoot = host?.closest<HTMLElement>('.opendraw-root') ?? host
-    keyRoot?.addEventListener('keydown', onKeyDown)
-    window.addEventListener('keyup', onWindowKeyUp)
-    window.addEventListener('keydown', onWindowKeyDown)
-  })
-  onBeforeUnmount(() => {
-    keyRoot?.removeEventListener('keydown', onKeyDown)
+  keyRoot.addEventListener('keydown', onKeyDown)
+  window.addEventListener('keyup', onWindowKeyUp)
+  window.addEventListener('keydown', onWindowKeyDown)
+  return () => {
+    keyRoot.removeEventListener('keydown', onKeyDown)
     window.removeEventListener('keyup', onWindowKeyUp)
     window.removeEventListener('keydown', onWindowKeyDown)
-  })
+  }
 }

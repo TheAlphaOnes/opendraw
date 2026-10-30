@@ -20,7 +20,7 @@ export const SELECTION_GRAB_PADDING = 12
 
 /** The transform handles of the current selection, zoom-aware. */
 export function selectionHandleLayout(rt: CanvasRuntime): readonly HandleBox[] {
-  const selected = rt.ctx.selectedElements.value
+  const selected = rt.ctx.selectedElements
   if (selected.length === 0) {
     return []
   }
@@ -28,7 +28,7 @@ export function selectionHandleLayout(rt: CanvasRuntime): readonly HandleBox[] {
   if (!frame) {
     return []
   }
-  return getHandleLayout(frame, { zoom: rt.ctx.viewport.value.zoom, pointer: 'mouse' })
+  return getHandleLayout(frame, { zoom: rt.ctx.viewport.zoom, pointer: 'mouse' })
 }
 
 /**
@@ -40,17 +40,17 @@ export function sideGrabAt(
   point: Point,
   frame: SelectionFrame,
 ): HandleDirection | null {
-  const selected = rt.ctx.selectedElements.value
+  const selected = rt.ctx.selectedElements
   const only = selected.length === 1 ? selected[0] : null
   if (only && isLinearElement(only) && only.points.length <= 2) {
     return null
   }
-  return sideHandleAt(frame, point, rt.ctx.viewport.value.zoom)
+  return sideHandleAt(frame, point, rt.ctx.viewport.zoom)
 }
 
 /** The lone selected, unlocked line/arrow — or null. */
 export function loneSelectedLinear(rt: CanvasRuntime): OpenDrawLinearElement | null {
-  const selected = rt.ctx.selectedElements.value
+  const selected = rt.ctx.selectedElements
   const only = selected.length === 1 ? selected[0] : null
   return only && !only.locked && isLinearElement(only) ? only : null
 }
@@ -72,5 +72,5 @@ export function mergeBindingCandidates(
 
 /** Live copies of the selection — the pointerdown snapshot transforms read. */
 export function snapshotSelection(rt: CanvasRuntime): readonly OpenDrawElement[] {
-  return rt.ctx.selectedElements.value.map((el) => rt.ctx.doc.getElement(el.id) ?? el)
+  return rt.ctx.selectedElements.map((el) => rt.ctx.doc.getElement(el.id) ?? el)
 }

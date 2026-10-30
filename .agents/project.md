@@ -12,7 +12,8 @@ patterns proven there, not a port.
 | path              | name             | role                                                                    |
 | ----------------- | ---------------- | ----------------------------------------------------------------------- |
 | `packages/core`   | `@opendraw/core`  | the engine: element model, geometry, scene store, hit testing, transforms, rough.js renderer, export. zero vue/nuxt imports — runs in node (tests) and the browser alike. |
-| `packages/nuxt`   | `opendraw`        | the module: `<OpenDraw>` shell + `<OpenDrawCanvas>` headless core + `useOpenDraw()` composable + the central ui kit. registers components and auto-imports. |
+| `packages/editor` | `@opendraw/editor` | the framework-free editor: `EditorController` (document + editor state + commands), `mountCanvas` (gestures, keyboard, render loop, cursor, laser, text editing), the action registry, tool table, persistence. |
+| `packages/nuxt`   | `@opendraw/nuxt`  | the vue/nuxt adapter: `<OpenDraw>` shell + `<OpenDrawCanvas>` + `useOpenDraw()` (a vue mirror of the controller) + the central ui kit. |
 | `playground/`     | —                | nuxt 4 app for manual verification: `/` full editor, `/headless` canvas-only with custom chrome. |
 | `.context/excalidraw/` | —           | the reference codebase. excalidraw parity is the behavior contract: when anything is ambiguous, read this and match it. |
 
@@ -28,9 +29,10 @@ does it and cite the file when you deviate.
 ## commands
 
 ```sh
-pnpm -r test          # core vitest suite (111 tests)
+pnpm test            # core, editor and nuxt vitest suites
 pnpm build            # core + nuxt package builds
-pnpm --filter opendraw exec vue-tsc --noEmit   # module typecheck gate
+pnpm typecheck                                 # every package + playground
+pnpm e2e                                       # playwright against the playground
 pnpm dev                                      # playground at :3000
 ```
 
@@ -61,7 +63,7 @@ these are load-bearing; changing one is a redesign, not a refactor.
   element colors in-canvas; the user-set background is never filtered —
   the theme switch swaps the default (`#ffffff` <-> `#121212`) and leaves
   customized backgrounds alone.
-- **text editing is a session.** `<TextEditor>` mounts per session
+- **text editing is a session.** the editor's text session starts per edit
   (`v-if="editingActive"` on the component in `OpenDrawCanvas`), seeds the
   textarea once from state, then the browser owns the editing state. the
   textarea keeps a session-stable box (width/height fixed at open):
@@ -112,3 +114,12 @@ windows deliver the initial size normally.
 - free tiers only; no paid platforms.
 - all icons lucide, through the central registry.
 - one central reusable component set; never remake the same ui piece.
+
+## verification state (2026-10-30)
+
+after the excalidraw-parity waves, the opendraw rename and the editor
+extraction: unit suites core 259 / editor 14 / nuxt 3 green, `pnpm
+typecheck` clean, all three package builds emit, and the playwright suite
+(62 specs, chromium) passes against the playground. manual checks ran in
+brave via agent-browser: grouping chrome, the properties island, the
+context menu, arrowheads and labels inside shapes.

@@ -1,5 +1,5 @@
-import type { IconName } from '../constants/icons.js'
-import type { OpenDrawContext } from '../composables/useOpenDraw.js'
+import type { IconName } from '../icons.js'
+import type { EditorController } from '../controller.js'
 
 /**
  * A user command — Excalidraw's `Action`. One definition feeds every
@@ -17,8 +17,8 @@ export interface OpenDrawAction {
   /** True when a keydown should trigger this action. */
   keyTest?: (event: KeyboardEvent) => boolean
   /** Whether the action applies to the current state (defaults to true). */
-  enabled?: (ctx: OpenDrawContext) => boolean
-  perform: (ctx: OpenDrawContext) => void
+  enabled?: (ctx: EditorController) => boolean
+  perform: (ctx: EditorController) => void
   /** Destructive actions render in the danger tone. */
   danger?: boolean
 }

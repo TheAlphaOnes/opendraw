@@ -21,11 +21,14 @@ full; this file adds the contracts that keep a canvas engine correct.
 
 ## boundaries
 
-- `packages/core` imports nothing from vue or nuxt. if a change needs vue
-  reactivity, it belongs in `packages/nuxt` (or a core callback/hook).
-- `packages/nuxt` treats core as a published library: no deep imports —
-  go through `@opendraw/core`'s index. the playground aliases core to src
-  for dev dx only.
+- `packages/core` and `packages/editor` import nothing from any ui
+  framework. behavior (gestures, keyboard, commands, text editing) belongs
+  in the editor; an adapter (`packages/nuxt`) only mirrors editor state
+  into its reactivity and renders chrome. if a nuxt component grows logic
+  another framework would need too, move it into the editor.
+- adapters treat core and editor as published libraries: no deep
+  imports — go through each package's index. the playground aliases both
+  to src for dev dx only.
 - all icons are lucide and all lucide imports go through
   `packages/nuxt/src/runtime/constants/icons.ts`. a component importing
   `lucide-vue-next` directly is a bug.
@@ -56,11 +59,11 @@ full; this file adds the contracts that keep a canvas engine correct.
 
 ## text editing
 
-- `<TextEditor>` is mounted per editing session, never permanently. its
-  `onMounted` is the session start (seed value, focus, caret at end);
-  unmount is the close. do not reintroduce an always-mounted editor with
-  an internal `v-if` — that pattern left the editor unfocusable and
-  uncloseable.
+- the text editor (`packages/editor/src/canvas/textEditor.ts`) is one
+  session per edit, never permanent: a session starts when `editingId` is
+  set (seed value, focus, caret at end) and is disposed when it clears.
+  do not reintroduce an always-alive editor — that pattern left the editor
+  unfocusable and uncloseable.
 - the textarea is uncontrolled while editing: seed once from state, then
   let the browser own caret/composition. never bind `value` (or
   `v-model`) on an input the user is actively editing.
@@ -88,9 +91,10 @@ full; this file adds the contracts that keep a canvas engine correct.
 
 before declaring any change done:
 
-- `pnpm -r test` (core suite) green.
-- `pnpm --filter opendraw exec vue-tsc --noEmit` clean.
-- `pnpm build` emits for both packages.
+- `pnpm test` (core, editor and nuxt suites) green.
+- `pnpm typecheck` clean (every package and the playground).
+- `pnpm build` emits for all three packages.
+- `pnpm e2e` green.
 - canvas-behavior changes get a live check in the playground
   (`pnpm dev`), not just unit tests — the text
   reversal bug passed every unit test and only reproduced in the browser.

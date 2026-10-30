@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import type { ActionId } from '../../actions/registry.js'
+import type { ActionId } from '@opendraw/editor'
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import ActionButton from './ActionButton.vue'
 import StyleSection from './StyleSection.vue'

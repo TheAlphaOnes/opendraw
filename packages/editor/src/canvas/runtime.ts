@@ -1,5 +1,3 @@
-import { shallowRef, ref, type Ref, type ShallowRef } from 'vue'
-
 import type {
   Bounds,
   HandleDirection,
@@ -10,7 +8,8 @@ import type {
 } from '@opendraw/core'
 import { screenToScene } from '@opendraw/core'
 
-import type { OpenDrawContext } from '../composables/useOpenDraw.js'
+import { Cell } from '../cell.js'
+import type { EditorController } from '../controller.js'
 
 /**
  * The canvas's pointer state machine, one variant per live gesture.
@@ -63,23 +62,25 @@ export interface CanvasModifiers {
 }
 
 /**
- * Everything the canvas gesture modules share: the editor context, the
- * host element, the live gesture and the transient overlay inputs. None
- * of this is document state — it lives and dies with the mounted canvas.
+ * Everything the canvas gesture modules share: the editor, the host
+ * element, the live gesture and the transient overlay inputs. None of this
+ * is document state — it lives and dies with the mounted canvas. The
+ * transient values are cells so the surface (repaint) and the cursor can
+ * react to them.
  */
 export interface CanvasRuntime {
-  ctx: OpenDrawContext
-  hostRef: Ref<HTMLDivElement | null>
-  interaction: ShallowRef<Interaction>
-  modifiers: ShallowRef<CanvasModifiers>
+  ctx: EditorController
+  host: HTMLElement
+  interaction: Cell<Interaction>
+  modifiers: Cell<CanvasModifiers>
   /** Marquee rect while drag-selecting, in scene coords. */
-  marquee: ShallowRef<Bounds | null>
+  marquee: Cell<Bounds | null>
   /** Shapes the live line/arrow probes would dock onto — outlined on the overlay. */
-  bindingCandidates: ShallowRef<readonly OpenDrawBindableShape[]>
+  bindingCandidates: Cell<readonly OpenDrawBindableShape[]>
   /** Scene point under an idle pointer — drives the hover cursor + probes. */
-  hoverScene: ShallowRef<Point | null>
+  hoverScene: Cell<Point | null>
   /** Space bar held → temporary pan mode. */
-  spaceDown: Ref<boolean>
+  spaceDown: Cell<boolean>
   /** Client-space event position → scene coordinates. */
   toScene: (event: { clientX: number; clientY: number }) => Point
   /** Client-space event position → host-local screen coordinates. */
@@ -88,23 +89,22 @@ export interface CanvasRuntime {
   scheduleRender: () => void
 }
 
-export function createCanvasRuntime(ctx: OpenDrawContext): CanvasRuntime {
-  const hostRef = ref<HTMLDivElement | null>(null)
+export function createCanvasRuntime(ctx: EditorController, host: HTMLElement): CanvasRuntime {
   const toHost = (event: { clientX: number; clientY: number }): Point => {
-    const rect = hostRef.value!.getBoundingClientRect()
+    const rect = host.getBoundingClientRect()
     return { x: event.clientX - rect.left, y: event.clientY - rect.top }
   }
   return {
     ctx,
-    hostRef,
-    interaction: shallowRef<Interaction>({ kind: 'none' }),
-    modifiers: shallowRef<CanvasModifiers>({ shift: false, alt: false }),
-    marquee: shallowRef<Bounds | null>(null),
-    bindingCandidates: shallowRef<readonly OpenDrawBindableShape[]>([]),
-    hoverScene: shallowRef<Point | null>(null),
-    spaceDown: ref(false),
+    host,
+    interaction: new Cell<Interaction>({ kind: 'none' }),
+    modifiers: new Cell<CanvasModifiers>({ shift: false, alt: false }),
+    marquee: new Cell<Bounds | null>(null),
+    bindingCandidates: new Cell<readonly OpenDrawBindableShape[]>([]),
+    hoverScene: new Cell<Point | null>(null),
+    spaceDown: new Cell(false),
     toHost,
-    toScene: (event) => screenToScene(toHost(event), ctx.viewport.value),
+    toScene: (event) => screenToScene(toHost(event), ctx.viewport),
     scheduleRender: () => {},
   }
 }

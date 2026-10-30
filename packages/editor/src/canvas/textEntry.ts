@@ -23,7 +23,7 @@ import type { CanvasRuntime } from './runtime.js'
 /** Creates an empty text element centered vertically on the point and edits it. */
 export function createTextAt(rt: CanvasRuntime, point: Point): void {
   const { ctx } = rt
-  const style = ctx.appState.value
+  const style = ctx.appState
   const fontSize = style.textStyle.fontSize
   const element = newTextElement({
     x: point.x,
@@ -46,14 +46,14 @@ export function createTextAt(rt: CanvasRuntime, point: Point): void {
  */
 export function editContainerText(rt: CanvasRuntime, container: TextContainer): void {
   const { ctx } = rt
-  const existing = boundTextOf(ctx.elements.value, container.id)
+  const existing = boundTextOf(ctx.elements, container.id)
   ctx.doc.beginStep()
   ctx.select(container.id)
   if (existing) {
     ctx.setEditing(existing.id)
     return
   }
-  const { style, textStyle } = ctx.appState.value
+  const { style, textStyle } = ctx.appState
   const label = newTextElement({
     x: container.x,
     y: container.y,
@@ -97,7 +97,7 @@ export function onCanvasDoubleClick(rt: CanvasRuntime, event: MouseEvent): void 
     finishLinearDraft(rt)
     return
   }
-  if (ctx.activeTool.value !== 'selection') {
+  if (ctx.activeTool !== 'selection') {
     return
   }
   // A pointerdown may have opened a "moving" step; discard it — the click
@@ -107,12 +107,12 @@ export function onCanvasDoubleClick(rt: CanvasRuntime, event: MouseEvent): void 
     rt.interaction.value = { kind: 'none' }
   }
   const scenePoint = rt.toScene(event)
-  const raw = findElementAt(ctx.elements.value, scenePoint, hitThreshold(ctx.viewport.value.zoom))
-  const hit = raw ? selectableTarget(raw, ctx.elements.value) : null
+  const raw = findElementAt(ctx.elements, scenePoint, hitThreshold(ctx.viewport.zoom))
+  const hit = raw ? selectableTarget(raw, ctx.elements) : null
   // Double-clicking a selected group enters it: the hit becomes the
   // selection (or its next inner group) — Excalidraw's editingGroupId.
-  const groupId = hit ? outermostGroupId(hit, ctx.editingGroupId.value) : null
-  if (hit && groupId && ctx.selectedGroupIds.value.includes(groupId)) {
+  const groupId = hit ? outermostGroupId(hit, ctx.editingGroupId) : null
+  if (hit && groupId && ctx.selectedGroupIds.includes(groupId)) {
     ctx.setEditingGroup(groupId)
     ctx.selectGrouped([hit.id])
     return
@@ -123,7 +123,7 @@ export function onCanvasDoubleClick(rt: CanvasRuntime, event: MouseEvent): void 
   }
   // Inside an unfilled shape the press hits nothing, yet the shape still
   // takes the text — the area counts, not just the stroke.
-  const container = textContainerAt(ctx.elements.value, scenePoint)
+  const container = textContainerAt(ctx.elements, scenePoint)
   if (container) {
     editContainerText(rt, container)
     return

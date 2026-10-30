@@ -1,4 +1,4 @@
-import { shallowRef } from 'vue'
+import { Cell } from '../cell.js'
 
 /**
  * Keyboard helpers shared by the action registry and the shortcut
@@ -6,12 +6,12 @@ import { shallowRef } from 'vue'
  */
 
 /**
- * Whether shortcut DISPLAYS use Apple glyphs. Starts false so the server
+ * Whether shortcut DISPLAYS use Apple glyphs. Starts false so a server
  * render and the hydration render agree (the server cannot know the
  * platform), then flips once a canvas mounts — see `detectKeyPlatform`.
  * Event handling never reads this; it checks the live platform.
  */
-const appleKeyDisplay = shallowRef(false)
+export const appleKeyDisplay = new Cell(false)
 
 /** Resolves the display platform — call from a mounted hook only. */
 export function detectKeyPlatform(): void {
@@ -54,9 +54,12 @@ export function isTypingTarget(target: EventTarget | null): boolean {
   )
 }
 
-/** Renders a key combo for display, platform-aware (hydration-safe). */
-export function formatKeys(keys: readonly string[]): string[] {
-  const apple = appleKeyDisplay.value
+/**
+ * Renders a key combo for display, platform-aware (hydration-safe). An
+ * adapter that tracks `appleKeyDisplay` passes its mirrored value so the
+ * display re-renders when the platform resolves.
+ */
+export function formatKeys(keys: readonly string[], apple = appleKeyDisplay.value): string[] {
   return keys.map((key) => {
     if (key === 'Mod') {
       return apple ? '⌘' : 'Ctrl'

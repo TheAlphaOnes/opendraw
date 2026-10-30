@@ -14,11 +14,11 @@ import {
   PERSISTED_SCENE_TYPE,
   buildPersistedScene,
   parsePersistedScene,
-} from '../src/runtime/persistence/persistedScene.js'
+} from '../src/persistence/persistedScene.js'
 
 function sceneFixture() {
   const rect: OpenDrawRectangleElement = newRectangleElement({ x: 10, y: 20, width: 120, height: 80 })
-  const arrow: OpenDrawArrowElement = newLinearElement('arrow', { x: 0, y: 0 })
+  const arrow = newLinearElement('arrow', { x: 0, y: 0 }) as OpenDrawArrowElement
   arrow.startBinding = null
   arrow.endBinding = { elementId: rect.id }
   const text = newTextElement({ x: 5, y: 5, text: 'hello' })

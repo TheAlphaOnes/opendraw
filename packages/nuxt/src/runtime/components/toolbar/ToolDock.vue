@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
-import { TOOL_GROUPS, toolLabel, type ToolDefinition } from '../../constants/tools.js'
+import { TOOL_GROUPS, toolLabel, type ToolDefinition } from '@opendraw/editor'
 import UiIconButton from '../ui/UiIconButton.vue'
 import UiPanel from '../ui/UiPanel.vue'
 

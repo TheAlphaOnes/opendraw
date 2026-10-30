@@ -1,6 +1,6 @@
 import { allInSameGroup } from '@opendraw/core'
 
-import type { OpenDrawContext } from '../composables/useOpenDraw.js'
+import type { EditorController } from '../controller.js'
 import { keyIs, noMod, plainMod } from './keys.js'
 import type { OpenDrawAction } from './types.js'
 
@@ -12,15 +12,15 @@ import type { OpenDrawAction } from './types.js'
  * Shift+1 types "!") test `event.code`, the physical key.
  */
 
-const hasSelection = (ctx: OpenDrawContext): boolean => ctx.selectedElements.value.length > 0
-const hasUnlockedSelection = (ctx: OpenDrawContext): boolean =>
-  ctx.selectedElements.value.some((el) => !el.locked)
-const hasSelectedText = (ctx: OpenDrawContext): boolean =>
-  ctx.selectedElements.value.some((el) => el.type === 'text')
+const hasSelection = (ctx: EditorController): boolean => ctx.selectedElements.length > 0
+const hasUnlockedSelection = (ctx: EditorController): boolean =>
+  ctx.selectedElements.some((el) => !el.locked)
+const hasSelectedText = (ctx: EditorController): boolean =>
+  ctx.selectedElements.some((el) => el.type === 'text')
 /** Align needs two units to align against each other. */
-const canAlign = (ctx: OpenDrawContext): boolean => ctx.selectedElements.value.length > 1
+const canAlign = (ctx: EditorController): boolean => ctx.selectedElements.length > 1
 /** Distribute needs three units for a gap to equalize. */
-const canDistribute = (ctx: OpenDrawContext): boolean => ctx.selectedElements.value.length > 2
+const canDistribute = (ctx: EditorController): boolean => ctx.selectedElements.length > 2
 
 /** Ctrl or ⌘, either one, with Alt — and the physical key. */
 const modAlt = (e: KeyboardEvent, code: string): boolean =>
@@ -32,8 +32,8 @@ const altOnly = (e: KeyboardEvent, code: string): boolean =>
 const modShift = (e: KeyboardEvent): boolean => plainMod(e) && e.shiftKey
 
 /** The canvas center, in host-local screen px — where keyboard zoom anchors. */
-function canvasCenter(ctx: OpenDrawContext): { x: number; y: number } {
-  const { width, height } = ctx.viewportSize.value
+function canvasCenter(ctx: EditorController): { x: number; y: number } {
+  const { width, height } = ctx.viewportSize
   return { x: width / 2, y: height / 2 }
 }
 
@@ -44,7 +44,7 @@ export const ACTIONS = {
     icon: 'undo',
     keys: ['Mod', 'Z'],
     keyTest: (e) => plainMod(e) && !e.shiftKey && keyIs(e, 'z'),
-    enabled: (ctx) => ctx.canUndo.value,
+    enabled: (ctx) => ctx.canUndo,
     perform: (ctx) => void ctx.undo(),
   },
   redo: {
@@ -52,7 +52,7 @@ export const ACTIONS = {
     icon: 'redo',
     keys: ['Mod', 'Shift', 'Z'],
     keyTest: (e) => plainMod(e) && ((e.shiftKey && keyIs(e, 'z')) || keyIs(e, 'y')),
-    enabled: (ctx) => ctx.canRedo.value,
+    enabled: (ctx) => ctx.canRedo,
     perform: (ctx) => void ctx.redo(),
   },
 
@@ -78,7 +78,7 @@ export const ACTIONS = {
     icon: 'paste',
     keys: ['Mod', 'V'],
     keyTest: (e) => plainMod(e) && !e.shiftKey && keyIs(e, 'v'),
-    enabled: (ctx) => ctx.clipboardSize.value > 0,
+    enabled: (ctx) => ctx.clipboardSize > 0,
     perform: (ctx) => ctx.paste(),
   },
   copyStyles: {
@@ -94,7 +94,7 @@ export const ACTIONS = {
     icon: 'pasteStyles',
     keys: ['Mod', 'Alt', 'V'],
     keyTest: (e) => modAlt(e, 'KeyV'),
-    enabled: (ctx) => ctx.hasCopiedStyles.value && hasSelection(ctx),
+    enabled: (ctx) => ctx.hasCopiedStyles && hasSelection(ctx),
     perform: (ctx) => ctx.pasteStyles(),
   },
 
@@ -140,8 +140,8 @@ export const ACTIONS = {
     // Excalidraw's enableActionGroup: two or more elements that are not
     // already one group (at the current editing level).
     enabled: (ctx) =>
-      ctx.selectedElements.value.length > 1 &&
-      !allInSameGroup(ctx.selectedElements.value, ctx.editingGroupId.value),
+      ctx.selectedElements.length > 1 &&
+      !allInSameGroup(ctx.selectedElements, ctx.editingGroupId),
     perform: (ctx) => ctx.groupSelection(),
   },
   ungroup: {
@@ -149,7 +149,7 @@ export const ACTIONS = {
     icon: 'ungroup',
     keys: ['Mod', 'Shift', 'G'],
     keyTest: (e) => modShift(e) && keyIs(e, 'g'),
-    enabled: (ctx) => ctx.selectedGroupIds.value.length > 0,
+    enabled: (ctx) => ctx.selectedGroupIds.length > 0,
     perform: (ctx) => ctx.ungroupSelection(),
   },
 
@@ -309,7 +309,7 @@ export const ACTIONS = {
     icon: 'zoomToFit',
     keys: ['Shift', '1'],
     keyTest: (e) => noMod(e) && e.shiftKey && e.code === 'Digit1',
-    enabled: (ctx) => ctx.elements.value.length > 0,
+    enabled: (ctx) => ctx.elements.length > 0,
     perform: (ctx) => ctx.zoomToFitAll(),
   },
   zoomToSelectionInViewport: {
@@ -332,7 +332,7 @@ export const ACTIONS = {
     icon: 'grid',
     keys: ['Mod', "'"],
     keyTest: (e) => plainMod(e) && (e.key === "'" || e.code === 'Quote'),
-    perform: (ctx) => ctx.setGridSize(ctx.gridSize.value === null ? 20 : null),
+    perform: (ctx) => ctx.setGridSize(ctx.gridSize === null ? 20 : null),
   },
   toggleTheme: {
     label: 'Toggle dark theme',
@@ -379,7 +379,7 @@ export const ACTIONS = {
     icon: 'clear',
     keys: ['Mod', 'Del'],
     keyTest: (e) => plainMod(e) && e.key === 'Delete',
-    enabled: (ctx) => ctx.elements.value.length > 0,
+    enabled: (ctx) => ctx.elements.length > 0,
     perform: (ctx) => {
       // Destructive and history-clearing in spirit: always confirm first.
       if (typeof window !== 'undefined' && window.confirm('Clear the canvas? This removes every element.')) {
@@ -396,13 +396,13 @@ export function actionById(id: ActionId): OpenDrawAction {
   return ACTIONS[id]
 }
 
-export function isActionEnabled(ctx: OpenDrawContext, id: ActionId): boolean {
+export function isActionEnabled(ctx: EditorController, id: ActionId): boolean {
   const action: OpenDrawAction = ACTIONS[id]
   return action.enabled ? action.enabled(ctx) : true
 }
 
 /** Runs an action when it applies; returns whether it ran. */
-export function runAction(ctx: OpenDrawContext, id: ActionId): boolean {
+export function runAction(ctx: EditorController, id: ActionId): boolean {
   if (!isActionEnabled(ctx, id)) {
     return false
   }
@@ -416,7 +416,7 @@ export function runAction(ctx: OpenDrawContext, id: ActionId): boolean {
  * not apply right now, so Mod+D never falls through to the browser's
  * bookmark dialog.
  */
-export function dispatchActionKey(ctx: OpenDrawContext, event: KeyboardEvent): boolean {
+export function dispatchActionKey(ctx: EditorController, event: KeyboardEvent): boolean {
   for (const id of Object.keys(ACTIONS) as ActionId[]) {
     const action: OpenDrawAction = ACTIONS[id]
     if (action.keyTest?.(event)) {

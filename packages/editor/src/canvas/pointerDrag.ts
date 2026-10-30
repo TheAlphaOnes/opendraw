@@ -23,7 +23,7 @@ import type { Interaction } from './runtime.js'
 import { eraseAlong, pressureOf } from './pointerPress.js'
 import { setModifiers, type CanvasRuntime } from './runtime.js'
 import { mergeBindingCandidates } from './selectionHits.js'
-import type { LaserTrail } from './useLaserTrail.js'
+import type { LaserTrail } from './laserTrail.js'
 
 /**
  * Binding follow-through after a drag: lines and arrows bound to any of the
@@ -32,7 +32,7 @@ import type { LaserTrail } from './useLaserTrail.js'
  */
 export function followBindings(rt: CanvasRuntime, originals: readonly OpenDrawElement[]): void {
   const movedIds = new Set(originals.map((el) => el.id))
-  for (const [id, patch] of bindingFollowPatches(movedIds, rt.ctx.elements.value)) {
+  for (const [id, patch] of bindingFollowPatches(movedIds, rt.ctx.elements)) {
     rt.ctx.doc.updateElement(id, patch)
   }
 }
@@ -51,7 +51,7 @@ function duplicateDraggedSelection(
     ctx.doc.forceUpdateElement(original.id, { x: original.x, y: original.y })
   }
   followBindings(rt, drag.originals)
-  const copies = duplicateElements(drag.originals, { editingGroupId: ctx.editingGroupId.value })
+  const copies = duplicateElements(drag.originals, { editingGroupId: ctx.editingGroupId })
   ctx.doc.addElements(copies, { select: true })
   drag.originals = copies
   drag.hitId = null
@@ -65,9 +65,9 @@ function duplicateDraggedSelection(
 function handleIdleHover(rt: CanvasRuntime, scenePoint: Point): void {
   const { ctx } = rt
   rt.hoverScene.value = scenePoint
-  const tool = ctx.activeTool.value
+  const tool = ctx.activeTool
   if (tool === 'line' || tool === 'arrow') {
-    const shape = bindableShapeAt(ctx.elements.value, scenePoint, maxBindingDistance(ctx.viewport.value.zoom))
+    const shape = bindableShapeAt(ctx.elements, scenePoint, maxBindingDistance(ctx.viewport.zoom))
     rt.bindingCandidates.value = shape ? [shape] : []
   } else if (rt.bindingCandidates.value.length > 0) {
     rt.bindingCandidates.value = []
@@ -104,7 +104,7 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
       // Box selection takes what it wholly contains (Excalidraw's default
       // "contain" mode), and a contained member brings its whole group.
       const ids = new Set(current.baseIds)
-      for (const el of elementsWithinBounds(ctx.elements.value, bounds)) {
+      for (const el of elementsWithinBounds(ctx.elements, bounds)) {
         // Labels are part of their shape, never selected on their own.
         if (!isBoundText(el)) {
           ids.add(el.id)
@@ -125,10 +125,10 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
         // one under the dragged tip AND the one the drag started on.
         // The draft is never rotated, so scene position is origin + point.
         const tip = points[points.length - 1]!
-        const distance = maxBindingDistance(ctx.viewport.value.zoom)
-        const startShape = bindableShapeAt(ctx.elements.value, current.originScene, distance, el.id)
+        const distance = maxBindingDistance(ctx.viewport.zoom)
+        const startShape = bindableShapeAt(ctx.elements, current.originScene, distance, el.id)
         const tipShape = bindableShapeAt(
-          ctx.elements.value,
+          ctx.elements,
           { x: el.x + tip.x, y: el.y + tip.y },
           distance,
           el.id,
@@ -159,7 +159,7 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
           duplicateDraggedSelection(rt, current)
         }
       }
-      for (const { id, patch } of moveElements(current.originals, delta, ctx.gridSize.value)) {
+      for (const { id, patch } of moveElements(current.originals, delta, ctx.gridSize)) {
         ctx.doc.forceUpdateElement(id, patch)
       }
       followBindings(rt, current.originals)
@@ -175,9 +175,9 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
       // would dock onto.
       if (current.end) {
         const shape = bindableShapeAt(
-          ctx.elements.value,
+          ctx.elements,
           scenePoint,
-          maxBindingDistance(ctx.viewport.value.zoom),
+          maxBindingDistance(ctx.viewport.zoom),
           el.id,
         )
         rt.bindingCandidates.value = shape ? [shape] : []

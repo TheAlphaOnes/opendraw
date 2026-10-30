@@ -9,9 +9,12 @@ import {
   type OpenDrawChangeDetail,
 } from '../composables/useOpenDraw.js'
 import { useScenePersistence } from '../composables/useScenePersistence.js'
-import { DEFAULT_SCENE_STORAGE_KEY } from '../persistence/persistedScene.js'
-import { resolveThemeDefault, type ThemeDefault } from '../persistence/systemTheme.js'
-import type { CanvasContextMenuRequest } from '../canvas/viewportGestures.js'
+import {
+  DEFAULT_SCENE_STORAGE_KEY,
+  resolveThemeDefault,
+  type CanvasContextMenuRequest,
+  type ThemeDefault,
+} from '@opendraw/editor'
 import OpenDrawCanvas from './OpenDrawCanvas.vue'
 import ToolDock from './toolbar/ToolDock.vue'
 import StylePanel from './panels/StylePanel.vue'
@@ -132,7 +135,7 @@ const themeAttr = computed(() => ctx.theme.value)
 </script>
 
 <template>
-  <div class="opendraw-root" :data-theme="themeAttr">
+  <div class="opendraw-root" data-opendraw-root :data-theme="themeAttr">
     <OpenDrawCanvas @contextmenu="openMenu" />
     <ToolDock v-if="ui !== 'none'" />
     <StylePanel v-if="ui === 'full'" />

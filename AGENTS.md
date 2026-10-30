@@ -646,7 +646,8 @@ Maintainable software is the goal.
 This repository is opendraw: an Excalidraw-style hand-drawn canvas for the Nuxt 4 ecosystem, published as a pnpm monorepo.
 
 * `packages/core` — `@opendraw/core`: the engine. Element model, geometry, scene document, history, hit testing, transforms, rough.js renderer, export. No Vue or Nuxt imports.
-* `packages/nuxt` — `opendraw`: the Nuxt module. `<OpenDraw>` shell, `<OpenDrawCanvas>` headless core, `useOpenDraw()`, and the central UI kit.
+* `packages/editor` — `@opendraw/editor`: the framework-free editor. `createEditor()` (commands + state), `mountCanvas()` (gestures, keyboard, rendering, text editing), the action registry, tools and persistence. No UI-framework imports.
+* `packages/nuxt` — `@opendraw/nuxt`: the Vue/Nuxt adapter. `<OpenDraw>` shell, `<OpenDrawCanvas>`, `useOpenDraw()` (a Vue mirror of the editor), and the central UI kit.
 * `playground/` — a Nuxt 4 app for manual verification.
 
 The full project doc lives in `.agents/project.md`. The project rules live in `.agents/rules/opendraw.md`. Read both before any task in this repo.
@@ -657,7 +658,7 @@ Laws that bear repeating:
 * Lines and arrows bind identically. `startBinding`/`endBinding` live on the shared linear type and a docked tip follows its shape for both tools — there is no arrow-only binding.
 * All document mutations go through `OpenDrawDocument.mutate()`. There is no other write path.
 * Vue derivations of document state read through the injected context: `ctx.state`, `ctx.elements`, `ctx.rev`. Plain document fields never invalidate a computed.
-* `<TextEditor>` mounts per editing session. The textarea is uncontrolled while typing and keeps a stable layout box for the session.
+* The text editor runs one session per edit (`packages/editor/src/canvas/textEditor.ts`). The textarea is uncontrolled while typing and keeps a stable layout box for the session.
 * The user's canvas background is data. Dark mode inverts element colors, never the background.
 * Every icon is a Lucide icon through the central registry. Every chrome piece comes from the central UI kit.
 * Canvas-behavior changes are verified in a live browser. The text-reversal bug passed every unit test and only reproduced in the browser.

@@ -7,8 +7,8 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "build": "pnpm --filter @opendraw/core build && pnpm --filter @opendraw/nuxt build",
-    "dev:prepare": "pnpm --filter @opendraw/core build && pnpm --filter @opendraw/nuxt dev:prepare",
+    "build": "pnpm --filter @opendraw/core build && pnpm --filter @opendraw/editor build && pnpm --filter @opendraw/nuxt build",
+    "dev:prepare": "pnpm --filter @opendraw/core build && pnpm --filter @opendraw/editor build && pnpm --filter @opendraw/nuxt dev:prepare",
     "dev": "pnpm dev:prepare && pnpm --filter opendraw-playground dev",
     "build:playground": "pnpm --filter opendraw-playground build",
     "test": "pnpm -r --if-present test",

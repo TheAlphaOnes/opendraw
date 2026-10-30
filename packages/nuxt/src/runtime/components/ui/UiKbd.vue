@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { formatKeys } from '../../actions/keys.js'
+import { useKeyDisplay } from '../../composables/useKeyDisplay.js'
 
 /**
  * UiKbd — a key combo rendered as keycaps, platform-aware (`Mod` shows ⌘
@@ -16,7 +16,8 @@ const props = withDefaults(
   { inline: false },
 )
 
-const display = computed(() => formatKeys(props.keys))
+const { format } = useKeyDisplay()
+const display = computed(() => format(props.keys))
 </script>
 
 <template>

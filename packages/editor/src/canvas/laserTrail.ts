@@ -1,5 +1,3 @@
-import { onBeforeUnmount } from 'vue'
-
 import type { Point } from '@opendraw/core'
 import { applyViewportTransform } from '@opendraw/core'
 
@@ -26,9 +24,10 @@ export interface LaserTrail {
   extend: (at: Point) => void
   /** Paints the trail onto the overlay (its own viewport transform). */
   draw: (target: CanvasRenderingContext2D, dpr: number) => void
+  dispose: () => void
 }
 
-export function useLaserTrail(rt: CanvasRuntime): LaserTrail {
+export function createLaserTrail(rt: CanvasRuntime): LaserTrail {
   /** Live trail in scene coordinates; trimmed by the fade loop below. */
   let trail: LaserPoint[] = []
   let fadeFrame = 0
@@ -48,13 +47,13 @@ export function useLaserTrail(rt: CanvasRuntime): LaserTrail {
     })
   }
 
-  onBeforeUnmount(() => {
-    if (fadeFrame) {
-      cancelAnimationFrame(fadeFrame)
-    }
-  })
-
   return {
+    dispose() {
+      if (fadeFrame) {
+        cancelAnimationFrame(fadeFrame)
+        fadeFrame = 0
+      }
+    },
     start(at) {
       trail = [{ x: at.x, y: at.y, t: performance.now() }]
       rt.scheduleRender()
@@ -68,7 +67,7 @@ export function useLaserTrail(rt: CanvasRuntime): LaserTrail {
       if (trail.length < 2) {
         return
       }
-      const { viewport } = rt.ctx.state.value.appState
+      const { viewport } = rt.ctx.state.appState
       const now = performance.now()
       target.save()
       applyViewportTransform(target, viewport, dpr)

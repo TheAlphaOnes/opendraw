@@ -1,0 +1,33 @@
+{
+  "name": "@opendraw/editor",
+  "version": "0.1.0",
+  "description": "Framework-free opendraw editor: the canvas session (pointer, keyboard, rendering, text editing), the action registry and editor state. Framework adapters (@opendraw/nuxt, …) are thin layers over it.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Vishnu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vishnu/opendraw",
+    "directory": "packages/editor"
+  },
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@opendraw/core": "workspace:*"
+  }
+}

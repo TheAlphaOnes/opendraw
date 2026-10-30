@@ -93,3 +93,9 @@
     animation-duration: 1ms !important;
   }
 }
+
+/* The text editor's selection tint (the editor is created by
+   @opendraw/editor; pseudo-elements can only be styled from CSS). */
+.opendraw-text-editor__input::selection {
+  background: rgba(105, 101, 219, 0.25);
+}

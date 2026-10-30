@@ -1,12 +1,13 @@
 # opendraw
 
-An Excalidraw-style hand-drawn canvas for the Nuxt 4 ecosystem. Drop `<OpenDraw />` into any Nuxt app and get the full whiteboard: shapes, arrows, freehand, text, selection, transforms, undo/redo, themes, and export.
+An Excalidraw-style hand-drawn canvas, built framework-free with adapters on top. Drop `<OpenDraw />` into any Nuxt app and get the full whiteboard: shapes, arrows, freehand, text, labels inside shapes, groups, alignment, selection, transforms, undo/redo, themes, and export.
 
-opendraw is a pnpm monorepo built on a framework-free engine, published as a Nuxt module.
+opendraw is a pnpm monorepo: a framework-free engine and editor, with Nuxt as the first adapter. Svelte and React (TanStack Start) adapters can sit on the same editor.
 
 ## Features
 
-- **The full toolset** — selection, hand (pan), rectangle, diamond, ellipse, arrow, line, freedraw, text, and eraser
+- **The full toolset** — selection, hand (pan), rectangle, diamond, ellipse, arrow, line, freedraw, text, image, eraser, frame, and laser, with Excalidraw's letter and number shortcuts and a tool lock (Q)
+- **Excalidraw's editing model** — groups (Ctrl+G), align/distribute, flip, copy/paste styles, Alt-drag duplicate, text inside shapes, start/end arrowheads, group-aware layering, and a context menu
 - **Hand-drawn rendering** — rough.js sketch geometry for shapes, perfect-freehand pressure-aware strokes for freedraw
 - **Excalidraw-grade interaction** — drag to create, click an edge to select, handles to resize and rotate, marquee select, modifier snapping
 - **Gesture-level history** — snapshot undo/redo where one undo reverts one gesture, not one keystroke
@@ -14,7 +15,7 @@ opendraw is a pnpm monorepo built on a framework-free engine, published as a Nux
 - **Themes** — dark mode inverts element colors in-canvas; your canvas background is user data and is never filtered
 - **Export** — PNG download and JSON scene save/load
 - **Headless mode** — every panel is optional; build your own UI on the same editor context
-- **A framework-free core** — `@opendraw/core` runs anywhere TypeScript does: tests, workers, other frameworks
+- **Framework-free all the way up** — `@opendraw/core` (engine) and `@opendraw/editor` (the whole interactive editor) run without any UI framework; an adapter only mirrors state and renders chrome
 
 ## Credits
 
@@ -31,8 +32,9 @@ Built on open source:
 
 | Package | What it is |
 | --- | --- |
-| [`opendraw`](./packages/nuxt) | The Nuxt module. Registers the `<OpenDraw>` and `<OpenDrawCanvas>` components and auto-imports the `useOpenDraw()` family. Ships the editor chrome: tool dock, style and actions panels, context menu. |
-| [`@opendraw/core`](./packages/core) | The engine. Element model, geometry, scene document with snapshot history, hit testing, transforms, the rough.js renderer, and PNG/JSON export. No Vue or Nuxt imports, so it is usable standalone in any TypeScript project. |
+| [`@opendraw/nuxt`](./packages/nuxt) | The Nuxt adapter. Registers the `<OpenDraw>` and `<OpenDrawCanvas>` components and auto-imports the `useOpenDraw()` family — a Vue mirror of the editor. Ships the editor chrome: tool dock, properties island, actions panel, context menu, shortcuts dialog. |
+| [`@opendraw/editor`](./packages/editor) | The framework-free editor. `createEditor()` (document + editor state + every command) and `mountCanvas()` (pointer gestures, keyboard, rendering, cursor, laser, text editing), the action registry with Excalidraw's shortcut map, the tool table, and scene persistence. |
+| [`@opendraw/core`](./packages/core) | The engine. Element model, geometry, scene document with snapshot history, groups, bound text, arrange, hit testing, transforms, the rough.js renderer, and PNG/SVG/JSON export. |
 
 ## Requirements
 
@@ -42,13 +44,13 @@ Built on open source:
 ## Quickstart
 
 ```bash
-pnpm add opendraw
+pnpm add @opendraw/nuxt
 ```
 
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ['opendraw'],
+  modules: ['@opendraw/nuxt'],
 })
 ```
 
@@ -166,7 +168,25 @@ The complete headless example lives in
 ## Tools
 
 `selection`, `hand` (pan), `rectangle`, `diamond`, `ellipse`, `arrow`, `line`,
-`freedraw`, `text`, `eraser`.
+`freedraw`, `text`, `image`, `eraser`, `frame`, `laser`.
+
+## Other frameworks
+
+`@opendraw/editor` holds every behavior; an adapter mirrors it and renders
+chrome. The whole contract:
+
+```ts
+import { createEditor, mountCanvas } from '@opendraw/editor'
+
+const editor = createEditor()                 // commands + memoized getters
+const off = editor.subscribe(() => render())  // any change → re-read getters
+const session = mountCanvas(editor, { host, staticCanvas, overlayCanvas })
+// …later: session.dispose(); off()
+```
+
+Mirror `subscribe` into Svelte stores or React's `useSyncExternalStore`,
+and drive menus and panels from the shared action registry
+(`ACTIONS`, `runAction`, `isActionEnabled`).
 
 ## Development
 
@@ -175,8 +195,9 @@ This is a pnpm monorepo:
 ```bash
 pnpm install            # workspace dependencies
 pnpm dev                # prepare packages, then run the playground at :3000
-pnpm build              # build @opendraw/core and the opendraw module
-pnpm test               # run the test suites (core: 111 tests)
+pnpm build              # build @opendraw/core, @opendraw/editor and @opendraw/nuxt
+pnpm test               # run every package's unit tests
+pnpm e2e                # Playwright suite against the playground
 pnpm typecheck          # typecheck every package
 pnpm build:playground   # production build of the playground
 ```

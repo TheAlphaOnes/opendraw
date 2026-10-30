@@ -32,7 +32,7 @@ import {
   snapshotSelection,
 } from './selectionHits.js'
 import { createTextAt, editContainerText } from './textEntry.js'
-import type { LaserTrail } from './useLaserTrail.js'
+import type { LaserTrail } from './laserTrail.js'
 
 /** Shape tools that draft by dragging. */
 const SHAPE_TOOLS = new Set(['rectangle', 'diamond', 'ellipse', 'line', 'arrow', 'frame'])
@@ -44,8 +44,8 @@ export function pressureOf(event: PointerEvent): number {
 
 /** Deletes everything the eraser swept between two scene points. */
 export function eraseAlong(rt: CanvasRuntime, from: Point, to: Point): void {
-  const elements = rt.ctx.elements.value
-  const hits = elementsUnderEraser(elements, from, to, rt.ctx.viewport.value.zoom)
+  const elements = rt.ctx.elements
+  const hits = elementsUnderEraser(elements, from, to, rt.ctx.viewport.zoom)
   if (hits.length > 0) {
     // Erasing a label erases its shape (and the shape takes the label).
     rt.ctx.doc.deleteElements(hits.map((el) => selectableTarget(el, elements).id))
@@ -53,7 +53,7 @@ export function eraseAlong(rt: CanvasRuntime, from: Point, to: Point): void {
 }
 
 function draftElement(rt: CanvasRuntime, tool: string, at: Point): OpenDrawElement {
-  const { style, shapeRoundness, arrowheads } = rt.ctx.appState.value
+  const { style, shapeRoundness, arrowheads } = rt.ctx.appState
   if (tool === 'line') {
     return newLinearElement(tool, { x: at.x, y: at.y, style, points: [{ x: 0, y: 0 }] })
   }
@@ -86,7 +86,7 @@ function draftElement(rt: CanvasRuntime, tool: string, at: Point): OpenDrawEleme
  */
 export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event: PointerEvent): void {
   const { ctx } = rt
-  const host = rt.hostRef.value
+  const host = rt.host
   if (!host) {
     return
   }
@@ -109,7 +109,7 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
   rt.bindingCandidates.value = []
 
   const scenePoint = rt.toScene(event)
-  const tool = ctx.activeTool.value
+  const tool = ctx.activeTool
 
   // Panning: middle button, hand tool, or space.
   if (event.button === 1 || tool === 'hand' || rt.spaceDown.value) {
@@ -134,8 +134,8 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
   // re-opens ITS editor (App.textTool resolves a "text" target before
   // falling through to free creation); anywhere else creates a new one.
   if (tool === 'text') {
-    const raw = findElementAt(ctx.elements.value, scenePoint, hitThreshold(ctx.viewport.value.zoom))
-    const hit = raw ? selectableTarget(raw, ctx.elements.value) : null
+    const raw = findElementAt(ctx.elements, scenePoint, hitThreshold(ctx.viewport.zoom))
+    const hit = raw ? selectableTarget(raw, ctx.elements) : null
     if (hit?.type === 'text') {
       // Same shape as a creation: one open step the editor commits into,
       // the element selected, and the tool reverted to selection.
@@ -185,9 +185,9 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
     // start tip is a binding candidate exactly like the dragged one.
     if (tool === 'line' || tool === 'arrow') {
       const shape = bindableShapeAt(
-        ctx.elements.value,
+        ctx.elements,
         scenePoint,
-        maxBindingDistance(ctx.viewport.value.zoom),
+        maxBindingDistance(ctx.viewport.zoom),
         element.id,
       )
       rt.bindingCandidates.value = shape ? [shape] : []
@@ -199,7 +199,7 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
     const element = newFreedrawElement({
       x: scenePoint.x,
       y: scenePoint.y,
-      style: ctx.appState.value.style,
+      style: ctx.appState.style,
       simulatePressure: event.pointerType === 'mouse',
       points: [[0, 0, pressureOf(event)]],
     })
@@ -214,7 +214,7 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
 
 function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoint: Point): void {
   const { ctx } = rt
-  const zoom = ctx.viewport.value.zoom
+  const zoom = ctx.viewport.zoom
 
   // Point handles of a lone selected line/arrow outrank the box chrome —
   // Excalidraw grabs endpoints by their circles, never the corner boxes.
@@ -270,7 +270,7 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
 
   // Border grabbing: a press within a few pixels of the selection border
   // resizes from that side, like Excalidraw's side resizing.
-  const frame = selectionFrameOf(ctx.selectedElements.value)
+  const frame = selectionFrameOf(ctx.selectedElements)
   if (frame) {
     const side = sideGrabAt(rt, scenePoint, frame)
     if (side) {
@@ -280,8 +280,8 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
     }
   }
 
-  const raw = findElementAt(ctx.elements.value, scenePoint, hitThreshold(zoom))
-  const hit = raw ? selectableTarget(raw, ctx.elements.value) : null
+  const raw = findElementAt(ctx.elements, scenePoint, hitThreshold(zoom))
+  const hit = raw ? selectableTarget(raw, ctx.elements) : null
   if (hit) {
     const wasSelected = ctx.isIdSelected(hit.id)
     if (event.shiftKey) {
@@ -290,14 +290,14 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
     } else if (!wasSelected) {
       // Pressing outside the edited group leaves it (Excalidraw's
       // clearSelection keeps editing only for a hit inside the group).
-      const editing = ctx.editingGroupId.value
+      const editing = ctx.editingGroupId
       if (editing && !hit.groupIds.includes(editing)) {
         ctx.setEditingGroup(null)
       }
       ctx.selectGrouped([hit.id])
     }
     // Locked elements stay selectable but immovable.
-    if (ctx.selectedElements.value.every((el) => el.locked)) {
+    if (ctx.selectedElements.every((el) => el.locked)) {
       rt.interaction.value = { kind: 'none' }
       return
     }
@@ -323,7 +323,7 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
   if (
     frame &&
     !event.shiftKey &&
-    !ctx.selectedElements.value.every((el) => el.locked) &&
+    !ctx.selectedElements.every((el) => el.locked) &&
     pointInSelectionFrame(frame, scenePoint, SELECTION_GRAB_PADDING / zoom)
   ) {
     rt.interaction.value = {
@@ -343,7 +343,7 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
   rt.interaction.value = {
     kind: 'marquee',
     originScene: scenePoint,
-    baseIds: event.shiftKey ? ctx.selectedElements.value.map((el) => el.id) : [],
+    baseIds: event.shiftKey ? ctx.selectedElements.map((el) => el.id) : [],
   }
   if (!event.shiftKey) {
     // An empty-canvas press leaves the edited group with the selection.

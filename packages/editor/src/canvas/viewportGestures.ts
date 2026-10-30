@@ -21,7 +21,7 @@ const WHEEL_ZOOM_STEP = 0.1
 /** Wheel: zoom with ctrl/cmd (and trackpad pinch), pan otherwise. */
 export function onCanvasWheel(rt: CanvasRuntime, event: WheelEvent): void {
   event.preventDefault()
-  if (!rt.hostRef.value) {
+  if (!rt.host) {
     return
   }
   const { ctx } = rt
@@ -35,7 +35,7 @@ export function onCanvasWheel(rt: CanvasRuntime, event: WheelEvent): void {
     const absDelta = Math.abs(event.deltaY)
     const maxStep = WHEEL_ZOOM_STEP * 100
     const delta = absDelta > maxStep ? maxStep * sign : event.deltaY
-    const zoom = ctx.viewport.value.zoom
+    const zoom = ctx.viewport.zoom
     let nextZoom = zoom - delta / 100
     nextZoom += Math.log10(Math.max(1, zoom)) * -sign * Math.min(1, absDelta / 20)
     ctx.zoomAt(rt.toHost(event), nextZoom)
@@ -62,7 +62,7 @@ export function onCanvasDrop(rt: CanvasRuntime, event: DragEvent): void {
  */
 export function onWindowPaste(rt: CanvasRuntime, event: ClipboardEvent): void {
   const { ctx } = rt
-  if (ctx.editingId.value) {
+  if (ctx.editingId) {
     return
   }
   const images = imageFilesOf(event.clipboardData?.files)
@@ -70,8 +70,8 @@ export function onWindowPaste(rt: CanvasRuntime, event: ClipboardEvent): void {
     return
   }
   event.preventDefault()
-  const size = ctx.viewportSize.value
-  ctx.insertImageFiles(images, screenToScene({ x: size.width / 2, y: size.height / 2 }, ctx.viewport.value))
+  const size = ctx.viewportSize
+  ctx.insertImageFiles(images, screenToScene({ x: size.width / 2, y: size.height / 2 }, ctx.viewport))
 }
 
 /** Where a context menu opened, and over what. */
@@ -90,10 +90,10 @@ export interface CanvasContextMenuRequest {
 export function resolveContextMenu(rt: CanvasRuntime, event: MouseEvent): CanvasContextMenuRequest {
   const { ctx } = rt
   const scenePoint = rt.toScene(event)
-  const raw = findElementAt(ctx.elements.value, scenePoint, hitThreshold(ctx.viewport.value.zoom))
-  const hit = raw ? selectableTarget(raw, ctx.elements.value) : null
+  const raw = findElementAt(ctx.elements, scenePoint, hitThreshold(ctx.viewport.zoom))
+  const hit = raw ? selectableTarget(raw, ctx.elements) : null
   if (hit && !ctx.isIdSelected(hit.id)) {
-    const editing = ctx.editingGroupId.value
+    const editing = ctx.editingGroupId
     if (editing && !hit.groupIds.includes(editing)) {
       ctx.setEditingGroup(null)
     }
@@ -101,7 +101,7 @@ export function resolveContextMenu(rt: CanvasRuntime, event: MouseEvent): Canvas
   }
   // Excalidraw: a hit, or a press inside the selection's common box, opens
   // the element menu; anywhere else the canvas menu.
-  const frame = selectionFrameOf(ctx.selectedElements.value)
+  const frame = selectionFrameOf(ctx.selectedElements)
   const insideSelection = frame !== null && pointInSelectionFrame(frame, scenePoint, 0)
   return { x: event.clientX, y: event.clientY, target: hit || insideSelection ? 'element' : 'canvas' }
 }

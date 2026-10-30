@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { formatKeys } from '../../actions/keys.js'
-import { actionById, isActionEnabled, runAction, type ActionId } from '../../actions/registry.js'
+import { actionById, isActionEnabled, runAction, type ActionId } from '@opendraw/editor'
+
+import { useKeyDisplay } from '../../composables/useKeyDisplay.js'
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import type { IconName } from '../../constants/icons.js'
 import UiIconButton from '../ui/UiIconButton.vue'
@@ -25,22 +26,23 @@ const props = withDefaults(
 )
 
 const ctx = useOpenDraw()
+const keys = useKeyDisplay()
 const definition = computed(() => actionById(props.action))
 
 const accessibleName = computed(() => {
   const base = props.label ?? definition.value.label
-  const keys = definition.value.keys
-  if (!keys) {
+  const shortcut = definition.value.keys
+  if (!shortcut) {
     return base
   }
-  const display = formatKeys(keys)
+  const display = keys.format(shortcut)
   return `${base} (${display.join(display.some((key) => key.length > 1) ? '+' : '')})`
 })
 
 const enabled = computed(() => {
-  // Track document revisions: predicates read plain document state.
-  void ctx.state.value.rev
-  return isActionEnabled(ctx, props.action)
+  // Track every change: predicates read the plain controller state.
+  void ctx.revision.value
+  return isActionEnabled(ctx.editor, props.action)
 })
 </script>
 
@@ -51,6 +53,6 @@ const enabled = computed(() => {
     :active="props.active"
     :disabled="!enabled"
     :danger="definition.danger"
-    @click="runAction(ctx, props.action)"
+    @click="runAction(ctx.editor, props.action)"
   />
 </template>

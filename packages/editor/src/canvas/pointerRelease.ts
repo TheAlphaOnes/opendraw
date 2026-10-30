@@ -18,7 +18,7 @@ export function onCanvasPointerUp(rt: CanvasRuntime, event: PointerEvent): void 
   rt.interaction.value = { kind: 'none' }
   rt.marquee.value = null
   rt.bindingCandidates.value = []
-  const host = rt.hostRef.value
+  const host = rt.host
   if (host?.hasPointerCapture(event.pointerId)) {
     host.releasePointerCapture(event.pointerId)
   }
@@ -45,7 +45,7 @@ export function onCanvasPointerUp(rt: CanvasRuntime, event: PointerEvent): void 
       if (isLinearElement(el)) {
         // Tips dropped over (or near) a shape dock onto it before the
         // creation step closes — the bind is part of the draw's undo entry.
-        const binding = computeLinearBindings(el, ctx.elements.value, maxBindingDistance(ctx.viewport.value.zoom))
+        const binding = computeLinearBindings(el, ctx.elements, maxBindingDistance(ctx.viewport.zoom))
         if (binding) {
           ctx.doc.updateElement(el.id, binding)
         }
@@ -53,7 +53,7 @@ export function onCanvasPointerUp(rt: CanvasRuntime, event: PointerEvent): void 
       ctx.doc.endStep()
       // A locked tool keeps drawing, so nothing gets selected in between
       // (App.tsx selects the new element only when the tool reverts).
-      if (!ctx.toolLocked.value) {
+      if (!ctx.toolLocked) {
         ctx.select(el.id)
       }
       ctx.finishToolUse()
@@ -84,7 +84,7 @@ export function onCanvasPointerUp(rt: CanvasRuntime, event: PointerEvent): void 
       if (el && isLinearElement(el) && current.end) {
         // Release-time docking: a tip dropped on (or near) a shape binds to
         // it; dropped loose, any previous binding clears.
-        const patch = computeTipBinding(el, current.end, ctx.elements.value, maxBindingDistance(ctx.viewport.value.zoom))
+        const patch = computeTipBinding(el, current.end, ctx.elements, maxBindingDistance(ctx.viewport.zoom))
         ctx.doc.updateElement(el.id, patch)
       }
       ctx.doc.endStep()

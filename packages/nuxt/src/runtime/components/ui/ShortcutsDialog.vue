@@ -9,9 +9,7 @@
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-import { actionById, type ActionId } from '../../actions/registry.js'
-import { isTypingTarget } from '../../actions/keys.js'
-import { TOOLS } from '../../constants/tools.js'
+import { TOOLS, actionById, isTypingTarget, type ActionId } from '@opendraw/editor'
 import UiIconButton from './UiIconButton.vue'
 import UiKbd from './UiKbd.vue'
 

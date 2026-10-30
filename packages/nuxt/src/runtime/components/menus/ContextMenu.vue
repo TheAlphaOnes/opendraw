@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 
-import { actionById, isActionEnabled, runAction, type ActionId } from '../../actions/registry.js'
+import { actionById, isActionEnabled, runAction, type ActionId } from '@opendraw/editor'
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import UiMenuItem from '../ui/UiMenuItem.vue'
 
@@ -51,8 +51,8 @@ interface MenuSection {
 
 /** Enabled actions, split into non-empty sections. */
 const sections = computed<MenuSection[]>(() => {
-  // Read reactive state so the menu tracks selection changes while open.
-  void ctx.state.value.rev
+  // Track every change so the menu follows the selection while open.
+  void ctx.revision.value
   const entries = props.target === 'element' ? ELEMENT_MENU : CANVAS_MENU
   const result: MenuSection[] = []
   let current: ActionId[] = []
@@ -62,7 +62,7 @@ const sections = computed<MenuSection[]>(() => {
         result.push({ key: current.join(','), items: current })
       }
       current = []
-    } else if (isActionEnabled(ctx, entry)) {
+    } else if (isActionEnabled(ctx.editor, entry)) {
       current.push(entry)
     }
   }
@@ -159,7 +159,7 @@ onUnmounted(() => {
 
 /** Every item runs its action, then dismisses the menu. */
 function select(id: ActionId): void {
-  runAction(ctx, id)
+  runAction(ctx.editor, id)
   emit('close')
 }
 </script>

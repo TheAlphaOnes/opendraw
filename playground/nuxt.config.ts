@@ -3,12 +3,13 @@ export default defineNuxtConfig({
 
   modules: ['@opendraw/nuxt'],
 
-  // Dev DX: alias the engine to its TypeScript source so playground edits are live.
-  // The built module still consumes @opendraw/core's dist in published form.
+  // Dev DX: alias the engine and editor to their TypeScript sources so
+  // playground edits are live. The built module still consumes their dists.
   vite: {
     resolve: {
       alias: {
         '@opendraw/core': '../packages/core/src/index.ts',
+        '@opendraw/editor': '../packages/editor/src/index.ts',
       },
     },
     optimizeDeps: {

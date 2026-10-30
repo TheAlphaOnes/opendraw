@@ -1,7 +1,7 @@
 {
   "name": "@opendraw/nuxt",
   "version": "0.1.0",
-  "description": "Excalidraw-style hand-drawn canvas for Nuxt 4 — a drop-in <OpenDraw /> editor module.",
+  "description": "Excalidraw-style hand-drawn canvas for Nuxt 4 \u2014 a drop-in <OpenDraw /> editor module.",
   "type": "module",
   "license": "MIT",
   "author": "Vishnu",
@@ -16,7 +16,9 @@
       "import": "./dist/module.mjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "nuxt-module-build build",
     "dev:prepare": "nuxt-module-build build --stub",
@@ -26,6 +28,7 @@
   "dependencies": {
     "@nuxt/kit": "^4.0.0",
     "@opendraw/core": "workspace:*",
+    "@opendraw/editor": "workspace:*",
     "lucide-vue-next": "^1.0.0"
   },
   "devDependencies": {

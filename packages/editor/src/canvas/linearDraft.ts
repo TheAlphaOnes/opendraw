@@ -74,9 +74,9 @@ export function appendDraftPoint(rt: CanvasRuntime, at: Point): void {
   ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points))
   // Binding feedback for the tip that just parked.
   const shape = bindableShapeAt(
-    ctx.elements.value,
+    ctx.elements,
     at,
-    maxBindingDistance(ctx.viewport.value.zoom),
+    maxBindingDistance(ctx.viewport.zoom),
     el.id,
   )
   rt.bindingCandidates.value = shape ? [shape] : []
@@ -103,9 +103,9 @@ export function trackDraftPointer(rt: CanvasRuntime, scenePoint: Point): void {
   }
   ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points))
   const shape = bindableShapeAt(
-    ctx.elements.value,
+    ctx.elements,
     scenePoint,
-    maxBindingDistance(ctx.viewport.value.zoom),
+    maxBindingDistance(ctx.viewport.zoom),
     el.id,
   )
   rt.bindingCandidates.value = shape ? [shape] : []
@@ -141,14 +141,14 @@ export function finishLinearDraft(rt: CanvasRuntime): void {
   ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points))
   const binding = computeLinearBindings(
     { ...el, points },
-    ctx.elements.value,
-    maxBindingDistance(ctx.viewport.value.zoom),
+    ctx.elements,
+    maxBindingDistance(ctx.viewport.zoom),
   )
   if (binding) {
     ctx.doc.updateElement(el.id, binding)
   }
   ctx.doc.endStep()
-  if (!ctx.toolLocked.value) {
+  if (!ctx.toolLocked) {
     ctx.select(el.id)
   }
   ctx.finishToolUse()
