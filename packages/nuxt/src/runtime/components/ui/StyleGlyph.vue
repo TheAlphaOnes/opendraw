@@ -15,10 +15,15 @@ export type StyleGlyphName =
   | 'sloppinessCartoonist'
   | 'edgeSharp'
   | 'edgeRound'
+  | 'arrowSharp'
+  | 'arrowRound'
+  | 'arrowElbow'
 </script>
 
 <script setup lang="ts">
-import { useId } from 'vue'
+import { computed, useId } from 'vue'
+
+import { ARROW_TYPE_OPTIONS } from '@opendraw/editor'
 
 /**
  * StyleGlyph — a drawing of a style value (a hatched square, a dashed line,
@@ -30,12 +35,35 @@ import { useId } from 'vue'
 const props = withDefaults(defineProps<{ name: StyleGlyphName; size?: number }>(), { size: 16 })
 
 const clipId = `od-glyph-${useId()}`
+
+/** The arrow-type glyphs come from the editor's shared definitions (24×24 grid). */
+const ARROW_GLYPHS = { arrowSharp: 'sharp', arrowRound: 'round', arrowElbow: 'elbow' } as const
+const arrowPaths = computed(() => {
+  const type = ARROW_GLYPHS[props.name as keyof typeof ARROW_GLYPHS]
+  return type ? (ARROW_TYPE_OPTIONS.find((option) => option.type === type)?.paths ?? null) : null
+})
 const SQUARE =
   'M5.879 2.625h8.242a3.254 3.254 0 0 1 3.254 3.254v8.242a3.254 3.254 0 0 1-3.254 3.254H5.88a3.254 3.254 0 0 1-3.254-3.254V5.88a3.254 3.254 0 0 1 3.254-3.254Z'
 </script>
 
 <template>
   <svg
+    v-if="arrowPaths"
+    class="style-glyph"
+    :width="props.size"
+    :height="props.size"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path v-for="d in arrowPaths" :key="d" :d="d" />
+  </svg>
+  <svg
+    v-else
     class="style-glyph"
     :width="props.size"
     :height="props.size"

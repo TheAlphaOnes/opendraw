@@ -7,6 +7,7 @@ export { OpenDraw, type OpenDrawProps } from './OpenDraw.js'
 export { OpenDrawCanvas, type OpenDrawCanvasProps } from './OpenDrawCanvas.js'
 export { Toolbar } from './Toolbar.js'
 export { Footer } from './Footer.js'
+export { ArrowTypePicker } from './ArrowTypePicker.js'
 export {
   useEditorState,
   useOpenDrawEditor,

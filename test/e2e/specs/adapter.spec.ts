@@ -9,7 +9,7 @@ import { expect, test, type Page } from '@playwright/test'
  */
 
 interface Mirror {
-  elements: Array<{ type: string; text?: string }>
+  elements: Array<{ type: string; text?: string; elbowed?: boolean; points?: Array<{ x: number; y: number }> }>
   theme: string
 }
 
@@ -76,6 +76,23 @@ test('arms tools from the keyboard', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Ellipse (4)' })).toHaveAttribute('aria-pressed', 'true')
   await drag(page, [400, 300], [560, 420])
   await expect.poll(async () => (await mirror(page)).elements.map((el) => el.type)).toEqual(['ellipse'])
+})
+
+test('picks the arrow type and draws an elbow arrow', async ({ page }) => {
+  await page.getByRole('button', { name: 'Arrow (5)' }).click()
+  const picker = page.getByRole('radiogroup', { name: 'Arrow type' })
+  // Curved is the default; A cycles curved, elbow, sharp (Excalidraw).
+  await expect(picker.getByRole('radio', { name: 'Curved arrow' })).toHaveAttribute('aria-checked', 'true')
+  await page.keyboard.press('a')
+  await expect(picker.getByRole('radio', { name: 'Elbow arrow' })).toHaveAttribute('aria-checked', 'true')
+  await drag(page, [400, 300], [620, 440])
+  await expect.poll(async () => (await mirror(page)).elements.map((el) => el.elbowed)).toEqual([true])
+  const points = (await mirror(page)).elements[0]!.points!
+  expect(points.length).toBeGreaterThan(2)
+  for (let i = 1; i < points.length; i++) {
+    const [a, b] = [points[i - 1]!, points[i]!]
+    expect(Math.abs(a.x - b.x) < 0.5 || Math.abs(a.y - b.y) < 0.5).toBe(true)
+  }
 })
 
 test('edits text in place', async ({ page }) => {

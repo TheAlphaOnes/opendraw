@@ -35,6 +35,11 @@ export function onCanvasPointerUp(rt: CanvasRuntime, laser: LaserTrail, event: P
       if (!el) {
         return
       }
+      // An elbow arrow is drawn by dragging; a bare click leaves nothing.
+      if (isLinearElement(el) && el.elbowed && Math.hypot(el.width, el.height) < 2) {
+        ctx.doc.cancelStep()
+        return
+      }
       if (isLinearElement(el) && (el.points.length < 2 || (el.points[1]!.x === 0 && el.points[1]!.y === 0))) {
         // Excalidraw's multi-point creation: a no-drag click parks the
         // first point and keeps the draft live — each later click beyond

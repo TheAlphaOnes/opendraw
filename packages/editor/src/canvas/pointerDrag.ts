@@ -123,6 +123,12 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
       if (!el) {
         return
       }
+      if (isLinearElement(el) && el.elbowed) {
+        // An elbow arrow follows the pointer with its end tip and re-routes;
+        // its origin moves with the route, so the tip is set in scene space.
+        dragTipTo(rt, el.id, 'end', scenePoint, tipModifiers(event))
+        return
+      }
       if (isLinearElement(el)) {
         // Shift locks the angle; the end tip then binds (or not) and every
         // bound tip snaps live — the draft is never rotated, so the scene

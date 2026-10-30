@@ -6,6 +6,7 @@ import {
   MIN_ZOOM,
   type Alignment,
   type Arrowhead,
+  type ArrowType,
   type ElementPatch,
   type ElementStyle,
   type FlipAxis,
@@ -99,6 +100,8 @@ export interface OpenDrawContext {
   changeTextStyle: (style: Partial<TextStyle>) => void
   changeRoundness: (roundness: Roundness | null) => void
   changeArrowhead: (position: 'start' | 'end', arrowhead: Arrowhead | null) => void
+  /** Sharp, curved or elbow: restyles selected arrows, else the next arrow drawn. */
+  changeArrowType: (type: ArrowType) => void
   stepFontSize: (direction: 1 | -1) => void
   copyStyles: () => void
   pasteStyles: () => void
@@ -223,6 +226,7 @@ export function createOpenDrawContext(
     changeTextStyle: (style) => editor.changeTextStyle(style),
     changeRoundness: (roundness) => editor.changeRoundness(roundness),
     changeArrowhead: (position, arrowhead) => editor.changeArrowhead(position, arrowhead),
+    changeArrowType: (type) => editor.changeArrowType(type),
     stepFontSize: (direction) => editor.stepFontSize(direction),
     copyStyles: () => editor.copyStyles(),
     pasteStyles: () => editor.pasteStyles(),

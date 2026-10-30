@@ -225,6 +225,67 @@
   background: var(--od-hover);
 }
 
+/* A small properties island top-left (the arrow type picker). */
+.opendraw__panel {
+  top: var(--od-gutter);
+  left: var(--od-gutter);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 12px 12px;
+}
+
+.opendraw__panel-label {
+  font-size: 12px;
+  color: var(--od-ink);
+}
+
+.opendraw__options {
+  display: flex;
+  gap: 8px;
+}
+
+.opendraw__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--od-divider);
+  border-radius: var(--od-radius);
+  background: var(--od-surface);
+  color: var(--od-ink);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease-out,
+    transform 90ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.opendraw__option:hover {
+  background: var(--od-hover);
+}
+
+.opendraw__option:active {
+  transform: scale(0.94);
+}
+
+.opendraw__option[aria-checked='true'] {
+  background: var(--od-accent-soft);
+  border-color: var(--od-accent-soft);
+  color: var(--od-on-accent-soft);
+}
+
+.opendraw__option:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--od-accent);
+}
+
+.opendraw__option svg {
+  width: 16px;
+  height: 16px;
+}
+
 @keyframes opendraw-island-in {
   from {
     opacity: 0;
@@ -251,6 +312,11 @@
   .opendraw__bottom-left {
     top: var(--od-gutter);
     bottom: auto;
+  }
+
+  .opendraw__panel {
+    top: auto;
+    bottom: calc(var(--od-gutter) * 2 + var(--od-button) + 8px);
   }
 
   .opendraw__zoom-island {

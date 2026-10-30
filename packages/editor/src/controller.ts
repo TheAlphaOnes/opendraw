@@ -17,6 +17,7 @@ import {
   zoomViewport,
   type Alignment,
   type Arrowhead,
+  type ArrowType,
   type ElementPatch,
   type ElementStyle,
   type FlipAxis,
@@ -401,8 +402,14 @@ export class EditorController {
   }
 
   /** Curved or straight arrows — the selected ones, else the next arrow. */
-  changeArrowType(type: 'round' | 'sharp'): void {
+  /** Sharp, round or elbow — the selected arrows, or the next arrow's type. */
+  changeArrowType(type: ArrowType): void {
     this.doc.changeArrowType(type)
+  }
+
+  /** The type the next arrow is drawn with, leaving the selection alone. */
+  setArrowTypeDefault(type: ArrowType): void {
+    this.doc.setAppState({ arrowType: type })
   }
 
   /** Sets one end's head on the selected arrows (or the next arrow's). */

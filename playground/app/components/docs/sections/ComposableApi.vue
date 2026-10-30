@@ -5,7 +5,7 @@ const GROUPS = [
   ['Tools & theme', 'setActiveTool(tool), toggleToolLock(), setTheme(theme), toggleTheme(), setGridSize(size), setViewBackgroundColor(color)'],
   ['Selection', 'select(ids, mode?), selectGrouped(ids), selectAll(), isIdSelected(id)'],
   ['Elements', 'updateElement(id, patch), deleteSelection(), duplicateSelection(), copySelection(), cutSelection(), paste(at?)'],
-  ['Style', 'changeStyle(style), changeTextStyle(style), changeRoundness(r), changeArrowhead(end, head), copyStyles(), pasteStyles()'],
+  ['Style', 'changeStyle(style), changeTextStyle(style), changeRoundness(r), changeArrowhead(end, head), changeArrowType(type), copyStyles(), pasteStyles()'],
   ['Arrange', 'groupSelection(), ungroupSelection(), reorderSelection(action), alignSelection(a), distributeSelection(axis), flipSelection(axis)'],
   ['History', 'undo(), redo()'],
   ['Viewport', 'zoomIn(at), zoomOut(at), zoomAt(at, zoom), resetZoom(), zoomToFitAll(), zoomToFitSelection(), panBy(dx, dy)'],

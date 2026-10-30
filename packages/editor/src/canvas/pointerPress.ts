@@ -72,6 +72,7 @@ function draftElement(rt: CanvasRuntime, tool: string, at: Point): OpenDrawEleme
       frameId,
       points: [{ x: 0, y: 0 }],
       roundness: arrowType === 'round' ? 'round' : null,
+      ...(arrowType === 'elbow' ? { elbowed: true } : {}),
       startArrowhead: arrowheads.start,
       endArrowhead: arrowheads.end,
     })

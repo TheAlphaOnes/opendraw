@@ -23,6 +23,9 @@ const hint = computed<HintPart[] | null>(() => {
   }
   switch (ctx.activeTool.value) {
     case 'arrow':
+      return ctx.appState.value.arrowType === 'elbow'
+        ? ['Drag to draw an elbow arrow. Press ', { key: 'A' }, ' again to change arrow type.']
+        : ['Click to start multiple points, drag for single line. Press ', { key: 'A' }, ' again to change arrow type.']
     case 'line':
       return ['Click to start multiple points, drag for single line']
     case 'freedraw':

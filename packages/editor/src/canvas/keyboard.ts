@@ -128,6 +128,13 @@ export function attachKeyboard(rt: CanvasRuntime, keyRoot: HTMLElement): () => v
         ctx.openImagePicker()
         return
       }
+      // Pressing the arrow key again cycles the arrow type: sharp → round →
+      // elbow → sharp (Excalidraw's keyboard handler).
+      if (tool === 'arrow' && ctx.activeTool === 'arrow') {
+        const current = ctx.appState.arrowType
+        ctx.setArrowTypeDefault(current === 'sharp' ? 'round' : current === 'round' ? 'elbow' : 'sharp')
+        return
+      }
       ctx.setActiveTool(tool)
     }
   }

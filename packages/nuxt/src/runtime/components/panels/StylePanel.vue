@@ -10,6 +10,7 @@ import {
   TRANSPARENT,
   mostUsedCustomColors,
   withBoundTexts,
+  type ArrowType,
   type ElementStyle,
   type FillStyle,
   type FontFamily,
@@ -20,6 +21,8 @@ import {
   type TextStyle,
   type OpenDrawTextElement,
 } from '@opendraw/core'
+
+import { ARROW_TYPE_OPTIONS } from '@opendraw/editor'
 
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import { panelTargets, type PanelTargets } from './panelTargets.js'
@@ -94,7 +97,13 @@ const roundness = computed(() => {
 })
 const arrowType = computed(() => {
   const el = ctx.selectedElements.value.find((e) => e.type === 'arrow')
-  return el && el.type === 'arrow' ? (el.roundness === 'round' ? 'round' : 'sharp') : ctx.appState.value.arrowType
+  return el && el.type === 'arrow'
+    ? el.elbowed
+      ? 'elbow'
+      : el.roundness === 'round'
+        ? 'round'
+        : 'sharp'
+    : ctx.appState.value.arrowType
 })
 
 const dark = computed(() => ctx.theme.value === 'dark')
@@ -129,10 +138,12 @@ const cornerOptions: UiSegmentedOption[] = [
   { value: 'sharp', label: 'Sharp', glyph: 'edgeSharp' },
   { value: 'round', label: 'Round', glyph: 'edgeRound' },
 ]
-const arrowTypeOptions: UiSegmentedOption[] = [
-  { value: 'sharp', label: 'Sharp arrow', icon: 'arrowSharp' },
-  { value: 'round', label: 'Curved arrow', icon: 'arrowRound' },
-]
+// Excalidraw's three arrow types, glyphs shared with every adapter.
+const arrowTypeOptions: UiSegmentedOption[] = ARROW_TYPE_OPTIONS.map((option) => ({
+  value: option.type,
+  label: option.label,
+  glyph: option.type === 'sharp' ? 'arrowSharp' : option.type === 'round' ? 'arrowRound' : 'arrowElbow',
+}))
 const fontFamilyOptions: UiSegmentedOption[] = [
   { value: 'hand', label: 'Hand-drawn', icon: 'fontHand' },
   { value: 'normal', label: 'Normal', icon: 'fontNormal' },
@@ -240,7 +251,7 @@ const alignOptions: UiSegmentedOption[] = [
           :options="arrowTypeOptions"
           :model-value="arrowType"
           ariaLabel="Arrow type"
-          @update:model-value="ctx.editor.changeArrowType($event === 'round' ? 'round' : 'sharp')"
+          @update:model-value="ctx.changeArrowType($event as ArrowType)"
         />
       </StyleSection>
       <StyleSection v-if="targets.arrowheads" label="Arrowheads">

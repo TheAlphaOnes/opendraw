@@ -16,6 +16,7 @@ export * from './cell.js'
 export * from './controller.js'
 export * from './icons.js'
 export * from './tools.js'
+export * from './arrowTypes.js'
 
 export * from './actions/types.js'
 export * from './actions/keys.js'

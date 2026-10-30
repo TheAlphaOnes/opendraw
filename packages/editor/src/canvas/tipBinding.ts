@@ -48,6 +48,10 @@ export function dragTipTo(
     return
   }
   const points = current.points.map((p) => ({ ...p }))
+  // A fresh draft holds only its start: give the end tip a point of its own.
+  if (points.length < 2) {
+    points.push({ ...points[0]! })
+  }
   points[end === 'start' ? 0 : points.length - 1] = localPointOf(current, tip)
   const moved = { ...current, ...pointsPatch(current, points) } as OpenDrawLinearElement
 

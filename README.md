@@ -49,7 +49,7 @@ Excalidraw set the bar for how a whiteboard should feel. opendraw brings that fe
 | | |
 | --- | --- |
 | **Tools** | Selection, hand, rectangle, diamond, ellipse, arrow, line, freedraw, text, sticky note, image, eraser, frame and laser pointer — with Excalidraw's letter and number keys and the tool lock (<kbd>Q</kbd>). |
-| **Arrows that connect** | Lines and arrows bind to shapes and follow them, with midpoint snapping, inside/outside binding and curved or sharp routes. |
+| **Arrows that connect** | Lines and arrows bind to shapes and follow them, with midpoint snapping and inside/outside binding. Arrows come sharp, curved or elbowed: elbow arrows route in right angles around the shapes they connect, and <kbd>A</kbd> cycles the type while the arrow tool is armed. |
 | **Text everywhere** | Free text and labels inside shapes, edited in place; sticky notes fit their text by shrinking the font before growing. |
 | **Frames** | Group content into frames that carry and clip their children; drop elements in or out. |
 | **Editing** | Groups, align &amp; distribute, flip, layers, copy/paste styles, Alt-drag duplicate, lock, a context menu and gesture-level undo/redo. |

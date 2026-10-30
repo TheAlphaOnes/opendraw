@@ -76,8 +76,6 @@ export type IconName =
   | 'arrowheadTriangle'
   | 'arrowheadDiamond'
   | 'chevronDown'
-  | 'arrowSharp'
-  | 'arrowRound'
   | 'eyeDropper'
   | 'stickyNoteTool'
   // chrome

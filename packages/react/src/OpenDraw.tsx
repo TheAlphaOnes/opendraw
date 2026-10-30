@@ -3,6 +3,7 @@ import { useEffect, type CSSProperties, type ReactNode } from 'react'
 import type { OpenDrawElement, OpenDrawState } from '@opendraw/core'
 import type { EditorController, ThemeDefault } from '@opendraw/editor'
 
+import { ArrowTypePicker } from './ArrowTypePicker.js'
 import { Footer } from './Footer.js'
 import { OpenDrawCanvas } from './OpenDrawCanvas.js'
 import { Toolbar } from './Toolbar.js'
@@ -55,6 +56,7 @@ function EditorShell({ editor, theme = 'system', persist = true, ui = 'full', on
       {ui === 'full' && (
         <>
           <Toolbar editor={editor} />
+          <ArrowTypePicker editor={editor} />
           <Footer editor={editor} />
         </>
       )}

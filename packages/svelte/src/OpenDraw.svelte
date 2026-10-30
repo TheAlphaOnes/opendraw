@@ -9,6 +9,7 @@
     type ThemeDefault,
   } from '@opendraw/editor'
 
+  import ArrowTypePicker from './ArrowTypePicker.svelte'
   import Footer from './Footer.svelte'
   import OpenDrawCanvas from './OpenDrawCanvas.svelte'
   import Toolbar from './Toolbar.svelte'
@@ -79,6 +80,7 @@
   <OpenDrawCanvas {editor} />
   {#if ui === 'full'}
     <Toolbar {editor} />
+    <ArrowTypePicker {editor} />
     <Footer {editor} />
   {/if}
   {@render children?.()}
