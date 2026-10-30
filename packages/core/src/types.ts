@@ -152,7 +152,15 @@ export interface VueDrawFreedrawElement extends VueDrawElementBase {
 
 export interface VueDrawTextElement extends VueDrawElementBase {
   type: 'text'
+  /** The text as rendered — wrapped to the container when bound. */
   text: string
+  /** The text as typed, before any wrapping (Excalidraw's originalText). */
+  originalText: string
+  /**
+   * The shape this text is bound inside (Excalidraw's containerId), or
+   * null for free-standing text. Bound text is laid out by its container.
+   */
+  containerId: string | null
   fontSize: number
   fontFamily: FontFamily
   textAlign: TextAlign

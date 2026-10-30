@@ -5,6 +5,7 @@ import {
   findElementAt,
   handleAt,
   hitThreshold,
+  isTextContainer,
   linearHandleAt,
   linearMidpointHandle,
   linearPointHandles,
@@ -16,6 +17,7 @@ import {
   newLinearElement,
   pointInSelectionFrame,
   pointsPatch,
+  selectableTarget,
   selectionFrameOf,
   startRotationAngle,
 } from '@vuedraw/core'
@@ -29,7 +31,7 @@ import {
   sideGrabAt,
   snapshotSelection,
 } from './selectionHits.js'
-import { createTextAt } from './textEntry.js'
+import { createTextAt, editContainerText } from './textEntry.js'
 import type { LaserTrail } from './useLaserTrail.js'
 
 /** Shape tools that draft by dragging. */
@@ -42,9 +44,11 @@ export function pressureOf(event: PointerEvent): number {
 
 /** Deletes everything the eraser swept between two scene points. */
 export function eraseAlong(rt: CanvasRuntime, from: Point, to: Point): void {
-  const hits = elementsUnderEraser(rt.ctx.elements.value, from, to, rt.ctx.viewport.value.zoom)
+  const elements = rt.ctx.elements.value
+  const hits = elementsUnderEraser(elements, from, to, rt.ctx.viewport.value.zoom)
   if (hits.length > 0) {
-    rt.ctx.doc.deleteElements(hits.map((el) => el.id))
+    // Erasing a label erases its shape (and the shape takes the label).
+    rt.ctx.doc.deleteElements(hits.map((el) => selectableTarget(el, elements).id))
   }
 }
 
@@ -130,7 +134,8 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
   // re-opens ITS editor (App.textTool resolves a "text" target before
   // falling through to free creation); anywhere else creates a new one.
   if (tool === 'text') {
-    const hit = findElementAt(ctx.elements.value, scenePoint, hitThreshold(ctx.viewport.value.zoom))
+    const raw = findElementAt(ctx.elements.value, scenePoint, hitThreshold(ctx.viewport.value.zoom))
+    const hit = raw ? selectableTarget(raw, ctx.elements.value) : null
     if (hit?.type === 'text') {
       // Same shape as a creation: one open step the editor commits into,
       // the element selected, and the tool reverted to selection.
@@ -138,6 +143,12 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
       ctx.select(hit.id)
       ctx.finishToolUse()
       ctx.setEditing(hit.id)
+      return
+    }
+    // Clicking a shape with the text tool writes inside it (App.textTool).
+    if (hit && isTextContainer(hit) && !hit.locked) {
+      ctx.finishToolUse()
+      editContainerText(rt, hit)
       return
     }
     createTextAt(rt, scenePoint)
@@ -269,7 +280,8 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
     }
   }
 
-  const hit = findElementAt(ctx.elements.value, scenePoint, hitThreshold(zoom))
+  const raw = findElementAt(ctx.elements.value, scenePoint, hitThreshold(zoom))
+  const hit = raw ? selectableTarget(raw, ctx.elements.value) : null
   if (hit) {
     const wasSelected = ctx.isIdSelected(hit.id)
     if (event.shiftKey) {

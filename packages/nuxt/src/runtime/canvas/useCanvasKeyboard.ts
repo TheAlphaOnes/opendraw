@@ -7,6 +7,7 @@ import { dispatchActionKey } from '../actions/registry.js'
 import { isTypingTarget } from '../actions/keys.js'
 import { TOOL_BY_KEY } from '../constants/tools.js'
 import { finishLinearDraft } from './linearDraft.js'
+import { editTextOf } from './textEntry.js'
 import type { CanvasRuntime } from './runtime.js'
 
 /**
@@ -24,6 +25,10 @@ const ARROW_DIRECTIONS: Record<string, Point> = {
   ArrowRight: { x: 1, y: 0 },
   ArrowUp: { x: 0, y: -1 },
   ArrowDown: { x: 0, y: 1 },
+}
+
+function noModifier(event: KeyboardEvent): boolean {
+  return !event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey
 }
 
 /** Controls that own Space/Enter themselves (activation keys). */
@@ -96,6 +101,12 @@ export function useCanvasKeyboard(rt: CanvasRuntime): void {
     }
     if (event.key === 'Enter' && drafting) {
       finishLinearDraft(rt)
+      return
+    }
+    // Enter on a lone text or shape starts editing its text (Excalidraw).
+    const selected = ctx.selectedElements.value
+    if (event.key === 'Enter' && noModifier(event) && selected.length === 1 && editTextOf(rt, selected[0]!)) {
+      event.preventDefault()
       return
     }
     if (dispatchActionKey(ctx, event)) {

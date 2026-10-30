@@ -43,10 +43,18 @@ const INKED: ReadonlySet<ElementType> = new Set([
   'rectangle', 'diamond', 'ellipse', 'arrow', 'line', 'freedraw', 'text', 'frame',
 ])
 
-export function panelTargets(selected: readonly VueDrawElement[], tool: ToolId): PanelTargets {
+export function panelTargets(
+  selected: readonly VueDrawElement[],
+  tool: ToolId,
+  hasLabels = false,
+): PanelTargets {
   let types: ElementType[]
   if (selected.length > 0) {
     types = [...new Set(selected.map((el) => el.type))]
+    // A labelled shape exposes its label's text properties.
+    if (hasLabels) {
+      types.push('text')
+    }
   } else if (STYLED_TOOLS.has(tool)) {
     types = [tool as ElementType]
   } else {

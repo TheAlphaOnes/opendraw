@@ -1,5 +1,15 @@
 import type { Point } from '@vuedraw/core'
-import { findElementAt, hitThreshold, newTextElement, outermostGroupId } from '@vuedraw/core'
+import type { TextContainer, VueDrawElement } from '@vuedraw/core'
+import {
+  boundTextOf,
+  findElementAt,
+  hitThreshold,
+  isTextContainer,
+  newTextElement,
+  outermostGroupId,
+  selectableTarget,
+  textContainerAt,
+} from '@vuedraw/core'
 
 import { finishLinearDraft } from './linearDraft.js'
 import type { CanvasRuntime } from './runtime.js'
@@ -29,6 +39,50 @@ export function createTextAt(rt: CanvasRuntime, point: Point): void {
   ctx.setEditing(element.id)
 }
 
+/**
+ * Edits the label inside a shape — Excalidraw's container text. An
+ * existing label re-opens; otherwise an empty centered label is created
+ * directly above the shape in z-order. The shape stays the selection.
+ */
+export function editContainerText(rt: CanvasRuntime, container: TextContainer): void {
+  const { ctx } = rt
+  const existing = boundTextOf(ctx.elements.value, container.id)
+  ctx.doc.beginStep()
+  ctx.select(container.id)
+  if (existing) {
+    ctx.setEditing(existing.id)
+    return
+  }
+  const { style, textStyle } = ctx.appState.value
+  const label = newTextElement({
+    x: container.x,
+    y: container.y,
+    text: '',
+    containerId: container.id,
+    verticalAlign: 'middle',
+    style,
+    textStyle: { ...textStyle, textAlign: 'center' },
+  })
+  ctx.doc.addElement(label, { after: container.id })
+  ctx.setEditing(label.id)
+}
+
+/**
+ * Starts text editing on whatever `target` is: a text element re-opens,
+ * a container edits its label. Returns false for anything else.
+ */
+export function editTextOf(rt: CanvasRuntime, target: VueDrawElement): boolean {
+  if (target.type === 'text') {
+    editTextElement(rt, target.id)
+    return true
+  }
+  if (isTextContainer(target) && !target.locked) {
+    editContainerText(rt, target)
+    return true
+  }
+  return false
+}
+
 /** Re-opens an existing text element's editor inside a fresh step. */
 export function editTextElement(rt: CanvasRuntime, id: string): void {
   rt.ctx.doc.beginStep()
@@ -53,7 +107,8 @@ export function onCanvasDoubleClick(rt: CanvasRuntime, event: MouseEvent): void 
     rt.interaction.value = { kind: 'none' }
   }
   const scenePoint = rt.toScene(event)
-  const hit = findElementAt(ctx.elements.value, scenePoint, hitThreshold(ctx.viewport.value.zoom))
+  const raw = findElementAt(ctx.elements.value, scenePoint, hitThreshold(ctx.viewport.value.zoom))
+  const hit = raw ? selectableTarget(raw, ctx.elements.value) : null
   // Double-clicking a selected group enters it: the hit becomes the
   // selection (or its next inner group) — Excalidraw's editingGroupId.
   const groupId = hit ? outermostGroupId(hit, ctx.editingGroupId.value) : null
@@ -62,8 +117,15 @@ export function onCanvasDoubleClick(rt: CanvasRuntime, event: MouseEvent): void 
     ctx.selectGrouped([hit.id])
     return
   }
-  if (hit && hit.type === 'text') {
-    editTextElement(rt, hit.id)
+  // A text element re-opens; a shape edits (or gains) its label.
+  if (hit && editTextOf(rt, hit)) {
+    return
+  }
+  // Inside an unfilled shape the press hits nothing, yet the shape still
+  // takes the text — the area counts, not just the stroke.
+  const container = textContainerAt(ctx.elements.value, scenePoint)
+  if (container) {
+    editContainerText(rt, container)
     return
   }
   if (!hit) {

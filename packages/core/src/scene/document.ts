@@ -15,6 +15,7 @@
 
 import { isTextElement } from '../elements/factories.js'
 import { duplicateElements } from '../elements/duplicate.js'
+import { isBoundText, syncBoundTexts, withBoundTexts } from '../elements/boundText.js'
 import { bindingFollowPatches, orphanBindingPatches } from '../elements/binding.js'
 import {
   type Alignment,
@@ -89,8 +90,9 @@ export class VueDrawDocument {
   private openStep: HistorySnapshot | null = null
 
   constructor(options: VueDrawDocumentOptions = {}) {
-    // Hand-built elements may predate newer fields (groups, arrowheads).
-    this.elements = (options.elements ?? []).map(normalizeElement)
+    // Hand-built elements may predate newer fields (groups, arrowheads),
+    // and their labels may not be laid out yet.
+    this.elements = syncBoundTexts([], (options.elements ?? []).map(normalizeElement), patchElement)
     this.elementsMap = new Map(this.elements.map((el) => [el.id, el]))
     this.appState = { ...DEFAULT_APP_STATE, ...options.appState }
     if (options.appState?.viewport) {
@@ -294,10 +296,12 @@ export class VueDrawDocument {
   private mutate(fn: (elements: readonly VueDrawElement[]) => VueDrawElement[] | null): void {
     const before = this.captureBefore()
     const beforeElements = this.elements
-    const next = fn(this.elements)
-    if (next === null || next === beforeElements) {
+    const produced = fn(this.elements)
+    if (produced === null || produced === beforeElements) {
       return // no-op
     }
+    // Invariant: bound text always fits and follows its container.
+    const next = syncBoundTexts(beforeElements, produced, patchElement)
     this.elements = next
     this.rebuildMap()
     this.emit()
@@ -310,11 +314,14 @@ export class VueDrawDocument {
   // Element mutations
   // -------------------------------------------------------------------------
 
-  addElement(element: VueDrawElement, options: { select?: boolean } = {}): void {
+  addElement(element: VueDrawElement, options: { select?: boolean; after?: string } = {}): void {
     this.addElements([element], options)
   }
 
-  addElements(elements: readonly VueDrawElement[], options: { select?: boolean } = {}): void {
+  addElements(
+    elements: readonly VueDrawElement[],
+    options: { select?: boolean; after?: string } = {},
+  ): void {
     if (elements.length === 0) {
       return
     }
@@ -324,7 +331,14 @@ export class VueDrawDocument {
     if (topLevel) {
       this.beginStep()
     }
-    this.mutate((current) => [...current, ...elements])
+    this.mutate((current) => {
+      // `after` slots the new elements right above an anchor (bound text
+      // directly over its container); otherwise they land on top.
+      const anchor = options.after ? current.findIndex((el) => el.id === options.after) : -1
+      return anchor === -1
+        ? [...current, ...elements]
+        : [...current.slice(0, anchor + 1), ...elements, ...current.slice(anchor + 1)]
+    })
     if (options.select) {
       this.select(elements.map((el) => el.id))
     }
@@ -385,7 +399,8 @@ export class VueDrawDocument {
     if (ids.length === 0) {
       return
     }
-    const idSet = new Set(ids)
+    // A container takes the text bound inside it along.
+    const idSet = new Set(withBoundTexts(this.elements, ids).map((el) => el.id))
     // Deleting an element and cleaning its selection is ONE undo step —
     // undo must resurrect the element with its selection intact.
     const topLevel = this.openStep === null
@@ -431,9 +446,13 @@ export class VueDrawDocument {
       return
     }
     this.beginStep()
-    const clones = duplicateElements(selected, { offset, editingGroupId: this.appState.editingGroupId })
+    const clones = duplicateElements(withBoundTexts(this.elements, selected.map((el) => el.id)), {
+      offset,
+      editingGroupId: this.appState.editingGroupId,
+    })
     this.addElements(clones)
-    this.select(clones.map((el) => el.id))
+    // Labels ride along with their containers; only the shapes are selected.
+    this.select(clones.filter((el) => !isBoundText(el)).map((el) => el.id))
     this.endStep()
   }
 
@@ -532,7 +551,8 @@ export class VueDrawDocument {
   }
 
   reorderSelection(action: ReorderAction): void {
-    this.reorderElements(action, this.getSelectedElements().map((el) => el.id))
+    const ids = this.getSelectedElements().map((el) => el.id)
+    this.reorderElements(action, withBoundTexts(this.elements, ids).map((el) => el.id))
   }
 
   // -------------------------------------------------------------------------
@@ -615,7 +635,7 @@ export class VueDrawDocument {
    */
   selectAll(): void {
     this.setEditingGroup(null)
-    this.select(this.elements.filter((el) => !el.locked).map((el) => el.id))
+    this.select(this.elements.filter((el) => !el.locked && !isBoundText(el)).map((el) => el.id))
   }
 
   // -------------------------------------------------------------------------
@@ -691,7 +711,7 @@ export class VueDrawDocument {
       this.setTextStyle(style)
       return
     }
-    const ids = selected.filter(isTextElement).map((el) => el.id)
+    const ids = this.selectedTextIds()
     if (ids.length === 0) {
       this.setTextStyle(style)
       return
@@ -718,12 +738,21 @@ export class VueDrawDocument {
   }
 
   /**
+   * Text that text-style commands act on: selected text plus the labels of
+   * selected shapes (Excalidraw styles a container's label through it).
+   */
+  private selectedTextIds(): string[] {
+    const selected = this.getSelectedElements().map((el) => el.id)
+    return withBoundTexts(this.elements, selected).filter(isTextElement).map((el) => el.id)
+  }
+
+  /**
    * Steps the font size of every selected text element by Excalidraw's
    * relative step (10%, rounded — actionIncrease/DecreaseFontSize),
    * re-measuring each box. One undo step; a no-op without text selected.
    */
   stepFontSize(direction: 1 | -1): void {
-    const ids = this.getSelectedElements().filter(isTextElement).map((el) => el.id)
+    const ids = this.selectedTextIds()
     if (ids.length === 0) {
       return
     }
@@ -832,7 +861,7 @@ export class VueDrawDocument {
     // Files come from disk, storage or a host app: coerce defensively so a
     // malformed or older element is repaired (or dropped), never trusted.
     const file = parseFile(input)
-    this.elements = [...file.elements]
+    this.elements = syncBoundTexts([], [...file.elements], patchElement)
     this.rebuildMap()
     this.appState = {
       ...this.appState,

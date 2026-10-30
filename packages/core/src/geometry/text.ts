@@ -80,3 +80,61 @@ export function layoutText(
     lineHeight,
   }
 }
+
+/**
+ * Word-wraps text to `maxWidth` (local px), keeping explicit line breaks —
+ * Excalidraw's `wrapText` for bound text. Words longer than a line break
+ * between characters; whitespace at a wrap point is dropped so wrapped
+ * lines never start or end with the gap they wrapped at.
+ */
+export function wrapText(
+  text: string,
+  fontFamily: FontFamily,
+  fontSize: number,
+  maxWidth: number,
+  measure: FontMeasurer = defaultMeasurer,
+): string {
+  if (!Number.isFinite(maxWidth) || maxWidth <= 0) {
+    return normalizeText(text)
+  }
+  const font = fontCss(fontFamily, fontSize)
+  const width = (value: string): number => measure(font, value)
+  const wrapped: string[] = []
+  for (const line of text.replace(/\r\n?/g, '\n').split('\n')) {
+    if (width(line) <= maxWidth) {
+      wrapped.push(line)
+      continue
+    }
+    let current = ''
+    for (const word of line.split(/(\s+)/)) {
+      if (word === '') {
+        continue
+      }
+      const candidate = current + word
+      if (width(candidate) <= maxWidth) {
+        current = candidate
+        continue
+      }
+      if (/^\s+$/.test(word)) {
+        // A gap at the wrap point is consumed by the break.
+        wrapped.push(current)
+        current = ''
+        continue
+      }
+      if (current.trim() !== '') {
+        wrapped.push(current.trimEnd())
+      }
+      current = ''
+      // A word wider than the whole line breaks between characters.
+      for (const char of word) {
+        if (current !== '' && width(current + char) > maxWidth) {
+          wrapped.push(current)
+          current = ''
+        }
+        current += char
+      }
+    }
+    wrapped.push(current.trimEnd())
+  }
+  return wrapped.join('\n')
+}

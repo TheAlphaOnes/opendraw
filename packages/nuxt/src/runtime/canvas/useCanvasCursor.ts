@@ -4,6 +4,7 @@ import {
   findElementAt,
   handleAt,
   hitThreshold,
+  isTextContainer,
   linearHandleAt,
   linearMidpointHandle,
   linearPointHandles,
@@ -46,7 +47,8 @@ export function useCanvasCursor(rt: CanvasRuntime): ComputedRef<string> {
     if (tool === 'text') {
       const point = rt.hoverScene.value
       const hit = point ? findElementAt(ctx.elements.value, point, hitThreshold(ctx.viewport.value.zoom)) : null
-      return hit?.type === 'text' ? 'text' : 'crosshair'
+      // Text and shapes that can hold text both take the text caret.
+      return hit && (hit.type === 'text' || isTextContainer(hit)) ? 'text' : 'crosshair'
     }
     if (tool !== 'selection') {
       return 'crosshair'

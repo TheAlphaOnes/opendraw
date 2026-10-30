@@ -5,7 +5,8 @@
  *   — groups wholly copied become new groups (`remapGroupIdsForCopies`);
  *   — a line/arrow binding to a shape copied alongside it follows the
  *     copy; a binding to a shape left behind is dropped, so a copy never
- *     drags someone else's tip around.
+ *     drags someone else's tip around;
+ *   — bound text copied with its container binds to the copy.
  */
 
 import type { Point, VueDrawBinding, VueDrawElement } from '../types.js'
@@ -34,10 +35,16 @@ export function duplicateElements(
     const target = binding ? idMap.get(binding.elementId) : undefined
     return target ? { elementId: target } : null
   }
-  const rebound = copies.map((copy) =>
-    isLinearElement(copy)
-      ? { ...copy, startBinding: remapBinding(copy.startBinding), endBinding: remapBinding(copy.endBinding) }
-      : copy,
-  )
+  const rebound = copies.map((copy): VueDrawElement => {
+    if (isLinearElement(copy)) {
+      return { ...copy, startBinding: remapBinding(copy.startBinding), endBinding: remapBinding(copy.endBinding) }
+    }
+    if (copy.type === 'text' && copy.containerId !== null) {
+      // A label copied with its container moves into the copy; copied
+      // without it, it becomes free text.
+      return { ...copy, containerId: idMap.get(copy.containerId) ?? null }
+    }
+    return copy
+  })
   return remapGroupIdsForCopies(rebound, options.editingGroupId ?? null)
 }

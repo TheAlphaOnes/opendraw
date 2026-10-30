@@ -136,6 +136,8 @@ export function coerceElement(input: unknown): VueDrawElement | null {
       ...base,
       type,
       text: str(input.text, ''),
+      originalText: str(input.originalText, str(input.text, '')),
+      containerId: typeof input.containerId === 'string' ? input.containerId : null,
       fontSize: Math.max(8, num(input.fontSize, 20)),
       fontFamily: oneOf(input.fontFamily, ['hand', 'normal', 'code'] as const, 'hand'),
       textAlign: oneOf<TextAlign>(input.textAlign, ['left', 'center', 'right'] as const, 'left'),
@@ -167,13 +169,18 @@ export function normalizeElement(element: VueDrawElement): VueDrawElement {
   const missingGroups = !Array.isArray(element.groupIds)
   const linear = element.type === 'line' || element.type === 'arrow'
   const missingHeads = linear && (!('startArrowhead' in element) || !('endArrowhead' in element))
-  if (!missingGroups && !missingHeads) {
+  const missingText = element.type === 'text' && (!('originalText' in element) || !('containerId' in element))
+  if (!missingGroups && !missingHeads && !missingText) {
     return element
   }
   const repaired = { ...element, groupIds: missingGroups ? [] : element.groupIds } as VueDrawElement
   if (missingHeads && (repaired.type === 'line' || repaired.type === 'arrow')) {
     repaired.startArrowhead = repaired.startArrowhead ?? null
     repaired.endArrowhead = repaired.endArrowhead === undefined ? (repaired.type === 'arrow' ? 'arrow' : null) : repaired.endArrowhead
+  }
+  if (missingText && repaired.type === 'text') {
+    repaired.originalText = repaired.originalText ?? repaired.text
+    repaired.containerId = repaired.containerId ?? null
   }
   return repaired
 }

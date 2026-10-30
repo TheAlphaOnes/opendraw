@@ -5,6 +5,8 @@ import {
   VueDrawDocument,
   duplicateElements,
   fitViewportToBounds,
+  isBoundText,
+  withBoundTexts,
   selectedGroupIds,
   stylePayloadOf,
   type Alignment,
@@ -216,6 +218,10 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
   /** Style remembered by copyStyles — editor intent, never document state. */
   const copiedStyle = shallowRef<StylePayload | null>(null)
 
+  function selectionWithLabels(): VueDrawElement[] {
+    return withBoundTexts(doc.getElements(), doc.getSelectedElements().map((el) => el.id))
+  }
+
   function fitTo(elementsToFit: readonly VueDrawElement[], fit: 'scale-down' | 'contain'): void {
     if (elementsToFit.length === 0) {
       return
@@ -329,15 +335,16 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
       )
     },
 
+    // The clipboard takes labels along with their shapes.
     copySelection: () => {
-      clipboard = doc.getSelectedElements().map((el) => ({ ...el }))
+      clipboard = selectionWithLabels().map((el) => ({ ...el }))
     },
     cutSelection: () => {
-      const selected = doc.getSelectedElements()
-      if (selected.length === 0) {
+      const copied = selectionWithLabels()
+      if (copied.length === 0) {
         return
       }
-      clipboard = selected.map((el) => ({ ...el }))
+      clipboard = copied.map((el) => ({ ...el }))
       doc.deleteSelectedElements()
     },
     paste: (at) => {
@@ -350,7 +357,8 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
       const copies = duplicateElements(clipboard, { offset })
       doc.beginStep()
       doc.setEditingGroup(null)
-      doc.addElements(copies, { select: true })
+      doc.addElements(copies)
+      doc.select(copies.filter((el) => !isBoundText(el)).map((el) => el.id))
       doc.endStep()
     },
     clipboardSize: computed(() => {

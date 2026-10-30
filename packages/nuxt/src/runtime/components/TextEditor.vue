@@ -1,8 +1,16 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
-import type { Point, VueDrawTextElement } from '@vuedraw/core'
-import { isTextElement, sceneToScreen, screenToScene, themeColor } from '@vuedraw/core'
+import type { TextContainer, VueDrawTextElement } from '@vuedraw/core'
+import {
+  boundTextMaxWidth,
+  containerTextOrigin,
+  isTextContainer,
+  isTextElement,
+  sceneToScreen,
+  screenToScene,
+  themeColor,
+} from '@vuedraw/core'
 
 import { useVueDraw } from '../composables/useVueDraw.js'
 
@@ -38,6 +46,16 @@ const element = computed<VueDrawTextElement | null>(() => {
 
 const isTextElementActive = computed(() => element.value !== null)
 
+/** The shape a bound label lives in (Excalidraw's container), if any. */
+const container = computed<TextContainer | null>(() => {
+  const id = element.value?.containerId
+  if (!id) {
+    return null
+  }
+  const el = ctx.elements.value.find((candidate) => candidate.id === id)
+  return el && isTextContainer(el) ? el : null
+})
+
 /** Screen-space box of the editing element. */
 const boxStyle = computed(() => {
   const el = element.value
@@ -45,11 +63,16 @@ const boxStyle = computed(() => {
   if (!el) {
     return {}
   }
-  const topLeft = sceneToScreen({ x: el.x, y: el.y }, viewport)
+  const shape = container.value
+  // A label's box spans the shape's inner width (stable while typing) and
+  // follows the label's top as vertical centering moves it.
+  const left = shape ? containerTextOrigin(shape).x : el.x
+  const width = shape ? boundTextMaxWidth(shape) : el.width
+  const topLeft = sceneToScreen({ x: left, y: el.y }, viewport)
   return {
     left: `${topLeft.x}px`,
     top: `${topLeft.y}px`,
-    width: `${el.width * viewport.zoom}px`,
+    width: `${width * viewport.zoom}px`,
     minHeight: `${el.height * viewport.zoom}px`,
     transform: el.angle !== 0 ? `rotate(${el.angle}rad)` : undefined,
     transformOrigin: 'center',
@@ -83,10 +106,12 @@ const fontStyle = computed(() => {
     fontFamily: fontFamilyStack(el.fontFamily),
     fontSize: `${el.fontSize * ctx.viewport.value.zoom}px`,
     lineHeight: `${el.lineHeight}`,
-    // Left while editing: the session-stable box is wider than the
-    // element, so center/right would show text away from its committed
-    // position. The committed render keeps the element's true align.
-    textAlign: 'left',
+    // Free text edits left-aligned: its session-stable box is wider than
+    // the element, so center/right would show text away from its committed
+    // position. A label's box IS its wrap width, so it aligns for real.
+    textAlign: container.value ? el.textAlign : 'left',
+    whiteSpace: container.value ? 'pre-wrap' : 'pre',
+    overflowWrap: container.value ? 'anywhere' : 'normal',
     // The committed render dark-filters stroke colors; the editor must
     // match it, or dark ink types invisibly on the dark canvas.
     color: themeColor(el.strokeColor, ctx.theme.value === 'dark'),
@@ -111,8 +136,9 @@ function onInput(event: Event) {
     return
   }
   const text = (event.target as HTMLTextAreaElement).value
-  // The composable re-measures text elements automatically on update.
-  ctx.updateElement(el.id, { text })
+  // The typed text is the original; the document re-wraps bound labels
+  // (and the composable re-measures free text) on every update.
+  ctx.updateElement(el.id, { text, originalText: text })
 }
 
 /** Finalizes editing: empty text deletes the element, everything else commits. */
@@ -129,7 +155,7 @@ function commit() {
     return
   }
   committed.value = true
-  if (el.text.trim() === '') {
+  if (el.originalText.trim() === '') {
     // A brand-new element never really existed → cancel its whole step.
     // An existing element emptied by the user → delete it, keeping the
     // pre-edit state reachable via undo.
@@ -145,7 +171,14 @@ function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     event.preventDefault()
     event.stopPropagation()
+    // The textarea is about to unmount: hand focus back to the canvas so
+    // the very next shortcut (another Escape, Delete…) still reaches the
+    // editor instead of falling to <body> — Excalidraw refocuses its
+    // container after text editing too.
+    const host = textareaRef.value?.closest<HTMLElement>('.vuedraw-canvas')
     commit()
+    host?.focus({ preventScroll: true })
+    return
   }
   event.stopPropagation()
 }
@@ -182,11 +215,13 @@ function isWithinElement(event: PointerEvent): boolean {
     { x: event.clientX - rect.left, y: event.clientY - rect.top },
     ctx.viewport.value,
   )
+  // A label's session spans its whole shape.
+  const box = container.value ?? el
   return (
-    scene.x >= el.x &&
-    scene.x <= el.x + el.width &&
-    scene.y >= el.y &&
-    scene.y <= el.y + el.height
+    scene.x >= box.x &&
+    scene.x <= box.x + box.width &&
+    scene.y >= box.y &&
+    scene.y <= box.y + box.height
   )
 }
 
@@ -197,7 +232,7 @@ onMounted(() => {
   const ta = textareaRef.value
   const el = element.value
   if (ta && el) {
-    ta.value = el.text
+    ta.value = el.originalText
     // Stable box for the whole session: from the element's screen position
     // to the canvas edges (floored near the edges). Mutating the focused
     // editable's box mid-typing resets Chromium's IME caret tracking.
@@ -206,7 +241,10 @@ onMounted(() => {
     const hostHeight = host instanceof HTMLElement ? host.clientHeight : 0
     const screenLeft = sceneToScreen({ x: el.x, y: el.y }, ctx.viewport.value).x
     const screenTop = sceneToScreen({ x: el.x, y: el.y }, ctx.viewport.value).y
-    sessionWidth.value = Math.max(MIN_SESSION_WIDTH, hostWidth - screenLeft)
+    const shape = container.value
+    sessionWidth.value = shape
+      ? boundTextMaxWidth(shape) * ctx.viewport.value.zoom
+      : Math.max(MIN_SESSION_WIDTH, hostWidth - screenLeft)
     sessionHeight.value = Math.max(MIN_SESSION_HEIGHT, hostHeight - screenTop)
     // preventScroll keeps the session's screen-anchored layout box honest —
     // a focus scroll would drift the editor against the canvas mid-session.

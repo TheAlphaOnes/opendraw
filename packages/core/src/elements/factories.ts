@@ -14,6 +14,7 @@ import type {
   Roundness,
   StylePayload,
   TextStyle,
+  VerticalAlign,
   VueDrawElement,
   VueDrawElementBase,
   VueDrawFreedrawElement,
@@ -80,6 +81,9 @@ export interface NewFreedrawOptions extends NewElementOptions {
 
 export interface NewTextOptions extends NewElementOptions {
   text: string
+  /** Binds the text inside this container shape. */
+  containerId?: string | null
+  verticalAlign?: VerticalAlign
   textStyle?: Partial<TextStyle>
   /** Optional layout override — pass your own measurement context. */
   layout?: TextLayout
@@ -181,10 +185,12 @@ export function newTextElement(opts: NewTextOptions): VueDrawTextElement {
   return {
     ...baseElement('text', opts),
     text: opts.text,
+    originalText: opts.text,
+    containerId: opts.containerId ?? null,
     fontSize: textStyle.fontSize,
     fontFamily: textStyle.fontFamily,
     textAlign: textStyle.textAlign,
-    verticalAlign: 'top',
+    verticalAlign: opts.verticalAlign ?? 'top',
     lineHeight: 1.25,
     width: opts.width ?? layout.width,
     height: opts.height ?? layout.height,

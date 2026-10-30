@@ -3,6 +3,7 @@ import {
   hitThreshold,
   pointInSelectionFrame,
   screenToScene,
+  selectableTarget,
   selectionFrameOf,
 } from '@vuedraw/core'
 
@@ -89,7 +90,8 @@ export interface CanvasContextMenuRequest {
 export function resolveContextMenu(rt: CanvasRuntime, event: MouseEvent): CanvasContextMenuRequest {
   const { ctx } = rt
   const scenePoint = rt.toScene(event)
-  const hit = findElementAt(ctx.elements.value, scenePoint, hitThreshold(ctx.viewport.value.zoom))
+  const raw = findElementAt(ctx.elements.value, scenePoint, hitThreshold(ctx.viewport.value.zoom))
+  const hit = raw ? selectableTarget(raw, ctx.elements.value) : null
   if (hit && !ctx.isIdSelected(hit.id)) {
     const editing = ctx.editingGroupId.value
     if (editing && !hit.groupIds.includes(editing)) {

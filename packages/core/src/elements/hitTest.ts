@@ -227,6 +227,14 @@ export function hitTestElement(
   return outlineDistance(element, local) <= threshold
 }
 
+/**
+ * True when the scene point lies inside the element's area, regardless of
+ * fill — the "inside" half of the hit test, rotation-aware.
+ */
+export function isPointInsideElement(element: VueDrawElement, point: Point): boolean {
+  return pointInsideShape(element, toLocal(element, point))
+}
+
 /** Topmost element under the point (z-order: later wins), or null. */
 export function findElementAt(
   elements: readonly VueDrawElement[],

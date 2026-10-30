@@ -93,10 +93,10 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
     drawBindingHighlight(ctx, candidate, UI.selection, zoom)
   }
 
-  // While a text element is being edited the DOM editor draws its own
-  // affordances — any chrome here would only double it.
-  const isEditingText =
-    selectedElements.length === 1 && selectedElements[0]!.id === editingId
+  // While text is being edited — free text, or a label inside its selected
+  // shape — the DOM editor draws its own affordances; chrome would only
+  // double it.
+  const isEditingText = editingId !== null
 
   // The edited group keeps its dashed box even with nothing selected, so
   // the user always sees which group they are inside.

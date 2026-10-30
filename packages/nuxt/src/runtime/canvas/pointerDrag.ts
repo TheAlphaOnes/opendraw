@@ -6,6 +6,7 @@ import {
   draftShapeRect,
   duplicateElements,
   elementsWithinBounds,
+  isBoundText,
   isFreedrawElement,
   isLinearElement,
   maxBindingDistance,
@@ -104,7 +105,10 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
       // "contain" mode), and a contained member brings its whole group.
       const ids = new Set(current.baseIds)
       for (const el of elementsWithinBounds(ctx.elements.value, bounds)) {
-        ids.add(el.id)
+        // Labels are part of their shape, never selected on their own.
+        if (!isBoundText(el)) {
+          ids.add(el.id)
+        }
       }
       ctx.selectGrouped([...ids])
       return

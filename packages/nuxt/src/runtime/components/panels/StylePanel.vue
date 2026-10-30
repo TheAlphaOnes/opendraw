@@ -7,6 +7,7 @@ import {
   STROKE_PALETTE,
   STROKE_WIDTHS,
   TRANSPARENT,
+  withBoundTexts,
   type ElementStyle,
   type FillStyle,
   type FontFamily,
@@ -37,8 +38,15 @@ import UiSwatchRow from '../ui/UiSwatchRow.vue'
  */
 const ctx = useVueDraw()
 
+/** Labels inside the selected shapes — styled through the text section. */
+const labels = computed(() =>
+  withBoundTexts(ctx.elements.value, ctx.selectedElements.value.map((el) => el.id)).filter(
+    (el): el is VueDrawTextElement => el.type === 'text' && el.containerId !== null,
+  ),
+)
+
 const targets = computed<PanelTargets>(() =>
-  panelTargets(ctx.selectedElements.value, ctx.activeTool.value),
+  panelTargets(ctx.selectedElements.value, ctx.activeTool.value, labels.value.length > 0),
 )
 
 // Current values: the first selected element, else the new-element defaults.
@@ -58,7 +66,7 @@ const style = computed<ElementStyle>(() => {
     : ctx.appState.value.style
 })
 const textStyle = computed<TextStyle>(() => {
-  const el = ctx.selectedElements.value.find((e): e is VueDrawTextElement => e.type === 'text')
+  const el = ctx.selectedElements.value.find((e): e is VueDrawTextElement => e.type === 'text') ?? labels.value[0]
   return el ? { fontSize: el.fontSize, fontFamily: el.fontFamily, textAlign: el.textAlign } : ctx.appState.value.textStyle
 })
 const roundness = computed(() => {
