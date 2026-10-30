@@ -37,7 +37,8 @@
       "import": "./dist/index.js"
     },
     "./package.json": "./package.json",
-    "./styles.css": "./styles/opendraw.css"
+    "./styles.css": "./styles/opendraw.css",
+    "./fonts.css": "./styles/fonts.css"
   },
   "files": [
     "dist",

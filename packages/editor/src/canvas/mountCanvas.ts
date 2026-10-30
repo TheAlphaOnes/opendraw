@@ -9,6 +9,7 @@ import { onCanvasPointerLeave, onCanvasPointerUp } from './pointerRelease.js'
 import { createCanvasRuntime } from './runtime.js'
 import { createCanvasSurface } from './surface.js'
 import { onCanvasDoubleClick } from './textEntry.js'
+import { attachSceneFonts } from './sceneFonts.js'
 import { attachTextEditing } from './textEditor.js'
 import { createTouchGestures } from './touchGestures.js'
 import {
@@ -60,6 +61,7 @@ export function mountCanvas(editor: EditorController, options: MountCanvasOption
   const keyRoot = options.keyboardRoot ?? host.closest<HTMLElement>('[data-opendraw-root]') ?? host
   const detachKeyboard = attachKeyboard(rt, keyRoot)
   const detachTextEditing = attachTextEditing(editor, host)
+  const detachFonts = attachSceneFonts(rt)
 
   // The cursor advertises what a press would do: recomputed on every input
   // that can change it and written straight to the host's style.
@@ -152,6 +154,7 @@ export function mountCanvas(editor: EditorController, options: MountCanvasOption
         unsubscribe()
       }
       touch.dispose()
+      detachFonts()
       detachTextEditing()
       detachKeyboard()
       laser.dispose()

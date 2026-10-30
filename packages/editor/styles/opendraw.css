@@ -9,6 +9,9 @@
  * Theme with data-theme="dark" on the .opendraw root.
  */
 
+/* Excalifont, the hand-drawn text font (shipped by @opendrawjs/editor). */
+@import './fonts.css';
+
 .opendraw {
   --od-surface: #ffffff;
   --od-surface-low: #ececf4;

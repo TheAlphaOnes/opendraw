@@ -317,7 +317,15 @@ export class OpenDrawDocument {
    * the before-snapshot is deferred to `endStep`; outside, the entry is
    * recorded immediately.
    */
-  private mutate(fn: (elements: readonly OpenDrawElement[]) => OpenDrawElement[] | null): void {
+  /**
+   * The one write path for elements. `history: false` is for writes that
+   * are not user edits (re-measuring text once fonts load): they change
+   * the scene without an undo entry, as Excalidraw's CaptureUpdateAction.NEVER.
+   */
+  private mutate(
+    fn: (elements: readonly OpenDrawElement[]) => OpenDrawElement[] | null,
+    options: { history?: boolean } = {},
+  ): void {
     const before = this.captureBefore()
     const beforeElements = this.elements
     const produced = fn(this.elements)
@@ -329,9 +337,40 @@ export class OpenDrawDocument {
     this.elements = next
     this.rebuildMap()
     this.emit()
-    if (!this.openStep) {
+    if (!this.openStep && options.history !== false) {
       this.record(before, { elements: next, appState: this.appState })
     }
+  }
+
+  /**
+   * Re-measures every text against the fonts now loaded — Excalidraw's
+   * refreshTextDimensions after its fonts arrive. Text measured while a
+   * web font was still downloading got the fallback font's size; this
+   * corrects free text (keeping its alignment edge) and refits every
+   * label in its container. Not an edit: no undo entry.
+   */
+  refreshTextMetrics(): void {
+    this.mutate(
+      (current) => {
+        let changed = false
+        const remeasured = current.map((el) => {
+          if (el.type !== 'text' || el.containerId !== null) {
+            return el
+          }
+          const layout = layoutText(el.text, el.fontFamily, el.fontSize)
+          if (Math.abs(layout.width - el.width) < 0.5 && Math.abs(layout.height - el.height) < 0.5) {
+            return el
+          }
+          changed = true
+          const shift = el.textAlign === 'center' ? (el.width - layout.width) / 2 : el.textAlign === 'right' ? el.width - layout.width : 0
+          return patchElement(el, { x: el.x + shift, width: layout.width, height: layout.height })
+        })
+        // An empty "previous" makes every label refit to its container.
+        const refitted = syncBoundTexts([], remeasured, patchElement)
+        return changed || refitted !== remeasured ? refitted : null
+      },
+      { history: false },
+    )
   }
 
   // -------------------------------------------------------------------------

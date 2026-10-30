@@ -11,6 +11,9 @@
  * No backdrop blur — Excalidraw's islands are opaque.
  */
 
+/* Excalifont, the hand-drawn text font (shipped by @opendrawjs/editor). */
+@import '@opendrawjs/editor/fonts.css';
+
 @font-face {
   font-family: 'Assistant';
   font-weight: 400;
