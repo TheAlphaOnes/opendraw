@@ -39,7 +39,7 @@ export function editFrameName(rt: CanvasRuntime, frame: OpenDrawFrameElement): v
     display: 'block',
     padding: `${EDIT_PADDING}px`,
     borderRadius: '4px',
-    boxShadow: 'inset 0 0 0 1px var(--od-accent, #6965db)',
+    boxShadow: 'inset 0 0 0 1px var(--od-accent, #ea580c)',
     background: ctx.appState.viewBackgroundColor,
     color: dark ? NAME_INK.dark : NAME_INK.light,
     font: `${FRAME_NAME_STYLE.fontSize}px ${FRAME_NAME_STYLE.fontFamily}`,

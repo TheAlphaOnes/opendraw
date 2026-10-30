@@ -91,10 +91,11 @@ defineProps<{
 @media (max-width: 640px) {
   .ui-panel--properties {
     top: auto;
+    left: var(--od-gutter);
     right: var(--od-gutter);
-    bottom: calc(var(--od-gutter) * 2 + var(--od-button-lg));
+    bottom: calc(var(--od-gutter) * 2 + var(--od-button-lg) + 8px);
     width: auto;
-    max-height: 40%;
+    max-height: 42%;
   }
 }
 

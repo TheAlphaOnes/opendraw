@@ -32,6 +32,13 @@ function toggleHelp(): void {
   animation: footer-right-in 320ms var(--od-ease) 60ms both;
 }
 
+/* Phones: the bottom edge belongs to the toolbar; shortcuts need a keyboard. */
+@media (max-width: 640px) {
+  .footer-right {
+    display: none;
+  }
+}
+
 @keyframes footer-right-in {
   from {
     opacity: 0;

@@ -441,6 +441,13 @@ onMounted(() => rootRef.value?.focus({ preventScroll: true }))
   font: 500 10px ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
+/* Phones have no keyboard to press them with (Excalidraw hides them too). */
+@media (max-width: 640px) {
+  .cp__hotkey {
+    display: none;
+  }
+}
+
 .cp__empty {
   margin: 0;
   padding: 14px 8px;

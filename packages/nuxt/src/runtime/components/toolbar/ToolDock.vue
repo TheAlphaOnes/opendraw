@@ -126,9 +126,42 @@ function activate(entry: ToolDefinition): void {
   background: var(--od-divider);
 }
 
+/* Phones (Excalidraw's mobile layout): the toolbar becomes the bottom bar —
+   one row that scrolls sideways, no key hints, no hint line. */
 @media (max-width: 640px) {
+  .tool-dock-stack {
+    top: auto;
+    bottom: var(--od-gutter);
+    width: auto;
+    left: var(--od-gutter);
+    right: var(--od-gutter);
+    max-width: none;
+  }
+
   .tool-dock {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
     gap: 2px;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .tool-dock::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tool-dock > * {
+    flex-shrink: 0;
+  }
+
+  .tool-dock :deep(.ui-icon-button__key) {
+    display: none;
+  }
+
+  .tool-dock-stack :deep(.tool-hint) {
+    display: none;
   }
 }
 </style>

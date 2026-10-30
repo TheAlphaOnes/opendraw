@@ -5,8 +5,9 @@
  * setting `data-theme="dark"` on the `.opendraw-root` container.
  *
  * Values are Excalidraw's (packages/excalidraw/css/theme.scss): solid
- * islands with the three-layer --shadow-island, 8px radii, the lavender
- * surface-high hover, the #e0dfff selected tone and the Assistant UI font.
+ * islands with the three-layer --shadow-island, 8px radii and the Assistant
+ * UI font. The accent is opendraw's own orange, in Excalidraw's roles
+ * (hover tint, selected fill, pressed ring).
  * No backdrop blur — Excalidraw's islands are opaque.
  */
 
@@ -44,23 +45,23 @@
   --od-surface-raised: #ffffff;
   --od-surface-float: #ffffff;
   --od-surface-low: #ececf4;
-  --od-surface-high: #f1f0ff;
+  --od-surface-high: #fff4ec;
 
   /* Ink — --color-on-surface, --color-gray-50, --keybinding-color */
   --od-ink: #1b1b1f;
   --od-ink-soft: #707070;
   --od-keybinding: #b8b8b8;
-  --od-border: #f1f0ff;
+  --od-border: #fbe8dc;
   --od-divider: #e9ecef;
 
-  /* Accents & intents — --color-primary, --color-surface-primary-container */
-  --od-accent: #6965db;
-  --od-accent-soft: #e0dfff;
-  --od-on-accent-soft: #030064;
-  --od-brand-active: #4440bf;
+  /* Accents & intents — opendraw's own orange (Excalidraw's roles, not its violet) */
+  --od-accent: #ea580c;
+  --od-accent-soft: #ffe2cf;
+  --od-on-accent-soft: #7c2d12;
+  --od-brand-active: #c2410c;
   --od-danger: #e03131;
   --od-danger-soft: rgba(224, 49, 49, 0.1);
-  --od-hover: #f1f0ff;
+  --od-hover: #fff4ec;
 
   /* Elevation — Excalidraw's --shadow-island, split in two layers */
   --od-shadow-1: 0 0 1px 0 rgba(0, 0, 0, 0.17), 0 0 3px 0 rgba(0, 0, 0, 0.08);
@@ -95,22 +96,29 @@
 
 .opendraw-root[data-theme='dark'] {
   --od-surface: #232329;
-  --od-surface-raised: #2e2d39;
+  --od-surface-raised: #2f2a27;
   --od-surface-float: #232329;
   --od-surface-low: hsl(240, 8%, 15%);
-  --od-surface-high: #2e2d39;
+  --od-surface-high: #2e2622;
   --od-ink: #e3e3e8;
   --od-ink-soft: #9a9aa5;
   --od-keybinding: #7a7a85;
-  --od-border: #2e2d39;
+  --od-border: #3a2e28;
   --od-divider: #3a3946;
-  --od-accent: #a8a5ff;
-  --od-accent-soft: #403e6a;
-  --od-on-accent-soft: #e0dfff;
-  --od-brand-active: #d0ccff;
-  --od-hover: #2e2d39;
+  --od-accent: #fb923c;
+  --od-accent-soft: #4a2814;
+  --od-on-accent-soft: #ffedd5;
+  --od-brand-active: #fdba74;
+  --od-hover: #2e2622;
   --od-shadow-1: 0 0 1px 0 rgba(0, 0, 0, 0.17), 0 0 3px 0 rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.15);
   --od-shadow-2: 0 7px 14px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Phones: Excalidraw's tighter 12px container padding. */
+@media (max-width: 640px) {
+  .opendraw-root {
+    --od-gutter: 12px;
+  }
 }
 
 /* Box-sizing reset scoped to the editor so host pages stay untouched. */
@@ -138,5 +146,5 @@
 /* The text editor's selection tint (the editor is created by
    @opendraw/editor; pseudo-elements can only be styled from CSS). */
 .opendraw-text-editor__input::selection {
-  background: rgba(105, 101, 219, 0.25);
+  background: rgba(234, 88, 12, 0.25);
 }

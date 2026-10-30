@@ -365,7 +365,7 @@ function drawLinearPointHandles(
   dark: boolean,
 ): void {
   // Excalidraw's renderSingleLinearPoint: themed white dots ringed in
-  // #5e5ad8; the segment midpoint is a ring-less lavender "phantom" dot.
+  // UI.point; the segment midpoint is a ring-less tinted "phantom" dot.
   const radius = POINT_HANDLE_RADIUS / zoom
   for (const handle of linearPointHandles(element)) {
     drawPointDot(ctx, handle.at, radius, themeColor('rgba(255, 255, 255, 0.9)', dark), themeColor(UI.point, dark), zoom)

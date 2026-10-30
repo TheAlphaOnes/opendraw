@@ -27,7 +27,7 @@ const open = ref(false)
 const triggerRef = ref<HTMLButtonElement | null>(null)
 const popoverRef = ref<HTMLElement | null>(null)
 const teleportTarget = ref<HTMLElement | null>(null)
-const position = ref({ left: 0, top: 0, arrow: 0 })
+const position = ref({ left: 0, top: 0, arrow: 0, above: false })
 
 /** Popover offset from the trigger, leaving room for the pointer triangle. */
 const POPOVER_GAP = 14
@@ -47,7 +47,11 @@ onMounted(() => {
   teleportTarget.value = triggerRef.value?.closest<HTMLElement>('.opendraw-root') ?? null
 })
 
-/** Right of the panel, top-aligned with the trigger, kept inside the editor. */
+/**
+ * Right of the panel, top-aligned with the trigger, kept inside the editor.
+ * Without room on the right (phones, where the panel spans the width) it
+ * opens above the trigger instead, centered on it, with no pointer.
+ */
 async function place(): Promise<void> {
   const trigger = triggerRef.value
   const root = teleportTarget.value
@@ -57,12 +61,22 @@ async function place(): Promise<void> {
   const panel = trigger.closest<HTMLElement>('.ui-panel') ?? trigger
   const t = trigger.getBoundingClientRect()
   const r = root.getBoundingClientRect()
-  const left = Math.max(panel.getBoundingClientRect().right, t.right) - r.left + POPOVER_GAP
-  let top = t.top - r.top - 12
   await nextTick()
+  const width = popoverRef.value?.offsetWidth ?? 0
   const height = popoverRef.value?.offsetHeight ?? 0
-  top = Math.max(EDGE_MARGIN, Math.min(top, r.height - height - EDGE_MARGIN))
-  position.value = { left, top, arrow: t.top - r.top + t.height / 2 - top }
+  const left = Math.max(panel.getBoundingClientRect().right, t.right) - r.left + POPOVER_GAP
+  if (left + width <= r.width - EDGE_MARGIN) {
+    const top = Math.max(EDGE_MARGIN, Math.min(t.top - r.top - 12, r.height - height - EDGE_MARGIN))
+    position.value = { left, top, arrow: t.top - r.top + t.height / 2 - top, above: false }
+    return
+  }
+  const centered = t.left - r.left + t.width / 2 - width / 2
+  position.value = {
+    left: Math.max(EDGE_MARGIN, Math.min(centered, r.width - width - EDGE_MARGIN)),
+    top: Math.max(EDGE_MARGIN, t.top - r.top - height - EDGE_MARGIN),
+    arrow: 0,
+    above: true,
+  }
 }
 
 async function show(): Promise<void> {
@@ -126,6 +140,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutsidePoint
         v-if="open"
         ref="popoverRef"
         class="ui-color-popover"
+        :class="{ 'is-above': position.above }"
         role="dialog"
         :aria-label="`${props.label} color picker`"
         :style="{ left: `${position.left}px`, top: `${position.top}px`, '--arrow-y': `${position.arrow}px` }"
@@ -155,6 +170,18 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutsidePoint
   display: flex;
   justify-content: space-between;
   gap: 5px;
+}
+
+/* Phones: the panel spans the screen, so the row packs left instead of spreading. */
+@media (max-width: 640px) {
+  .ui-color-picker {
+    grid-template-columns: auto 15px 26px;
+    justify-content: start;
+  }
+
+  .ui-color-picker__picks {
+    gap: 8px;
+  }
 }
 
 .ui-color-picker__pick,
@@ -231,6 +258,11 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutsidePoint
   background: var(--od-surface);
   border-radius: var(--od-radius-l);
   box-shadow: var(--od-shadow-1), var(--od-shadow-2);
+}
+
+/* Opened above the trigger (no room beside the panel): no pointer. */
+.ui-color-popover.is-above::before {
+  display: none;
 }
 
 /* The pointer triangle, aimed at the trigger. */

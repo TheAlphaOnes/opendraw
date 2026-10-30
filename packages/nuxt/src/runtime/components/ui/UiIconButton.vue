@@ -6,7 +6,7 @@ import UiIcon from './UiIcon.vue'
 /**
  * UiIconButton — Excalidraw's ToolIcon: a square icon button (32px, or
  * 36px for the toolbar and on-canvas buttons) with the lavender hover,
- * the #e0dfff checked state and an optional key hint in its corner.
+ * the accent-soft checked state and an optional key hint in its corner.
  */
 const props = withDefaults(
   defineProps<{

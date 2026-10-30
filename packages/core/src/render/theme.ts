@@ -17,17 +17,17 @@ export interface RenderTheme {
 /** Chrome colors used by the overlay renderer — not element user data. */
 export const UI = {
   /**
-   * Selection borders, handles and the marquee — Excalidraw's
-   * `--color-selection` per theme. Chrome colors are consumed as-is (like
-   * `grid`), never through the element dark filter.
+   * Selection borders, handles and the marquee — opendraw's orange accent
+   * (the chrome's --od-accent) per theme. Chrome colors are consumed as-is
+   * (like `grid`), never through the element dark filter.
    */
-  selection: { light: '#6965db', dark: '#b4b0ff' },
-  /** Linear point handles' stroke — Excalidraw's renderSingleLinearPoint. */
-  point: '#5e5ad8',
+  selection: { light: '#ea580c', dark: '#fdba74' },
+  /** Linear point handles' stroke (Excalidraw's renderSingleLinearPoint role). */
+  point: '#c2410c',
   /** Midpoint ("phantom") handles' fill. */
-  phantomPoint: 'rgba(177, 151, 252, 0.7)',
+  phantomPoint: 'rgba(251, 146, 60, 0.7)',
   /** Focus point indicator ink (circle stroke and dashed connector). */
-  focus: 'rgba(134, 131, 226, 0.6)',
+  focus: 'rgba(234, 88, 12, 0.6)',
   /** De-emphasized accent for locked selections. */
   locked: '#ced4da',
   /** Scene grid ink per theme — low contrast so content stays in focus. */

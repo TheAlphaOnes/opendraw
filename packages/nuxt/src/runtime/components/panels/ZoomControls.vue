@@ -79,6 +79,20 @@ function zoomAnchor(): Point {
   }
 }
 
+/* Phones: pinch zooms, so the zoom island goes; undo/redo move up beside
+   the main menu, clear of the bottom toolbar. */
+@media (max-width: 640px) {
+  .footer-left {
+    top: var(--od-gutter);
+    bottom: auto;
+    left: calc(var(--od-gutter) + var(--od-button-lg) + 8px);
+  }
+
+  .zoom-controls {
+    display: none;
+  }
+}
+
 .footer-left__zoom {
   height: var(--od-button-lg);
   min-width: 60px;
