@@ -137,7 +137,8 @@ export function coerceElement(input: unknown): OpenDrawElement | null {
       startBinding: linearBinding(input.startBinding),
       endBinding: linearBinding(input.endBinding),
       // Files from before curved lines were drawn straight: absent is sharp.
-      roundness: input.roundness === 'round' ? 'round' : null,
+      roundness: input.roundness === 'round' && input.elbowed !== true ? 'round' : null,
+      ...(type === 'arrow' && input.elbowed === true ? { elbowed: true } : {}),
       startArrowhead: arrowhead(input.startArrowhead, null),
       // Files from before arrowheads were configurable: arrows always had
       // an end head, so absent means 'arrow' for them.

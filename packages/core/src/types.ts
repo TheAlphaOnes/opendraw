@@ -29,6 +29,9 @@ export type Size = { width: number; height: number }
 // Element style enums
 // ---------------------------------------------------------------------------
 
+/** Excalidraw's arrow types: straight legs, a curve, or orthogonal elbows. */
+export type ArrowType = 'sharp' | 'round' | 'elbow'
+
 export type ElementType =
   | 'rectangle'
   | 'diamond'
@@ -129,6 +132,12 @@ export interface OpenDrawLinearElement extends OpenDrawElementBase {
   startArrowhead: Arrowhead | null
   /** Head drawn at the last point, or null. */
   endArrowhead: Arrowhead | null
+  /**
+   * An elbow arrow (Excalidraw's `elbowed`): routed in horizontal and
+   * vertical legs around its shapes, re-routed whenever a tip or a bound
+   * shape moves. Arrows only; absent means false.
+   */
+  elbowed?: boolean
   /** Shape the start tip is docked to, or null when loose. */
   startBinding: OpenDrawBinding | null
   /** Shape the end tip is docked to, or null when loose. */
@@ -352,7 +361,7 @@ export interface OpenDrawAppState {
   /** Heads given to newly drawn arrows. */
   arrowheads: { start: Arrowhead | null; end: Arrowhead | null }
   /** Shape of newly drawn arrows: curved through their points, or sharp. */
-  arrowType: 'round' | 'sharp'
+  arrowType: ArrowType
   /**
    * Ink and paper of newly placed sticky notes — their own color domain
    * (Excalidraw's currentItemStickynoteStrokeColor / BackgroundColor).

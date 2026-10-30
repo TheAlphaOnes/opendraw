@@ -37,6 +37,7 @@ import type {
 } from '../types.js'
 import { applyViewportTransform, screenToScene } from '../viewport.js'
 import { arrowheadDrawables } from './arrowheads.js'
+import { elbowArrowPath } from '../elements/elbowArrow.js'
 import { isBoundText } from '../elements/boundText.js'
 import { elementOverlapsFrame, FRAME_NAME_STYLE, frameNameBounds, frameTitle } from '../elements/frames.js'
 import {
@@ -351,7 +352,10 @@ function buildLinearShape(
   const loop = element.type === 'line' && isClosedLoop(element.points)
   const options: Options = loop ? buildRoughOptions(element, dark) : { ...buildRoughOptions(element, dark), fill: undefined }
   const body =
-    element.roundness === 'round'
+    element.type === 'arrow' && element.elbowed
+      ? // Straight legs with 16px rounded elbows (generateElbowArrowShape).
+        generator.path(elbowArrowPath(element.points, 16), options)
+      : element.roundness === 'round'
       ? generator.curve(points, options)
       : loop
         ? generator.polygon(points, options)

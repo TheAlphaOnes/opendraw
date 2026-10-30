@@ -25,6 +25,7 @@ import { cornerRadius } from '../geometry/corners.js'
 import { rotatePoint, unrotatePoint } from '../geometry/points.js'
 import { isLinearElement } from './factories.js'
 import { isPointInsideElement } from './hitTest.js'
+import { elbowRoutePatch, elbowSnapPoint } from './elbowArrow.js'
 import type { ElementPatch } from './mutate.js'
 import { stickyNoteCornerRadius } from './stickyNote.js'
 import type {
@@ -483,6 +484,10 @@ export function resolveTipBinding(
   if (!shape) {
     return { binding: null, shape: null }
   }
+  // An elbow tip always lands square on the outline of the side it nears.
+  if (arrow.elbowed) {
+    return { binding: bindingAt(shape, elbowSnapPoint(shape, tip, zoom), 'orbit'), shape }
+  }
   const otherBinding = end === 'start' ? arrow.endBinding : arrow.startBinding
   if (otherBinding && otherBinding.elementId === shape.id) {
     return {
@@ -604,6 +609,10 @@ export function boundTipsPatch(
   elements: readonly OpenDrawElement[] | ReadonlyMap<string, OpenDrawElement>,
   options: BoundTipOptions = {},
 ): ElementPatch<OpenDrawLinearElement> | null {
+  // Elbow arrows are re-routed whole, bound or not.
+  if (arrow.elbowed) {
+    return elbowRoutePatch(arrow, elements)
+  }
   if (!arrow.startBinding && !arrow.endBinding) {
     return null
   }
@@ -663,6 +672,10 @@ export function rebindAfterDrag(
   elements: readonly OpenDrawElement[],
   zoom: number,
 ): ElementPatch<OpenDrawLinearElement> {
+  // A dragged elbow arrow lets go of its shapes and keeps its route.
+  if (arrow.elbowed) {
+    return { startBinding: null, endBinding: null }
+  }
   const loose = { ...arrow, startBinding: null, endBinding: null }
   const start = resolveTipBinding(loose, 'start', scenePointOf(arrow, arrow.points[0]!), elements, zoom).binding
   const end = resolveTipBinding({ ...loose, startBinding: start }, 'end', scenePointOf(arrow, arrow.points[arrow.points.length - 1]!), elements, zoom).binding

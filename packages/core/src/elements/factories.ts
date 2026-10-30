@@ -75,6 +75,8 @@ export interface NewLinearElementOptions extends NewElementOptions {
   /** Defaults: arrows get an end `arrow` head, lines none (Excalidraw). */
   startArrowhead?: Arrowhead | null
   endArrowhead?: Arrowhead | null
+  /** An elbow arrow (arrows only): routed orthogonally, never rounded. */
+  elbowed?: boolean
 }
 
 export interface NewFreedrawOptions extends NewElementOptions {
@@ -170,9 +172,10 @@ export function newLinearElement(
     // Lines and arrows bind alike (Excalidraw's LinearElement).
     startBinding: null,
     endBinding: null,
-    roundness: opts.roundness ?? null,
+    roundness: opts.elbowed ? null : (opts.roundness ?? null),
     startArrowhead: opts.startArrowhead ?? null,
     endArrowhead: opts.endArrowhead === undefined ? (type === 'arrow' ? 'arrow' : null) : opts.endArrowhead,
+    ...(type === 'arrow' && opts.elbowed ? { elbowed: true } : {}),
   } as OpenDrawLineElement | OpenDrawArrowElement
 }
 

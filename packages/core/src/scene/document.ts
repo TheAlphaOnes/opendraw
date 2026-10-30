@@ -27,6 +27,7 @@ import {
   withFrameChildren,
 } from '../elements/frames.js'
 import { isFrameElement } from '../elements/factories.js'
+import { elbowRoutePatch } from '../elements/elbowArrow.js'
 import {
   DEFAULT_STICKY_NOTE_BG,
   DEFAULT_STICKY_NOTE_STROKE,
@@ -55,12 +56,14 @@ import { forcePatchElement, patchElement } from '../elements/mutate.js'
 import { DEFAULT_ELEMENT_STYLE, DEFAULT_TEXT_STYLE } from '../elements/defaults.js'
 import type {
   Arrowhead,
+  ArrowType,
   ElementStyle,
   ReorderAction,
   StylePayload,
   Roundness,
   TextStyle,
   OpenDrawAppState,
+  OpenDrawArrowElement,
   OpenDrawElement,
   OpenDrawFile,
   OpenDrawLinearElement,
@@ -956,15 +959,29 @@ export class OpenDrawDocument {
    * Excalidraw's "Arrow type": curves (round) or straightens (sharp) the
    * selected arrows; with none selected it sets the next arrow's type.
    */
-  changeArrowType(type: 'round' | 'sharp'): void {
-    const ids = this.getSelectedElements()
-      .filter((el) => el.type === 'arrow')
-      .map((el) => el.id)
-    if (ids.length === 0) {
+  /**
+   * Excalidraw's "Arrow type": sharp legs, a curve, or an elbow route.
+   * Becoming an elbow arrow routes it at once between its tips (or bound
+   * shapes); leaving elbow keeps the route's points as plain points.
+   * With no arrow selected it sets the type for the next arrow.
+   */
+  changeArrowType(type: ArrowType): void {
+    const arrows = this.getSelectedElements().filter((el): el is OpenDrawArrowElement => el.type === 'arrow')
+    if (arrows.length === 0) {
       this.commitAppState({ ...this.appState, arrowType: type })
       return
     }
-    this.updateElements<OpenDrawLinearElement>(ids, { roundness: type === 'round' ? 'round' : null })
+    this.beginStep()
+    for (const arrow of arrows) {
+      const next = { ...arrow, elbowed: type === 'elbow', roundness: type === 'round' ? ('round' as const) : null }
+      const routed = type === 'elbow' ? elbowRoutePatch(next, this.elements) : {}
+      this.updateElement<OpenDrawLinearElement>(arrow.id, {
+        elbowed: type === 'elbow',
+        roundness: next.roundness,
+        ...routed,
+      })
+    }
+    this.endStep()
   }
 
   /**

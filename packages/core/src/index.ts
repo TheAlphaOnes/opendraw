@@ -32,6 +32,7 @@ export * from './elements/boundText.js'
 export * from './elements/zindex.js'
 export * from './elements/frames.js'
 export * from './elements/stickyNote.js'
+export * from './elements/elbowArrow.js'
 
 export * from './viewport.js'
 

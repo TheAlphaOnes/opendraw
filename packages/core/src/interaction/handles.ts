@@ -83,6 +83,10 @@ export function hasBoundingBox(elements: readonly OpenDrawElement[]): boolean {
     return elements.length > 1
   }
   const only = elements[0]!
+  // An elbow arrow is edited by its tips alone — no box (Excalidraw).
+  if (only.type === 'arrow' && only.elbowed) {
+    return false
+  }
   return !((only.type === 'line' || only.type === 'arrow') && only.points.length <= 2)
 }
 
@@ -312,7 +316,9 @@ export interface LinearHandle {
 
 /** Scene positions of a linear element's point handles, in point order. */
 export function linearPointHandles(element: OpenDrawLinearElement): LinearHandle[] {
-  return element.points.map((point, index) => ({ index, at: scenePointOf(element, point) }))
+  const handles = element.points.map((point, index) => ({ index, at: scenePointOf(element, point) }))
+  // An elbow arrow's bends are routed, never edited: only its tips have handles.
+  return element.elbowed ? [handles[0]!, handles[handles.length - 1]!] : handles
 }
 
 /**
@@ -322,7 +328,7 @@ export function linearPointHandles(element: OpenDrawLinearElement): LinearHandle
  * point editor, which opendraw does not have.
  */
 export function linearMidpointHandle(element: OpenDrawLinearElement): LinearHandle | null {
-  if (element.points.length !== 2) {
+  if (element.points.length !== 2 || element.elbowed) {
     return null
   }
   const a = scenePointOf(element, element.points[0]!)
