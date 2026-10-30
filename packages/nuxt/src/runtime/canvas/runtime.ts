@@ -30,6 +30,8 @@ export type Interaction =
       /** Element to narrow the selection to on a no-drag pointerup, or null. */
       hitId: string | null
       didDrag: boolean
+      /** Alt-drag already swapped the drag onto fresh duplicates. */
+      duplicated: boolean
     }
   | { kind: 'resizing'; handle: HandleDirection; originals: readonly VueDrawElement[] }
   | {

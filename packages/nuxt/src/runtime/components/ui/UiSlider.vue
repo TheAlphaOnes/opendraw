@@ -41,37 +41,49 @@ function onInput(event: Event): void {
 
 <template>
   <div class="ui-slider">
-    <div class="ui-slider__track" aria-hidden="true">
-      <div class="ui-slider__fill" :style="{ width: `${progress}%` }" />
+    <!-- The rail scopes the native input to the track, so its thumb can
+         never travel over the value readout beside it. -->
+    <div class="ui-slider__rail">
+      <div class="ui-slider__track" aria-hidden="true">
+        <div class="ui-slider__fill" :style="{ width: `${progress}%` }" />
+      </div>
+      <input
+        class="ui-slider__input"
+        type="range"
+        :min="min"
+        :max="max"
+        :step="step"
+        :value="modelValue"
+        :aria-label="ariaLabel"
+        @input="onInput"
+      />
     </div>
-    <input
-      class="ui-slider__input"
-      type="range"
-      :min="min"
-      :max="max"
-      :step="step"
-      :value="modelValue"
-      :aria-label="ariaLabel"
-      @input="onInput"
-    />
     <span class="ui-slider__value" aria-hidden="true">{{ modelValue }}{{ suffix }}</span>
   </div>
 </template>
 
 <style scoped>
 .ui-slider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 140px;
+}
+
+.ui-slider__rail {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 140px;
+  flex: 1;
+  height: 20px;
 }
 
 /* The painted track sits behind the native input, which keeps its own
    invisible track so dragging and keyboard control stay fully native. */
 .ui-slider__track {
   position: relative;
-  flex: 1;
+  width: 100%;
   height: 4px;
   border-radius: 2px;
   background: var(--vd-border);

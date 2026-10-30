@@ -1,58 +1,137 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 
+import { actionById, isActionEnabled, runAction, type ActionId } from '../../actions/registry.js'
 import { useVueDraw } from '../../composables/useVueDraw.js'
+import UiMenuItem from '../ui/UiMenuItem.vue'
 
+/**
+ * The right-click menu — Excalidraw's App.getContextMenuItems, generated
+ * from the action registry. Actions that do not apply right now are left
+ * out (Excalidraw's contextItemPredicate), and separators collapse so the
+ * menu never shows an empty section.
+ */
 const props = defineProps<{
-  /** Viewport coordinates of the menu's top-left corner. */
+  /** Viewport coordinates the menu opens at. */
   x: number
   y: number
   visible: boolean
+  target: 'element' | 'canvas'
 }>()
 
 const emit = defineEmits<{ close: [] }>()
 
 const ctx = useVueDraw()
-
 const rootEl = ref<HTMLElement | null>(null)
 
-/** Estimated footprint used to keep the menu inside the viewport. */
-const MENU_WIDTH = 200
-const MENU_HEIGHT = 260
+const SEPARATOR = '|'
+type MenuEntry = ActionId | typeof SEPARATOR
 
-const menuX = computed(() => {
-  if (typeof window === 'undefined') {
-    return props.x
+const ELEMENT_MENU: readonly MenuEntry[] = [
+  'cut', 'copy', 'paste', SEPARATOR,
+  'copyStyles', 'pasteStyles', SEPARATOR,
+  'group', 'ungroup', SEPARATOR,
+  'sendBackward', 'bringForward', 'sendToBack', 'bringToFront', SEPARATOR,
+  'flipHorizontal', 'flipVertical', SEPARATOR,
+  'duplicate', 'toggleLock', SEPARATOR,
+  'deleteSelection',
+]
+
+const CANVAS_MENU: readonly MenuEntry[] = [
+  'paste', SEPARATOR,
+  'selectAll', SEPARATOR,
+  'zoomToFit', 'toggleGrid', 'toggleTheme', SEPARATOR,
+  'exportPNG', 'exportSVG',
+]
+
+interface MenuSection {
+  key: string
+  items: ActionId[]
+}
+
+/** Enabled actions, split into non-empty sections. */
+const sections = computed<MenuSection[]>(() => {
+  // Read reactive state so the menu tracks selection changes while open.
+  void ctx.state.value.rev
+  const entries = props.target === 'element' ? ELEMENT_MENU : CANVAS_MENU
+  const result: MenuSection[] = []
+  let current: ActionId[] = []
+  for (const entry of entries) {
+    if (entry === SEPARATOR) {
+      if (current.length > 0) {
+        result.push({ key: current.join(','), items: current })
+      }
+      current = []
+    } else if (isActionEnabled(ctx, entry)) {
+      current.push(entry)
+    }
   }
-  return Math.max(8, Math.min(props.x, window.innerWidth - MENU_WIDTH - 8))
+  if (current.length > 0) {
+    result.push({ key: current.join(','), items: current })
+  }
+  return result
 })
 
-const menuY = computed(() => {
-  if (typeof window === 'undefined') {
-    return props.y
-  }
-  return Math.max(8, Math.min(props.y, window.innerHeight - MENU_HEIGHT - 8))
-})
+// ---------------------------------------------------------------------------
+// Placement — measured after mount, clamped inside the viewport
+// ---------------------------------------------------------------------------
 
-const modKey = computed(() => {
-  if (typeof navigator === 'undefined') {
-    return 'Ctrl'
-  }
-  return /Mac|iPod|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl'
-})
+const VIEWPORT_MARGIN = 8
+const position = ref({ left: 0, top: 0 })
 
-/** Clicks outside the menu dismiss it. */
-function onPointerDown(event: PointerEvent): void {
-  if (rootEl.value?.contains(event.target as Node)) {
+async function place(): Promise<void> {
+  position.value = { left: props.x, top: props.y }
+  await nextTick()
+  const el = rootEl.value
+  if (!el || typeof window === 'undefined') {
     return
   }
-  emit('close')
+  const { width, height } = el.getBoundingClientRect()
+  position.value = {
+    left: Math.max(VIEWPORT_MARGIN, Math.min(props.x, window.innerWidth - width - VIEWPORT_MARGIN)),
+    top: Math.max(VIEWPORT_MARGIN, Math.min(props.y, window.innerHeight - height - VIEWPORT_MARGIN)),
+  }
+  // The menu itself takes focus (no ring on a mouse-opened item); the
+  // arrow keys then step into the items.
+  el.focus({ preventScroll: true })
+}
+
+// ---------------------------------------------------------------------------
+// Dismissal & keyboard navigation
+// ---------------------------------------------------------------------------
+
+function onPointerDown(event: PointerEvent): void {
+  if (!rootEl.value?.contains(event.target as Node)) {
+    emit('close')
+  }
+}
+
+function focusSibling(step: 1 | -1): void {
+  const items = Array.from(rootEl.value?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])
+  if (items.length === 0) {
+    return
+  }
+  const index = items.indexOf(document.activeElement as HTMLElement)
+  const next = index === -1 ? (step === 1 ? 0 : items.length - 1) : (index + step + items.length) % items.length
+  items[next]!.focus()
 }
 
 function onKeyDown(event: KeyboardEvent): void {
   if (event.key === 'Escape') {
+    event.preventDefault()
     emit('close')
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    focusSibling(1)
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    focusSibling(-1)
   }
+}
+
+function detachListeners(): void {
+  document.removeEventListener('pointerdown', onPointerDown, true)
+  document.removeEventListener('keydown', onKeyDown, true)
 }
 
 watch(
@@ -64,6 +143,7 @@ watch(
     if (visible) {
       document.addEventListener('pointerdown', onPointerDown, true)
       document.addEventListener('keydown', onKeyDown, true)
+      void place()
     } else {
       detachListeners()
     }
@@ -71,79 +151,55 @@ watch(
   { immediate: true },
 )
 
-function detachListeners(): void {
-  document.removeEventListener('pointerdown', onPointerDown, true)
-  document.removeEventListener('keydown', onKeyDown, true)
-}
-
 onUnmounted(() => {
   if (typeof document !== 'undefined') {
     detachListeners()
   }
 })
 
-/** Runs the action then closes — every menu item dismisses on click. */
-function run(action: () => void): void {
-  action()
+/** Every item runs its action, then dismisses the menu. */
+function select(id: ActionId): void {
+  runAction(ctx, id)
   emit('close')
 }
 </script>
 
-<!-- Design law: no entrance animation on context menus; the exit is an
-     instant unmount, so exits stay faster than any entrance. -->
+<!-- Design law: no entrance animation on context menus; only a quick exit
+     fade, so dismissal always feels faster than opening. -->
 <template>
-  <div
-    v-if="props.visible"
-    ref="rootEl"
-    class="context-menu"
-    role="menu"
-    :style="{ left: `${menuX}px`, top: `${menuY}px` }"
-  >
-    <button type="button" role="menuitem" class="context-menu__item" @click="run(() => ctx.duplicateSelection())">
-      <span>Duplicate</span>
-      <span class="context-menu__hint">{{ modKey }}D</span>
-    </button>
-
-    <button type="button" role="menuitem" class="context-menu__item" @click="run(() => ctx.copySelection())">
-      <span>Copy</span>
-      <span class="context-menu__hint">{{ modKey }}C</span>
-    </button>
-
-    <button type="button" role="menuitem" class="context-menu__item" @click="run(() => ctx.cutSelection())">
-      <span>Cut</span>
-      <span class="context-menu__hint">{{ modKey }}X</span>
-    </button>
-
-    <button
-      type="button"
-      role="menuitem"
-      class="context-menu__item"
-      :disabled="ctx.clipboardSize.value === 0"
-      @click="run(() => ctx.paste())"
+  <Transition name="context-menu">
+    <div
+      v-if="props.visible && sections.length > 0"
+      ref="rootEl"
+      class="context-menu"
+      role="menu"
+      tabindex="-1"
+      :aria-label="props.target === 'element' ? 'Element actions' : 'Canvas actions'"
+      :style="{ left: `${position.left}px`, top: `${position.top}px` }"
     >
-      <span>Paste</span>
-      <span class="context-menu__hint">{{ modKey }}V</span>
-    </button>
-
-    <div class="context-menu__separator" role="separator" />
-
-    <button
-      type="button"
-      role="menuitem"
-      class="context-menu__item is-danger"
-      @click="run(() => ctx.deleteSelection())"
-    >
-      <span>Delete</span>
-      <span class="context-menu__hint">Del</span>
-    </button>
-  </div>
+      <template v-for="(section, index) in sections" :key="section.key">
+        <div v-if="index > 0" class="context-menu__separator" role="separator" />
+        <UiMenuItem
+          v-for="id in section.items"
+          :key="id"
+          :label="actionById(id).label"
+          :icon="actionById(id).icon"
+          :keys="actionById(id).keys"
+          :danger="actionById(id).danger"
+          @select="select(id)"
+        />
+      </template>
+    </div>
+  </Transition>
 </template>
 
 <style scoped>
 .context-menu {
   position: fixed;
   z-index: 20;
-  min-width: 200px;
+  min-width: 220px;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
   padding: 4px;
   background: var(--vd-surface);
   border: 1px solid var(--vd-border);
@@ -151,53 +207,31 @@ function run(action: () => void): void {
   box-shadow: var(--vd-shadow-1), var(--vd-shadow-2);
 }
 
-.context-menu__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  min-height: 32px;
-  padding: 0 8px 0 10px;
-  border: none;
-  border-radius: var(--vd-radius-m);
-  background: transparent;
-  color: var(--vd-ink);
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color var(--vd-fast) var(--vd-ease);
-}
-
-.context-menu__item:hover {
-  background: var(--vd-hover);
-}
-
-.context-menu__item:focus-visible {
-  outline: 2px solid var(--vd-accent);
-  outline-offset: -2px;
-}
-
-.context-menu__item.is-danger {
-  color: var(--vd-danger);
-}
-
-.context-menu__item.is-danger:hover {
-  background: var(--vd-danger-soft);
-}
-
-.context-menu__item:disabled {
-  opacity: 0.4;
-  pointer-events: none;
-}
-
-.context-menu__hint {
-  color: var(--vd-ink-soft);
-  font-size: 12px;
+.context-menu:focus {
+  outline: none;
 }
 
 .context-menu__separator {
   height: 1px;
   margin: 4px 8px;
   background: var(--vd-border);
+}
+
+.context-menu-enter-active {
+  transition: none;
+}
+
+.context-menu-leave-active {
+  transition: opacity 100ms ease-in;
+}
+
+.context-menu-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .context-menu-leave-active {
+    transition: none;
+  }
 }
 </style>

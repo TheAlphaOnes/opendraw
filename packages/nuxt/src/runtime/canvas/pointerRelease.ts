@@ -51,8 +51,12 @@ export function onCanvasPointerUp(rt: CanvasRuntime, event: PointerEvent): void 
         }
       }
       ctx.doc.endStep()
-      ctx.select(el.id)
-      ctx.setActiveTool('selection')
+      // A locked tool keeps drawing, so nothing gets selected in between
+      // (App.tsx selects the new element only when the tool reverts).
+      if (!ctx.toolLocked.value) {
+        ctx.select(el.id)
+      }
+      ctx.finishToolUse()
       return
     }
     case 'freedrawing': {
@@ -61,8 +65,9 @@ export function onCanvasPointerUp(rt: CanvasRuntime, event: PointerEvent): void 
         ctx.doc.cancelStep()
         return
       }
+      // Excalidraw parity: the pen stays armed for the next stroke and the
+      // stroke is not selected (App.tsx excludes freedraw from both).
       ctx.doc.endStep()
-      ctx.setActiveTool('selection')
       return
     }
     case 'moving': {
@@ -70,7 +75,7 @@ export function onCanvasPointerUp(rt: CanvasRuntime, event: PointerEvent): void 
       // A no-drag click on an element inside a multi-selection narrows the
       // selection to it; a drag moved the whole group instead.
       if (!current.didDrag && current.hitId) {
-        ctx.select(current.hitId)
+        ctx.selectGrouped([current.hitId])
       }
       return
     }

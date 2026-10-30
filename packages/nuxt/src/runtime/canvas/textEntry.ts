@@ -1,5 +1,5 @@
 import type { Point } from '@vuedraw/core'
-import { findElementAt, hitThreshold, newTextElement } from '@vuedraw/core'
+import { findElementAt, hitThreshold, newTextElement, outermostGroupId } from '@vuedraw/core'
 
 import { finishLinearDraft } from './linearDraft.js'
 import type { CanvasRuntime } from './runtime.js'
@@ -25,7 +25,7 @@ export function createTextAt(rt: CanvasRuntime, point: Point): void {
   ctx.doc.beginStep()
   ctx.doc.addElement(element)
   ctx.select(element.id)
-  ctx.setActiveTool('selection')
+  ctx.finishToolUse()
   ctx.setEditing(element.id)
 }
 
@@ -54,6 +54,14 @@ export function onCanvasDoubleClick(rt: CanvasRuntime, event: MouseEvent): void 
   }
   const scenePoint = rt.toScene(event)
   const hit = findElementAt(ctx.elements.value, scenePoint, hitThreshold(ctx.viewport.value.zoom))
+  // Double-clicking a selected group enters it: the hit becomes the
+  // selection (or its next inner group) — Excalidraw's editingGroupId.
+  const groupId = hit ? outermostGroupId(hit, ctx.editingGroupId.value) : null
+  if (hit && groupId && ctx.selectedGroupIds.value.includes(groupId)) {
+    ctx.setEditingGroup(groupId)
+    ctx.selectGrouped([hit.id])
+    return
+  }
   if (hit && hit.type === 'text') {
     editTextElement(rt, hit.id)
     return

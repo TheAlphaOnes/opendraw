@@ -11,6 +11,7 @@ import type {
   ElementStyle,
   Point,
   Roundness,
+  StylePayload,
   TextStyle,
   VueDrawElement,
   VueDrawElementBase,
@@ -266,6 +267,18 @@ export function elementStyleOf(element: VueDrawElement): ElementStyle {
     roughness: element.roughness,
     opacity: element.opacity,
   }
+}
+
+/** Everything Mod+Alt+C copies from an element. */
+export function stylePayloadOf(element: VueDrawElement): StylePayload {
+  const payload: StylePayload = { style: elementStyleOf(element) }
+  if (element.type === 'text') {
+    payload.textStyle = textStyleOf(element)
+  }
+  if (element.type === 'rectangle' || element.type === 'diamond') {
+    payload.roundness = element.roundness ?? null
+  }
+  return payload
 }
 
 export function textStyleOf(element: VueDrawTextElement): TextStyle {

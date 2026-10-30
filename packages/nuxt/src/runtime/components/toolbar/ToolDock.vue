@@ -1,54 +1,17 @@
 <script setup lang="ts">
-import type { ToolId } from '@vuedraw/core'
-
 import { useVueDraw } from '../../composables/useVueDraw.js'
-import type { IconName } from '../../constants/icons.js'
+import { TOOL_GROUPS, toolLabel, type ToolDefinition } from '../../constants/tools.js'
 import UiIconButton from '../ui/UiIconButton.vue'
 import UiPanel from '../ui/UiPanel.vue'
 
-interface DockTool {
-  tool: ToolId
-  icon: IconName
-  label: string
-  /**
-   * True for the image tool: its button is an insertion gesture that opens
-   * the file picker, so it never shows a persistent active state.
-   */
-  opensPicker?: boolean
-}
-
 /**
- * Tools in Excalidraw's island order: hand + selection, then the shape
- * group, then freedraw/text/image/eraser, then frame and laser — grouped by
- * dividers exactly like Excalidraw's top-center toolbar.
+ * The top-center tool island, in Excalidraw's order and grouping, led by
+ * the tool lock (Q) exactly like Excalidraw's toolbar.
  */
-const TOOL_GROUPS: DockTool[][] = [
-  [
-    { tool: 'hand', icon: 'hand', label: 'Hand (H)' },
-    { tool: 'selection', icon: 'selection', label: 'Selection (1)' },
-  ],
-  [
-    { tool: 'rectangle', icon: 'rectangle', label: 'Rectangle (2)' },
-    { tool: 'diamond', icon: 'diamond', label: 'Diamond (3)' },
-    { tool: 'ellipse', icon: 'ellipse', label: 'Ellipse (4)' },
-    { tool: 'arrow', icon: 'arrow', label: 'Arrow (5)' },
-    { tool: 'line', icon: 'line', label: 'Line (6)' },
-  ],
-  [
-    { tool: 'freedraw', icon: 'freedraw', label: 'Freedraw (P)' },
-    { tool: 'text', icon: 'text', label: 'Text (T)' },
-    { tool: 'image', icon: 'imageTool', label: 'Image (9)', opensPicker: true },
-    { tool: 'eraser', icon: 'eraser', label: 'Eraser (E)' },
-  ],
-  [
-    { tool: 'frame', icon: 'frameTool', label: 'Frame (F)' },
-    { tool: 'laser', icon: 'laserTool', label: 'Laser (K)' },
-  ],
-]
 
 const ctx = useVueDraw()
 
-function activate(entry: DockTool): void {
+function activate(entry: ToolDefinition): void {
   if (entry.opensPicker) {
     ctx.openImagePicker()
     return
@@ -60,12 +23,20 @@ function activate(entry: DockTool): void {
 <template>
   <UiPanel position="top-center" role="toolbar" aria-label="Drawing tools">
     <div class="tool-dock">
+      <div class="tool-dock__group">
+        <UiIconButton
+          icon="toolLock"
+          label="Keep selected tool active after drawing (Q)"
+          :active="ctx.toolLocked.value"
+          @click="ctx.toggleToolLock()"
+        />
+      </div>
       <div v-for="(group, groupIndex) in TOOL_GROUPS" :key="groupIndex" class="tool-dock__group">
         <UiIconButton
           v-for="entry in group"
           :key="entry.tool"
           :icon="entry.icon"
-          :label="entry.label"
+          :label="toolLabel(entry)"
           :active="!entry.opensPicker && ctx.activeTool.value === entry.tool"
           @click="activate(entry)"
         />

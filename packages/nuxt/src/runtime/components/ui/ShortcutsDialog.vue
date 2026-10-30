@@ -2,19 +2,24 @@
 /**
  * ShortcutsDialog — the "?" keyboard shortcuts modal (Excalidraw help-dialog
  * parity). Owns its own window key listener: "?" toggles it, Escape and a
- * backdrop press close it. The list is generated from the shortcuts the
- * canvas actually implements (VueDrawCanvas), never from Excalidraw's full
- * set, so the dialog can never advertise a shortcut that does nothing.
+ * backdrop press close it. Entries are generated from the tool table and
+ * the action registry — the same definitions the keyboard handler
+ * dispatches — so the dialog can never advertise a shortcut that does
+ * nothing.
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
+import { actionById, type ActionId } from '../../actions/registry.js'
+import { isTypingTarget } from '../../actions/keys.js'
+import { TOOLS } from '../../constants/tools.js'
 import UiIconButton from './UiIconButton.vue'
+import UiKbd from './UiKbd.vue'
 
 interface ShortcutEntry {
   /** What the shortcut does. */
   label: string
-  /** Keys as shown, e.g. `['Ctrl', 'Z']`. */
-  keys: string[]
+  /** Alternative combos, each one a key list, e.g. `[['Mod', 'Z']]`. */
+  combos: readonly (readonly string[])[]
 }
 
 interface ShortcutGroup {
@@ -22,66 +27,67 @@ interface ShortcutGroup {
   entries: ShortcutEntry[]
 }
 
-// Mirrors `onKeyDown` / wheel handling in VueDrawCanvas.vue. Update both
-// together: this dialog is the user-facing contract for that handler.
+function fromActions(ids: readonly ActionId[]): ShortcutEntry[] {
+  return ids.flatMap((id) => {
+    const action = actionById(id)
+    return action.keys ? [{ label: action.label, combos: [action.keys] }] : []
+  })
+}
+
+/** Pointer gestures and gesture-local keys the canvas handles itself. */
+const GESTURES: ShortcutEntry[] = [
+  { label: 'Pan the canvas', combos: [['Space', 'drag'], ['Wheel']] },
+  { label: 'Zoom', combos: [['Mod', 'Wheel']] },
+  { label: 'Pan horizontally', combos: [['Shift', 'Wheel']] },
+]
+
 const groups: ShortcutGroup[] = [
   {
     title: 'Tools',
-    entries: [
-      { label: 'Selection', keys: ['1'] },
-      { label: 'Hand', keys: ['H'] },
-      { label: 'Rectangle', keys: ['2'] },
-      { label: 'Diamond', keys: ['3'] },
-      { label: 'Ellipse', keys: ['4'] },
-      { label: 'Arrow', keys: ['5'] },
-      { label: 'Line', keys: ['6'] },
-      { label: 'Freedraw', keys: ['P'] },
-      { label: 'Text', keys: ['T'] },
-      { label: 'Image (opens file picker)', keys: ['9'] },
-      { label: 'Eraser', keys: ['E'] },
-      { label: 'Frame', keys: ['F'] },
-      { label: 'Laser pointer', keys: ['K'] },
-    ],
+    entries: TOOLS.map((def) => ({
+      label: def.opensPicker ? `${def.name} (opens file picker)` : def.name,
+      combos: def.keys.map((key) => [key.toUpperCase()]),
+    })),
   },
   {
     title: 'View',
     entries: [
-      { label: 'Pan the canvas', keys: ['Space', 'drag'] },
-      { label: 'Zoom', keys: ['Ctrl / ⌘', 'scroll'] },
-      { label: 'Pan horizontally', keys: ['Shift', 'scroll'] },
+      ...GESTURES,
+      ...fromActions([
+        'zoomIn', 'zoomOut', 'resetZoom', 'zoomToFit', 'zoomToSelectionInViewport', 'zoomToSelection',
+        'toggleGrid', 'toggleTheme',
+      ]),
     ],
   },
   {
-    title: 'Editing',
+    title: 'Editor',
     entries: [
-      { label: 'Undo', keys: ['Ctrl / ⌘', 'Z'] },
-      { label: 'Redo', keys: ['Ctrl / ⌘', 'Shift', 'Z'] },
-      { label: 'Select all', keys: ['Ctrl / ⌘', 'A'] },
-      { label: 'Duplicate', keys: ['Ctrl / ⌘', 'D'] },
-      { label: 'Cut', keys: ['Ctrl / ⌘', 'X'] },
-      { label: 'Copy', keys: ['Ctrl / ⌘', 'C'] },
-      { label: 'Paste', keys: ['Ctrl / ⌘', 'V'] },
-      { label: 'Delete selection', keys: ['Del'] },
-      { label: 'Move selection', keys: ['arrows'] },
-      { label: 'Move selection (large step)', keys: ['Shift', 'arrows'] },
-      { label: 'Bring forward', keys: [']'] },
-      { label: 'Send backward', keys: ['['] },
-      { label: 'Deselect', keys: ['Esc'] },
+      ...fromActions([
+        'undo', 'redo', 'cut', 'copy', 'paste', 'copyStyles', 'pasteStyles', 'selectAll',
+        'duplicate', 'deleteSelection', 'toggleLock', 'toolLock',
+      ]),
+      { label: 'Duplicate while dragging', combos: [['Alt', 'drag']] },
+      { label: 'Move selection', combos: [['←↑→↓']] },
+      { label: 'Move selection (large step)', combos: [['Shift', '←↑→↓']] },
+      { label: 'Finish line / Deselect / Exit group', combos: [['Esc']] },
+      { label: 'Edit group members', combos: [['Double-click']] },
     ],
+  },
+  {
+    title: 'Arrange',
+    entries: fromActions([
+      'group', 'ungroup', 'sendBackward', 'bringForward', 'sendToBack', 'bringToFront',
+      'alignLeft', 'alignRight', 'alignTop', 'alignBottom', 'distributeHorizontally', 'distributeVertically',
+      'flipHorizontal', 'flipVertical',
+    ]),
+  },
+  {
+    title: 'Text & files',
+    entries: fromActions(['increaseFontSize', 'decreaseFontSize', 'saveToFile', 'openFile', 'clearCanvas']),
   },
 ]
 
 const open = ref(false)
-
-/** Typing contexts own their keys — "?" in the text editor must stay literal. */
-function isTypingTarget(target: EventTarget | null): boolean {
-  return (
-    target instanceof HTMLElement
-    && (target.tagName === 'INPUT'
-      || target.tagName === 'TEXTAREA'
-      || target.isContentEditable)
-  )
-}
 
 function onKeydown(event: KeyboardEvent): void {
   if (isTypingTarget(event.target)) {
@@ -92,17 +98,27 @@ function onKeydown(event: KeyboardEvent): void {
     open.value = !open.value
     return
   }
-  if (open.value && event.key === 'Escape') {
+  if (!open.value) {
+    return
+  }
+  // A modal owns the keyboard: editor shortcuts must not act behind it
+  // (Tab still moves focus within the dialog).
+  if (event.key !== 'Tab') {
+    event.stopPropagation()
+  }
+  if (event.key === 'Escape') {
+    event.preventDefault()
     open.value = false
   }
 }
 
 onMounted(() => {
-  window.addEventListener('keydown', onKeydown)
+  // Capture phase: the open dialog sees keys before the editor does.
+  window.addEventListener('keydown', onKeydown, true)
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('keydown', onKeydown, true)
 })
 </script>
 
@@ -132,7 +148,10 @@ onBeforeUnmount(() => {
             <li v-for="entry in group.entries" :key="entry.label" class="shortcuts__entry">
               <span class="shortcuts__label">{{ entry.label }}</span>
               <span class="shortcuts__keys">
-                <kbd v-for="key in entry.keys" :key="key" class="shortcuts__key">{{ key }}</kbd>
+                <template v-for="(combo, index) in entry.combos" :key="index">
+                  <span v-if="index > 0" class="shortcuts__or">or</span>
+                  <UiKbd :keys="combo" />
+                </template>
               </span>
             </li>
           </ul>
@@ -228,14 +247,8 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
 }
 
-.shortcuts__key {
-  min-width: 20px;
-  padding: 2px 6px;
-  border: 1px solid var(--vd-border);
-  border-radius: var(--vd-radius-s);
-  background: var(--vd-surface);
-  font: 500 11px/1.4 inherit;
-  text-align: center;
-  color: var(--vd-ink);
+.shortcuts__or {
+  font-size: 11px;
+  color: var(--vd-ink-soft);
 }
 </style>

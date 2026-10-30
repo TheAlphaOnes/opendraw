@@ -8,8 +8,16 @@ import type { Component } from 'vue'
 
 import {
   AlignCenter,
+  AlignCenterHorizontal,
+  AlignCenterVertical,
+  AlignEndHorizontal,
+  AlignEndVertical,
+  AlignHorizontalDistributeCenter,
   AlignLeft,
   AlignRight,
+  AlignStartHorizontal,
+  AlignStartVertical,
+  AlignVerticalDistributeCenter,
   ArrowDownToLine,
   ArrowUpRight,
   ArrowUpToLine,
@@ -24,19 +32,28 @@ import {
   FileDown,
   FileType,
   FileUp,
+  Flashlight,
+  FlipHorizontal2,
+  FlipVertical2,
+  FolderOpen,
   Frame,
   Grid2x2,
   Grid3x3,
+  Group,
   Hand,
   ImageDown,
   ImagePlus,
-  Flashlight,
+  Keyboard,
   Lock,
+  LockKeyhole,
   LockOpen,
+  Maximize,
   Minus,
   Moon,
   MousePointer2,
+  Paintbrush,
   PaintBucket,
+  PaintRoller,
   Pen,
   Pencil,
   PenLine,
@@ -44,6 +61,7 @@ import {
   RectangleHorizontal,
   Redo2,
   Scan,
+  ScanSearch,
   Scissors,
   SendToBack,
   Slash,
@@ -52,6 +70,7 @@ import {
   Trash2,
   Type,
   Undo2,
+  Ungroup,
   X,
   ZoomIn,
   ZoomOut,
@@ -87,6 +106,22 @@ export type IconName =
   | 'cut'
   | 'paste'
   | 'duplicate'
+  | 'group'
+  | 'ungroup'
+  | 'flipHorizontal'
+  | 'flipVertical'
+  | 'copyStyles'
+  | 'pasteStyles'
+  | 'toolLock'
+  // arrange
+  | 'alignLeftEdges'
+  | 'alignHorizontalCenters'
+  | 'alignRightEdges'
+  | 'alignTopEdges'
+  | 'alignVerticalCenters'
+  | 'alignBottomEdges'
+  | 'distributeHorizontal'
+  | 'distributeVertical'
   // view & file
   | 'image'
   | 'svg'
@@ -98,6 +133,10 @@ export type IconName =
   | 'zoomIn'
   | 'zoomOut'
   | 'resetZoom'
+  | 'zoomToFit'
+  | 'zoomToSelection'
+  | 'shortcuts'
+  | 'open'
   | 'clear'
   | 'close'
   // style controls
@@ -143,6 +182,23 @@ export const iconRegistry: Record<IconName, Component> = {
   cut: Scissors,
   paste: ClipboardPaste,
   duplicate: CopyPlus,
+  group: Group,
+  ungroup: Ungroup,
+  flipHorizontal: FlipHorizontal2,
+  flipVertical: FlipVertical2,
+  copyStyles: Paintbrush,
+  pasteStyles: PaintRoller,
+  toolLock: LockKeyhole,
+
+  // arrange
+  alignLeftEdges: AlignStartVertical,
+  alignHorizontalCenters: AlignCenterVertical,
+  alignRightEdges: AlignEndVertical,
+  alignTopEdges: AlignStartHorizontal,
+  alignVerticalCenters: AlignCenterHorizontal,
+  alignBottomEdges: AlignEndHorizontal,
+  distributeHorizontal: AlignHorizontalDistributeCenter,
+  distributeVertical: AlignVerticalDistributeCenter,
 
   // view & file
   image: ImageDown,
@@ -155,6 +211,10 @@ export const iconRegistry: Record<IconName, Component> = {
   zoomIn: ZoomIn,
   zoomOut: ZoomOut,
   resetZoom: Scan,
+  zoomToFit: Maximize,
+  zoomToSelection: ScanSearch,
+  shortcuts: Keyboard,
+  open: FolderOpen,
   clear: Trash2,
   close: X,
 

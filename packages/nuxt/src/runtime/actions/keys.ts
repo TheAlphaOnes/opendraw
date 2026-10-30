@@ -1,7 +1,22 @@
+import { shallowRef } from 'vue'
+
 /**
  * Keyboard helpers shared by the action registry and the shortcut
  * displays.
  */
+
+/**
+ * Whether shortcut DISPLAYS use Apple glyphs. Starts false so the server
+ * render and the hydration render agree (the server cannot know the
+ * platform), then flips once a canvas mounts — see `detectKeyPlatform`.
+ * Event handling never reads this; it checks the live platform.
+ */
+const appleKeyDisplay = shallowRef(false)
+
+/** Resolves the display platform — call from a mounted hook only. */
+export function detectKeyPlatform(): void {
+  appleKeyDisplay.value = isApplePlatform()
+}
 
 /** True on Apple platforms, where Mod is ⌘ and Alt is ⌥. */
 export function isApplePlatform(): boolean {
@@ -39,9 +54,9 @@ export function isTypingTarget(target: EventTarget | null): boolean {
   )
 }
 
-/** Renders a key combo for display, platform-aware. */
+/** Renders a key combo for display, platform-aware (hydration-safe). */
 export function formatKeys(keys: readonly string[]): string[] {
-  const apple = isApplePlatform()
+  const apple = appleKeyDisplay.value
   return keys.map((key) => {
     if (key === 'Mod') {
       return apple ? '⌘' : 'Ctrl'

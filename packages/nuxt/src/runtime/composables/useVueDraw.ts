@@ -3,7 +3,13 @@ import { computed, inject, provide, shallowRef, type ComputedRef, type Injection
 import {
   DEFAULT_APP_STATE,
   VueDrawDocument,
-  duplicateElement,
+  duplicateElements,
+  fitViewportToBounds,
+  selectedGroupIds,
+  stylePayloadOf,
+  type Alignment,
+  type FlipAxis,
+  type StylePayload,
   exportToDataURL,
   exportToSvg,
   getCommonBounds,
@@ -32,6 +38,7 @@ import {
 
 import { isTextElement } from '@vuedraw/core'
 
+import { downloadText, downloadURL, pickFiles } from '../services/file.service.js'
 import {
   imageElementFromPrepared,
   imageResolver,
@@ -67,12 +74,22 @@ export interface VueDrawContext {
   // tools & theme
   activeTool: ComputedRef<ToolId>
   setActiveTool: (tool: ToolId) => void
+  /** Q — a locked tool stays armed after each use (Excalidraw's tool lock). */
+  toolLocked: ComputedRef<boolean>
+  toggleToolLock: () => void
+  /**
+   * Called when a tool finishes one use: reverts to selection unless the
+   * tool is locked. Freedraw never calls it — the pen stays armed.
+   */
+  finishToolUse: () => void
   theme: ComputedRef<ThemeName>
   setTheme: (theme: ThemeName) => void
   toggleTheme: () => void
 
   // selection
   select: (ids: string | readonly string[] | null, mode?: 'replace' | 'toggle') => void
+  /** Group-aware select: each id pulls in its whole (visible) group. */
+  selectGrouped: (ids: readonly string[], mode?: 'replace' | 'toggle') => void
   selectAll: () => void
   isIdSelected: (id: string) => boolean
 
@@ -92,6 +109,26 @@ export interface VueDrawContext {
   changeTextStyle: (style: Partial<TextStyle>) => void
   /** Corner treatment for the selected rectangles/diamonds, else new-shape default. */
   changeRoundness: (roundness: Roundness | null) => void
+  /** Mod+Shift+> / Mod+Shift+< — steps selected text 10% bigger/smaller. */
+  stepFontSize: (direction: 1 | -1) => void
+  /** Mod+Alt+C — remembers the first selected element's style. */
+  copyStyles: () => void
+  /** Mod+Alt+V — applies the remembered style to the selection. */
+  pasteStyles: () => void
+  hasCopiedStyles: ComputedRef<boolean>
+
+  // groups
+  groupSelection: () => void
+  ungroupSelection: () => void
+  /** Groups currently selected as a unit (derived from the selection). */
+  selectedGroupIds: ComputedRef<readonly string[]>
+  editingGroupId: ComputedRef<string | null>
+  setEditingGroup: (groupId: string | null) => void
+
+  // arrange
+  alignSelection: (alignment: Alignment) => void
+  distributeSelection: (axis: 'x' | 'y') => void
+  flipSelection: (axis: FlipAxis) => void
 
   // history
   undo: () => boolean
@@ -104,6 +141,13 @@ export interface VueDrawContext {
   zoomIn: (screenPoint: Point) => void
   zoomOut: (screenPoint: Point) => void
   resetZoom: () => void
+  /** Shift+1 — fits every element, never zooming past 100%. */
+  zoomToFitAll: () => void
+  /**
+   * Fits the selection: `scale-down` (Shift+2) caps at 100%, `contain`
+   * (Shift+3) fills the canvas.
+   */
+  zoomToFitSelection: (fit?: 'scale-down' | 'contain') => void
   panBy: (dxScreen: number, dyScreen: number) => void
   viewport: ComputedRef<{ scrollX: number; scrollY: number; zoom: number }>
 
@@ -125,6 +169,14 @@ export interface VueDrawContext {
   insertImageFiles: (files: readonly File[] | FileList, at?: Point) => void
   /** Opens the toolbar file picker (the image tool's only entry gesture). */
   openImagePicker: () => void
+
+  // files
+  /** Mod+S — downloads the scene as a .json file. */
+  saveToFile: (filename?: string) => void
+  /** Mod+O — opens a .json scene file, replacing the current scene. */
+  openFile: () => Promise<void>
+  /** Deletes every element (one undo step). */
+  clearCanvas: () => void
 
   // grid
   gridSize: ComputedRef<number | null>
@@ -158,9 +210,25 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
 
   /** In-app clipboard: plain element copies; ids are regenerated on paste. */
   let clipboard: VueDrawElement[] = []
+  /** Style remembered by copyStyles — editor intent, never document state. */
+  const copiedStyle = shallowRef<StylePayload | null>(null)
+
+  function fitTo(elementsToFit: readonly VueDrawElement[], fit: 'scale-down' | 'contain'): void {
+    if (elementsToFit.length === 0) {
+      return
+    }
+    doc.setViewport(
+      fitViewportToBounds(appState.value.viewport, getCommonBounds(elementsToFit), {
+        size: viewportSize.value,
+        fit,
+      }),
+    )
+  }
 
   const state = shallowRef<VueDrawState>(doc.getState())
   const viewportSize = shallowRef<ViewportSize>({ width: 0, height: 0 })
+  /** Tool lock is editor intent, never document state (not persisted). */
+  const toolLocked = shallowRef(false)
 
   doc.subscribe((next) => {
     state.value = next
@@ -196,6 +264,15 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
 
     activeTool: computed(() => appState.value.activeTool),
     setActiveTool: (tool) => doc.setAppState({ activeTool: tool }),
+    toolLocked: computed(() => toolLocked.value),
+    toggleToolLock: () => {
+      toolLocked.value = !toolLocked.value
+    },
+    finishToolUse: () => {
+      if (!toolLocked.value) {
+        doc.setAppState({ activeTool: 'selection' })
+      }
+    },
 
     theme: computed(() => appState.value.theme),
 
@@ -206,6 +283,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
     },
 
     select: (ids, mode) => doc.select(ids, mode),
+    selectGrouped: (ids, mode) => doc.selectGrouped(ids, mode),
     selectAll: () => doc.selectAll(),
     isIdSelected: (id) => doc.isIdSelected(id),
 
@@ -264,10 +342,12 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
         return
       }
       const offset = at ? centerOffsetFor(clipboard, at) : { x: 10, y: 10 }
+      // Pasted groups are new groups, and the paste lands selected
+      // (Excalidraw's actionPaste) — outside any group being edited.
+      const copies = duplicateElements(clipboard, { offset })
       doc.beginStep()
-      for (const el of clipboard) {
-        doc.addElement(duplicateElement(el, { x: el.x + offset.x, y: el.y + offset.y }))
-      }
+      doc.setEditingGroup(null)
+      doc.addElements(copies, { select: true })
       doc.endStep()
     },
     clipboardSize: computed(() => {
@@ -278,6 +358,32 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
     changeStyle: (style) => doc.changeStyle(style),
     changeTextStyle: (style) => doc.changeTextStyle(style),
     changeRoundness: (roundness) => doc.changeRoundness(roundness),
+    stepFontSize: (direction) => doc.stepFontSize(direction),
+    copyStyles: () => {
+      const first = doc.getSelectedElements()[0]
+      if (first) {
+        copiedStyle.value = stylePayloadOf(first)
+      }
+    },
+    pasteStyles: () => {
+      if (copiedStyle.value) {
+        doc.pasteStyle(copiedStyle.value)
+      }
+    },
+    hasCopiedStyles: computed(() => copiedStyle.value !== null),
+
+    groupSelection: () => doc.groupSelection(),
+    ungroupSelection: () => doc.ungroupSelection(),
+    selectedGroupIds: computed(() => {
+      const { elements, appState } = state.value
+      return selectedGroupIds(elements, appState.selectedIds, appState.editingGroupId)
+    }),
+    editingGroupId: computed(() => appState.value.editingGroupId),
+    setEditingGroup: (groupId) => doc.setEditingGroup(groupId),
+
+    alignSelection: (alignment) => doc.alignSelection(alignment),
+    distributeSelection: (axis) => doc.distributeSelection(axis),
+    flipSelection: (axis) => doc.flipSelection(axis),
 
     undo: () => doc.undo(),
     redo: () => doc.redo(),
@@ -302,6 +408,8 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
       context.zoomAt(screenPoint, appState.value.viewport.zoom / ZOOM_STEP)
     },
     resetZoom: () => doc.setViewport({ ...DEFAULT_VIEWPORT }),
+    zoomToFitAll: () => fitTo(state.value.elements, 'scale-down'),
+    zoomToFitSelection: (fit = 'scale-down') => fitTo(context.selectedElements.value, fit),
     panBy: (dx, dy) => {
       const vp = appState.value.viewport
       doc.setViewport({
@@ -321,7 +429,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
         // Composite decoded bitmaps; undecoded ones fall back to the placeholder.
         resolveImage: imageResolver,
       })
-      downloadDataURL(url, `${filename}.png`)
+      downloadURL(url, `${filename}.png`)
     },
     exportSVG: (filename = 'vuedraw') => {
       if (typeof document === 'undefined') {
@@ -332,7 +440,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
       })
       const blob = new Blob([svg], { type: 'image/svg+xml' })
       const url = URL.createObjectURL(blob)
-      downloadDataURL(url, `${filename}.svg`)
+      downloadURL(url, `${filename}.svg`)
       URL.revokeObjectURL(url)
     },
     exportDataURL: () =>
@@ -363,7 +471,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
         if (lastId) {
           context.select(lastId)
         }
-        context.setActiveTool('selection')
+        context.finishToolUse()
       })().catch((error: unknown) => {
         // A read failure must not strand the open step or crash the editor.
         doc.cancelStep()
@@ -371,25 +479,30 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
       })
     },
     openImagePicker: () => {
-      if (typeof document === 'undefined') {
+      void pickFiles('image/*', true).then((files) => {
+        if (files.length > 0) {
+          context.insertImageFiles(files)
+        }
+      })
+    },
+
+    saveToFile: (filename = 'vuedraw') => {
+      downloadText(context.toJSON(), `${filename}.json`, 'application/json')
+    },
+    openFile: async () => {
+      const [file] = await pickFiles('application/json,.json')
+      if (!file) {
         return
       }
-      const input = document.createElement('input')
-      input.type = 'file'
-      input.accept = 'image/*'
-      input.multiple = true
-      input.style.display = 'none'
-      input.addEventListener('change', () => {
-        if (input.files && input.files.length > 0) {
-          context.insertImageFiles(input.files)
-        }
-        input.remove()
-      })
-      document.body.appendChild(input)
-      input.click()
-      // A picker dialog dismissed without a choice leaves no `change`
-      // event — remove the stray input on the next tick regardless.
-      window.setTimeout(() => input.remove(), 60_000)
+      try {
+        context.loadJSON(await file.text())
+      } catch (error) {
+        // A malformed file must not break the editor; the scene is untouched.
+        console.error('[vuedraw] failed to open file', error)
+      }
+    },
+    clearCanvas: () => {
+      doc.deleteElements(state.value.elements.map((el) => el.id))
     },
 
     gridSize: computed(() => appState.value.gridSize),
@@ -449,15 +562,6 @@ function withTextMetrics(patch: ElementPatch, element: VueDrawElement): ElementP
   return { ...patch, width: layout.width, height: layout.height }
 }
 
-function downloadDataURL(url: string, filename: string): void {
-  if (typeof document === 'undefined') {
-    return
-  }
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-}
 
 /** Offset that centers the clipboard content's bounds at the target point. */
 function centerOffsetFor(clipboard: readonly VueDrawElement[], at: Point): { x: number; y: number } {

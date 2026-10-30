@@ -148,6 +148,8 @@ export function finishLinearDraft(rt: CanvasRuntime): void {
     ctx.doc.updateElement(el.id, binding)
   }
   ctx.doc.endStep()
-  ctx.select(el.id)
-  ctx.setActiveTool('selection')
+  if (!ctx.toolLocked.value) {
+    ctx.select(el.id)
+  }
+  ctx.finishToolUse()
 }

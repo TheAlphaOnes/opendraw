@@ -1,6 +1,6 @@
 import { onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
 
-import { renderOverlay, renderScene } from '@vuedraw/core'
+import { groupSelectionChrome, renderOverlay, renderScene } from '@vuedraw/core'
 
 import { imageDataUrlsOf, imageResolver, requestImageDecode } from '../services/image.service.js'
 import type { CanvasRuntime } from './runtime.js'
@@ -60,6 +60,7 @@ export function useCanvasSurface(rt: CanvasRuntime): CanvasSurface {
       marquee: rt.marquee.value,
       previewElements: [],
       bindingCandidates: rt.bindingCandidates.value,
+      groupChrome: groupSelectionChrome(elements, appState.selectedIds, appState.editingGroupId),
       canvasSize: size,
       dpr: dpr.value,
     })

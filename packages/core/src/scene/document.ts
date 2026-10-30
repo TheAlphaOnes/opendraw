@@ -13,7 +13,8 @@
  * - no-op patches keep the same element reference and record nothing
  */
 
-import { duplicateElement, isTextElement } from '../elements/factories.js'
+import { isTextElement } from '../elements/factories.js'
+import { duplicateElements } from '../elements/duplicate.js'
 import { bindingFollowPatches, orphanBindingPatches } from '../elements/binding.js'
 import {
   type Alignment,
@@ -28,7 +29,6 @@ import {
   elementsInGroup,
   expandIdsToGroups,
   groupElements,
-  remapGroupIdsForCopies,
   ungroupElements,
 } from '../elements/groups.js'
 import type { ElementPatch } from '../elements/mutate.js'
@@ -37,6 +37,7 @@ import { DEFAULT_ELEMENT_STYLE, DEFAULT_TEXT_STYLE } from '../elements/defaults.
 import type {
   ElementStyle,
   ReorderAction,
+  StylePayload,
   Roundness,
   TextStyle,
   VueDrawAppState,
@@ -47,6 +48,7 @@ import type {
   VueDrawStateListener,
 } from '../types.js'
 import { layoutText, type TextLayout } from '../geometry/text.js'
+import { parseFile } from '../export/serialize.js'
 import type { Point, Viewport } from '../types.js'
 import { type HistorySnapshot, SceneHistory } from './history.js'
 
@@ -54,6 +56,11 @@ export interface VueDrawDocumentOptions {
   elements?: readonly VueDrawElement[]
   appState?: Partial<VueDrawAppState>
 }
+
+/** Excalidraw's FONT_SIZE_RELATIVE_INCREASE_STEP. */
+const FONT_SIZE_STEP = 0.1
+/** Smallest font a keyboard step can reach (matches file coercion). */
+const MIN_FONT_SIZE = 8
 
 export const DEFAULT_APP_STATE: VueDrawAppState = {
   activeTool: 'selection',
@@ -80,7 +87,10 @@ export class VueDrawDocument {
   private openStep: HistorySnapshot | null = null
 
   constructor(options: VueDrawDocumentOptions = {}) {
-    this.elements = [...(options.elements ?? [])]
+    // Hand-built elements from older versions may predate `groupIds`.
+    this.elements = (options.elements ?? []).map((el) =>
+      Array.isArray(el.groupIds) ? el : { ...el, groupIds: [] },
+    )
     this.elementsMap = new Map(this.elements.map((el) => [el.id, el]))
     this.appState = { ...DEFAULT_APP_STATE, ...options.appState }
     if (options.appState?.viewport) {
@@ -421,10 +431,7 @@ export class VueDrawDocument {
       return
     }
     this.beginStep()
-    const clones = remapGroupIdsForCopies(
-      selected.map((el) => duplicateElement(el, { x: el.x + offset.x, y: el.y + offset.y })),
-      this.appState.editingGroupId,
-    )
+    const clones = duplicateElements(selected, { offset, editingGroupId: this.appState.editingGroupId })
     this.addElements(clones)
     this.select(clones.map((el) => el.id))
     this.endStep()
@@ -711,6 +718,63 @@ export class VueDrawDocument {
   }
 
   /**
+   * Steps the font size of every selected text element by Excalidraw's
+   * relative step (10%, rounded — actionIncrease/DecreaseFontSize),
+   * re-measuring each box. One undo step; a no-op without text selected.
+   */
+  stepFontSize(direction: 1 | -1): void {
+    const ids = this.getSelectedElements().filter(isTextElement).map((el) => el.id)
+    if (ids.length === 0) {
+      return
+    }
+    this.beginStep()
+    this.updateElements(ids, (el): ElementPatch => {
+      if (!isTextElement(el)) {
+        return {}
+      }
+      const scaled = direction === 1 ? el.fontSize * (1 + FONT_SIZE_STEP) : el.fontSize / (1 + FONT_SIZE_STEP)
+      const fontSize = Math.max(MIN_FONT_SIZE, Math.round(scaled))
+      const layout = layoutText(el.text, el.fontFamily, fontSize)
+      return { fontSize, width: layout.width, height: layout.height }
+    })
+    this.endStep()
+  }
+
+  /**
+   * Pastes a copied style onto the selection in ONE undo step — the
+   * element style everywhere, text style on text (re-measured), corners
+   * on rectangles and diamonds (Excalidraw's actionPasteStyles). Unlike
+   * `changeStyle`, an empty selection is a no-op: pasting never rewrites
+   * the defaults for new elements.
+   */
+  pasteStyle(payload: StylePayload): void {
+    const ids = new Set(this.getSelectedElements().map((el) => el.id))
+    if (ids.size === 0) {
+      return
+    }
+    this.mutate((current) => {
+      let changed = false
+      const next = current.map((el) => {
+        if (!ids.has(el.id)) {
+          return el
+        }
+        let patch: ElementPatch = { ...payload.style }
+        if (isTextElement(el) && payload.textStyle) {
+          const layout = layoutText(el.text, payload.textStyle.fontFamily, payload.textStyle.fontSize)
+          patch = { ...patch, ...payload.textStyle, width: layout.width, height: layout.height }
+        }
+        if ((el.type === 'rectangle' || el.type === 'diamond') && payload.roundness !== undefined) {
+          patch = { ...patch, roundness: payload.roundness }
+        }
+        const patched = patchElement(el, patch)
+        changed ||= patched !== el
+        return patched
+      })
+      return changed ? next : null
+    })
+  }
+
+  /**
    * Applies corner roundness to the selected rectangles and diamonds. With no
    * such element selected it becomes the default for future shapes instead.
    */
@@ -744,18 +808,21 @@ export class VueDrawDocument {
    * Replaces the scene wholesale. Resets history — a loaded scene is a new
    * timeline (Excalidraw behaves the same on scene load).
    */
-  loadFile(file: VueDrawFile): void {
-    if (file.type !== 'vuedraw') {
-      throw new Error('not a vuedraw file')
-    }
-    this.elements = file.elements.map((el) => ({ ...el }))
+  loadFile(input: VueDrawFile): void {
+    // Files come from disk, storage or a host app: coerce defensively so a
+    // malformed or older element is repaired (or dropped), never trusted.
+    const file = parseFile(input)
+    this.elements = [...file.elements]
     this.rebuildMap()
     this.appState = {
       ...this.appState,
       selectedIds: {},
       editingId: null,
       editingGroupId: null,
-      viewBackgroundColor: file.appState?.viewBackgroundColor ?? this.appState.viewBackgroundColor,
+      // A file without its own background keeps the current one.
+      viewBackgroundColor: typeof input.appState?.viewBackgroundColor === 'string'
+        ? file.appState.viewBackgroundColor
+        : this.appState.viewBackgroundColor,
     }
     this.history.clear()
     this.emit()

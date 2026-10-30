@@ -17,7 +17,7 @@ test('one undo press reverts exactly one drawn shape', async ({ page }) => {
 
   // Three draws, three undo presses — selection and tool switches in
   // between must not have recorded anything.
-  const undo = page.getByRole('button', { name: 'Undo (Ctrl+Z)' })
+  const undo = page.getByRole('button', { name: /^Undo \(/ })
   await undo.click()
   await expect.poll(async () => (await scene(page)).elements.length).toBe(2)
   await undo.click()
@@ -30,7 +30,7 @@ test('one undo press reverts exactly one drawn shape', async ({ page }) => {
 test('switching tools never creates undo work', async ({ page }) => {
   await openEditor(page)
 
-  const undo = page.getByRole('button', { name: 'Undo (Ctrl+Z)' })
+  const undo = page.getByRole('button', { name: /^Undo \(/ })
   await expect(undo).toBeDisabled()
 
   await pickTool(page, 'Rectangle (2)')

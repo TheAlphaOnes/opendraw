@@ -4,7 +4,8 @@ import {
   bindingFollowPatches,
   draftLinePoints,
   draftShapeRect,
-  elementsInBounds,
+  duplicateElements,
+  elementsWithinBounds,
   isFreedrawElement,
   isLinearElement,
   maxBindingDistance,
@@ -17,6 +18,7 @@ import {
 } from '@vuedraw/core'
 
 import { trackDraftPointer } from './linearDraft.js'
+import type { Interaction } from './runtime.js'
 import { eraseAlong, pressureOf } from './pointerPress.js'
 import { setModifiers, type CanvasRuntime } from './runtime.js'
 import { mergeBindingCandidates } from './selectionHits.js'
@@ -32,6 +34,27 @@ export function followBindings(rt: CanvasRuntime, originals: readonly VueDrawEle
   for (const [id, patch] of bindingFollowPatches(movedIds, rt.ctx.elements.value)) {
     rt.ctx.doc.updateElement(id, patch)
   }
+}
+
+/**
+ * Alt-drag (Excalidraw's duplicateDraggedSelection): the originals stay
+ * where the drag began and the drag continues on fresh duplicates, added
+ * on top and selected — all inside the drag's own undo step.
+ */
+function duplicateDraggedSelection(
+  rt: CanvasRuntime,
+  drag: Extract<Interaction, { kind: 'moving' }>,
+): void {
+  const { ctx } = rt
+  for (const original of drag.originals) {
+    ctx.doc.forceUpdateElement(original.id, { x: original.x, y: original.y })
+  }
+  followBindings(rt, drag.originals)
+  const copies = duplicateElements(drag.originals, { editingGroupId: ctx.editingGroupId.value })
+  ctx.doc.addElements(copies, { select: true })
+  drag.originals = copies
+  drag.hitId = null
+  drag.duplicated = true
 }
 
 /**
@@ -77,11 +100,13 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
         y2: Math.max(current.originScene.y, scenePoint.y),
       }
       rt.marquee.value = bounds
+      // Box selection takes what it wholly contains (Excalidraw's default
+      // "contain" mode), and a contained member brings its whole group.
       const ids = new Set(current.baseIds)
-      for (const el of elementsInBounds(ctx.elements.value, bounds)) {
+      for (const el of elementsWithinBounds(ctx.elements.value, bounds)) {
         ids.add(el.id)
       }
-      ctx.select([...ids])
+      ctx.selectGrouped([...ids])
       return
     }
     case 'creating': {
@@ -126,6 +151,9 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
       }
       if (delta.x !== 0 || delta.y !== 0) {
         current.didDrag = true
+        if (modifiers.alt && !current.duplicated) {
+          duplicateDraggedSelection(rt, current)
+        }
       }
       for (const { id, patch } of moveElements(current.originals, delta, ctx.gridSize.value)) {
         ctx.doc.forceUpdateElement(id, patch)

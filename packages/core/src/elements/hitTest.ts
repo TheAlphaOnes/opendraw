@@ -11,7 +11,7 @@
  * threshold.
  */
 
-import { getElementBounds, boundsIntersect, pointInBounds } from '../geometry/bounds.js'
+import { boundsContain, getElementBounds, boundsIntersect, pointInBounds } from '../geometry/bounds.js'
 import { distanceToSegment, segmentsOf, unrotatePoint } from '../geometry/points.js'
 import { isLinearElement, isFreedrawElement } from './factories.js'
 import { TRANSPARENT } from './defaults.js'
@@ -248,6 +248,18 @@ export function elementsInBounds(
   bounds: Bounds,
 ): VueDrawElement[] {
   return elements.filter((element) => boundsIntersect(getElementBounds(element), bounds))
+}
+
+/**
+ * Elements whose (rotation-aware) bounds lie wholly inside `bounds` —
+ * the marquee's box selection. Excalidraw's default `boxSelectionMode`
+ * is "contain": brushing past an element's edge does not select it.
+ */
+export function elementsWithinBounds(
+  elements: readonly VueDrawElement[],
+  bounds: Bounds,
+): VueDrawElement[] {
+  return elements.filter((element) => boundsContain(bounds, getElementBounds(element)))
 }
 
 /**

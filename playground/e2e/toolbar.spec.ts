@@ -1,15 +1,18 @@
 /**
  * Toolbar e2e — the top-center tool island must match Excalidraw's
  * arrangement: the full tool set, in Excalidraw's order, split into the
- * same groups (hand+selection | shapes | freedraw/text/image/eraser |
- * frame/laser).
+ * same groups (tool lock | hand+selection | shapes |
+ * freedraw/text/image/eraser | frame/laser).
  */
 import type { Page } from '@playwright/test'
 
 import { expect, openEditor, test } from './helpers'
 
 /** Excalidraw's island order, one entry per dock button. */
+const TOOL_LOCK = 'Keep selected tool active after drawing (Q)'
+
 const TOOL_ORDER = [
+  TOOL_LOCK,
   'Hand (H)',
   'Selection (1)',
   'Rectangle (2)',
@@ -27,6 +30,7 @@ const TOOL_ORDER = [
 
 /** Excalidraw's visual groups, separated by dividers in the island. */
 const TOOL_GROUPS: ReadonlyArray<readonly string[]> = [
+  [TOOL_LOCK],
   ['Hand (H)', 'Selection (1)'],
   ['Rectangle (2)', 'Diamond (3)', 'Ellipse (4)', 'Arrow (5)', 'Line (6)'],
   ['Freedraw (P)', 'Text (T)', 'Image (9)', 'Eraser (E)'],
@@ -52,7 +56,7 @@ async function dockBox(page: Page): Promise<{ x: number; y: number; width: numbe
 test('renders every tool in the top-center island in Excalidraw order', async ({ page }) => {
   await openEditor(page)
 
-  const dock = page.getByRole('toolbar')
+  const dock = page.getByRole('toolbar', { name: 'Drawing tools' })
   await expect(dock).toBeVisible()
 
   // DOM order of the accessible names must equal Excalidraw's island order.

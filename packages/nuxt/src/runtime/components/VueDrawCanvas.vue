@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 
+import { detectKeyPlatform } from '../actions/keys.js'
 import { onCanvasPointerDown } from '../canvas/pointerPress.js'
 import { onCanvasPointerMove } from '../canvas/pointerDrag.js'
 import { onCanvasPointerLeave, onCanvasPointerUp } from '../canvas/pointerRelease.js'
@@ -10,7 +11,13 @@ import { useCanvasCursor } from '../canvas/useCanvasCursor.js'
 import { useCanvasKeyboard } from '../canvas/useCanvasKeyboard.js'
 import { useCanvasSurface } from '../canvas/useCanvasSurface.js'
 import { useLaserTrail } from '../canvas/useLaserTrail.js'
-import { onCanvasDrop, onCanvasWheel, onWindowPaste } from '../canvas/viewportGestures.js'
+import {
+  onCanvasDrop,
+  onCanvasWheel,
+  onWindowPaste,
+  resolveContextMenu,
+  type CanvasContextMenuRequest,
+} from '../canvas/viewportGestures.js'
 import { useVueDraw } from '../composables/useVueDraw.js'
 import TextEditor from './TextEditor.vue'
 
@@ -27,7 +34,7 @@ import TextEditor from './TextEditor.vue'
  */
 
 const emit = defineEmits<{
-  (e: 'contextmenu', payload: { x: number; y: number }): void
+  (e: 'contextmenu', payload: CanvasContextMenuRequest): void
 }>()
 
 const ctx = useVueDraw()
@@ -36,7 +43,7 @@ const hostRef = rt.hostRef
 const { staticRef, overlayRef, setOverlayPainter } = useCanvasSurface(rt)
 const laser = useLaserTrail(rt)
 setOverlayPainter(laser.draw)
-const keyboard = useCanvasKeyboard(rt)
+useCanvasKeyboard(rt)
 const cursor = useCanvasCursor(rt)
 
 /**
@@ -57,6 +64,7 @@ const onDoubleClick = (event: MouseEvent): void => onCanvasDoubleClick(rt, event
 const onWheel = (event: WheelEvent): void => onCanvasWheel(rt, event)
 const onDrop = (event: DragEvent): void => onCanvasDrop(rt, event)
 const onPaste = (event: ClipboardEvent): void => onWindowPaste(rt, event)
+const onContextMenu = (event: MouseEvent): void => emit('contextmenu', resolveContextMenu(rt, event))
 
 /**
  * Suppress the mousedown default (focus move) for presses on the host
@@ -73,7 +81,11 @@ function onMouseDown(event: MouseEvent): void {
   }
 }
 
-onMounted(() => window.addEventListener('paste', onPaste))
+onMounted(() => {
+  window.addEventListener('paste', onPaste)
+  // Shortcut hints switch to ⌘/⌥ glyphs only after hydration.
+  detectKeyPlatform()
+})
 onBeforeUnmount(() => window.removeEventListener('paste', onPaste))
 </script>
 
@@ -92,8 +104,7 @@ onBeforeUnmount(() => window.removeEventListener('paste', onPaste))
     @mousedown="onMouseDown"
     @wheel="onWheel"
     @dblclick="onDoubleClick"
-    @keydown="keyboard.onKeyDown"
-    @contextmenu.prevent="emit('contextmenu', { x: $event.clientX, y: $event.clientY })"
+    @contextmenu.prevent="onContextMenu"
     @dragover.prevent
     @drop.prevent="onDrop"
   >

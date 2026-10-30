@@ -26,6 +26,7 @@ export * from './elements/hitTest.js'
 export * from './elements/binding.js'
 export * from './elements/groups.js'
 export * from './elements/arrange.js'
+export * from './elements/duplicate.js'
 
 export * from './viewport.js'
 

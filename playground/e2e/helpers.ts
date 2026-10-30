@@ -37,9 +37,26 @@ declare global {
   }
 }
 
-/** Latest mirrored state; empty before the first event lands. */
+// ---------------------------------------------------------------------------
+// The test stage
+// ---------------------------------------------------------------------------
+
+/**
+ * Specs work in a "stage" space: canvas-local pixels shifted right by this
+ * much, so the scenes they draw sit clear of the left properties island
+ * (Excalidraw's layout covers the canvas's left edge whenever a tool is
+ * armed). Every helper converts — `at()` and the pixel probes add it, the
+ * scene mirror subtracts it — so a spec's numbers stay self-consistent.
+ */
+export const STAGE_X = 260
+
+/** Latest mirrored state (in stage space); empty before the first event lands. */
 export async function scene(page: Page): Promise<MirroredScene> {
-  return page.evaluate(() => window.__vuedraw ?? { elements: [], selection: [] })
+  const raw = await page.evaluate(() => window.__vuedraw ?? { elements: [], selection: [] })
+  return {
+    selection: raw.selection,
+    elements: raw.elements.map((el) => ({ ...el, x: el.x - STAGE_X })),
+  }
 }
 
 /** Scene-space position of an arrow/line tip. */
@@ -111,7 +128,7 @@ export function at(
   x: number,
   y: number,
 ): { x: number; y: number } {
-  return { x: box.x + x, y: box.y + y }
+  return { x: box.x + STAGE_X + x, y: box.y + y }
 }
 
 /** Click a tool in the dock by its accessible label (e.g. 'Rectangle (2)'). */
@@ -125,7 +142,13 @@ export async function pickTool(page: Page, label: string): Promise<void> {
  * makes shapes behave like the filled ones binding demos use.
  */
 export async function pickFill(page: Page): Promise<void> {
-  await page.getByRole('radio', { name: '#ffc9c9' }).check()
+  // The properties island only shows for a selection or an armed drawing
+  // tool (Excalidraw parity) — arm one so the swatch is on screen.
+  const swatch = page.getByRole('radio', { name: '#ffc9c9' })
+  if (!(await swatch.isVisible())) {
+    await pickTool(page, 'Rectangle (2)')
+  }
+  await swatch.check()
 }
 
 export async function drag(
@@ -178,6 +201,7 @@ export async function pixelAt(
   x: number,
   y: number,
 ): Promise<[number, number, number]> {
+  x += STAGE_X
   return page.evaluate(
     ({ x, y }) => {
       const canvas = document.querySelector<HTMLCanvasElement>('canvas.vuedraw-canvas__static')
@@ -213,6 +237,7 @@ export async function overlayPixelAt(
   x: number,
   y: number,
 ): Promise<[number, number, number, number]> {
+  x += STAGE_X
   return page.evaluate(
     ({ x, y }) => {
       const canvas = document.querySelector<HTMLCanvasElement>('canvas.vuedraw-canvas__overlay')
@@ -249,6 +274,7 @@ export async function staticInkPixels(
   w: number,
   h: number,
 ): Promise<number> {
+  x += STAGE_X
   return page.evaluate(
     ({ x, y, w, h }) => {
       const canvas = document.querySelector<HTMLCanvasElement>('canvas.vuedraw-canvas__static')
@@ -314,7 +340,8 @@ export async function staticInkCentroid(
   w: number,
   h: number,
 ): Promise<{ x: number; y: number; count: number } | null> {
-  return page.evaluate(
+  x += STAGE_X
+  const centroid = await page.evaluate(
     ({ x, y, w, h }) => {
       const canvas = document.querySelector<HTMLCanvasElement>('canvas.vuedraw-canvas__static')
       if (!canvas) {
@@ -371,6 +398,7 @@ export async function staticInkCentroid(
     },
     { x, y, w, h },
   )
+  return centroid && { ...centroid, x: centroid.x - STAGE_X }
 }
 
 /** CSS-space bounding box of every inked pixel on the overlay canvas.
@@ -381,7 +409,7 @@ export async function staticInkCentroid(
 export async function overlayInkBounds(
   page: Page,
 ): Promise<{ minX: number; minY: number; maxX: number; maxY: number } | null> {
-  return page.evaluate(() => {
+  const bounds = await page.evaluate(() => {
     const canvas = document.querySelector<HTMLCanvasElement>('canvas.vuedraw-canvas__overlay')
     if (!canvas) {
       throw new Error('overlay canvas missing')
@@ -412,4 +440,5 @@ export async function overlayInkBounds(
     }
     return { minX: minX / scale, minY: minY / scale, maxX: maxX / scale, maxY: maxY / scale }
   })
+  return bounds && { ...bounds, minX: bounds.minX - STAGE_X, maxX: bounds.maxX - STAGE_X }
 }

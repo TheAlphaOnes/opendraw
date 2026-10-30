@@ -9,6 +9,7 @@
 
 import type { VueDrawBindableShape } from '../elements/binding.js'
 import { isLinearElement } from '../elements/factories.js'
+import type { GroupSelectionChrome } from '../elements/groups.js'
 import { clamp } from '../geometry/points.js'
 import type { HandleBox, LinearHandle, PointerKind, SelectionFrame } from '../interaction/handles.js'
 import {
@@ -41,6 +42,12 @@ export interface OverlayRenderInput {
    * idle hover. Empty when nothing probes.
    */
   bindingCandidates: readonly VueDrawBindableShape[]
+  /**
+   * Group-aware chrome (see `groupSelectionChrome`): per-element outlines
+   * inside a multi-selection, dashed boxes for selected groups and the
+   * edited group. Omitted, a multi-selection draws only its common frame.
+   */
+  groupChrome?: GroupSelectionChrome
   canvasSize: CanvasSize
   dpr: number
 }
@@ -56,7 +63,7 @@ const HANDLE_RADIUS_PX = 2
 const MARQUEE_FILL_ALPHA = 0.06
 
 export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRenderInput): void {
-  const { selectedElements, appState, pointer, marquee, previewElements, bindingCandidates } = input
+  const { selectedElements, appState, pointer, marquee, previewElements, bindingCandidates, groupChrome } = input
   const { theme, viewport, editingId } = appState
   const zoom = viewport.zoom
   const dark = theme === 'dark'
@@ -91,6 +98,12 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
   const isEditingText =
     selectedElements.length === 1 && selectedElements[0]!.id === editingId
 
+  // The edited group keeps its dashed box even with nothing selected, so
+  // the user always sees which group they are inside.
+  if (groupChrome?.editingBounds && !isEditingText) {
+    drawDashedBounds(ctx, groupChrome.editingBounds, UI.selection, zoom)
+  }
+
   if (selectedElements.length > 0 && !isEditingText) {
     const frame = selectionFrameOf(selectedElements)
     if (frame) {
@@ -104,6 +117,23 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
       if (selectedElements.length === 1) {
         drawSingleBorder(ctx, frame, accent, zoom)
       } else {
+        // Excalidraw's multi-selection: every element selected on its own
+        // keeps a thin outline, every selected group a dashed box, and the
+        // whole selection one dashed frame carrying the handles.
+        for (const element of selectedElements) {
+          if (groupChrome?.individualIds.has(element.id)) {
+            const own = selectionFrameOf([element])
+            if (own) {
+              drawSingleBorder(ctx, own, element.locked ? UI.locked : UI.selection, zoom)
+            }
+          }
+        }
+        for (const bounds of groupChrome?.groupBounds ?? []) {
+          // A lone selected group IS the frame; its box would only double it.
+          if (!boundsMatchFrame(bounds, frame)) {
+            drawDashedBounds(ctx, bounds, accent, zoom)
+          }
+        }
         drawGroupBorder(ctx, frame, accent, zoom)
       }
       drawHandles(ctx, getHandleLayout(frame, { zoom, pointer }), accent, zoom, dark)
@@ -156,6 +186,31 @@ function drawGroupBorder(
   ctx.lineWidth = 1 / zoom
   ctx.setLineDash([2 / zoom])
   ctx.strokeRect(frame.x, frame.y, frame.width, frame.height)
+  ctx.restore()
+}
+
+function boundsMatchFrame(bounds: Bounds, frame: SelectionFrame): boolean {
+  const epsilon = 1e-6
+  return (
+    Math.abs(bounds.x1 - frame.x) < epsilon &&
+    Math.abs(bounds.y1 - frame.y) < epsilon &&
+    Math.abs(bounds.x2 - (frame.x + frame.width)) < epsilon &&
+    Math.abs(bounds.y2 - (frame.y + frame.height)) < epsilon
+  )
+}
+
+/** Dashed box around a group's common bounds. */
+function drawDashedBounds(
+  ctx: CanvasRenderingContext2D,
+  bounds: Bounds,
+  color: string,
+  zoom: number,
+): void {
+  ctx.save()
+  ctx.strokeStyle = color
+  ctx.lineWidth = 1 / zoom
+  ctx.setLineDash([4 / zoom, 4 / zoom])
+  ctx.strokeRect(bounds.x1, bounds.y1, bounds.x2 - bounds.x1, bounds.y2 - bounds.y1)
   ctx.restore()
 }
 

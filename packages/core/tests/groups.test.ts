@@ -154,3 +154,24 @@ describe('groups — document', () => {
     expect(file.elements[1]!.groupIds).toEqual([])
   })
 })
+
+describe('duplicateElements', async () => {
+  const { duplicateElements } = await import('../src/elements/duplicate.js')
+  const { newLinearElement } = await import('../src/elements/factories.js')
+  it('remaps bindings inside the copied set and drops the rest', () => {
+    const shape = rect(0)
+    const other = rect(100)
+    const line = {
+      ...newLinearElement('arrow', { x: 0, y: 0, points: [{ x: 0, y: 0 }, { x: 50, y: 0 }] }),
+      startBinding: { elementId: shape.id },
+      endBinding: { elementId: other.id },
+    }
+    const [shapeCopy, lineCopy] = duplicateElements([shape, line], { offset: { x: 5, y: 5 } })
+    expect(shapeCopy!.x).toBe(5)
+    expect(lineCopy!.type).toBe('arrow')
+    if (lineCopy!.type === 'arrow') {
+      expect(lineCopy!.startBinding).toEqual({ elementId: shapeCopy!.id })
+      expect(lineCopy!.endBinding).toBeNull()
+    }
+  })
+})

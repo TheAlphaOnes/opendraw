@@ -39,7 +39,7 @@ const visible = computed(() => ctx.elements.value.length === 0)
 
 <style scoped>
 .welcome {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 5;
   display: flex;
@@ -121,7 +121,7 @@ const visible = computed(() => ctx.elements.value.length === 0)
 }
 
 .welcome__zoom-hint {
-  position: fixed;
+  position: absolute;
   bottom: 56px;
   left: 20px;
   margin: 0;

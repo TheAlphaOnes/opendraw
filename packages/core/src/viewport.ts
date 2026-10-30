@@ -75,3 +75,47 @@ export function panViewport(viewport: Viewport, dx: number, dy: number): Viewpor
     scrollY: viewport.scrollY + dy / viewport.zoom,
   }
 }
+
+export interface FitViewportOptions {
+  /** CSS-pixel size of the canvas. */
+  size: { width: number; height: number }
+  /**
+   * `scale-down` never zooms past 100% (fit-all, Shift+1 / Shift+2);
+   * `contain` fills the canvas at any zoom (Shift+3) — Excalidraw's
+   * zoomToFitBounds fit modes.
+   */
+  fit: 'scale-down' | 'contain'
+}
+
+/**
+ * The viewport that centers `bounds` and fits it on the canvas. Empty or
+ * degenerate bounds keep the current zoom and only center.
+ */
+export function fitViewportToBounds(
+  viewport: Viewport,
+  bounds: { x1: number; y1: number; x2: number; y2: number },
+  options: FitViewportOptions,
+): Viewport {
+  const { width, height } = options.size
+  const boundsWidth = bounds.x2 - bounds.x1
+  const boundsHeight = bounds.y2 - bounds.y1
+  if (!Number.isFinite(boundsWidth) || !Number.isFinite(boundsHeight) || width <= 0 || height <= 0) {
+    return viewport
+  }
+  let zoom = viewport.zoom
+  if (boundsWidth > 0 || boundsHeight > 0) {
+    const fitZoom = Math.min(
+      boundsWidth > 0 ? width / boundsWidth : Number.POSITIVE_INFINITY,
+      boundsHeight > 0 ? height / boundsHeight : Number.POSITIVE_INFINITY,
+    )
+    zoom = options.fit === 'scale-down' ? Math.min(fitZoom, 1) : fitZoom
+  }
+  zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom))
+  const centerX = (bounds.x1 + bounds.x2) / 2
+  const centerY = (bounds.y1 + bounds.y2) / 2
+  return {
+    zoom,
+    scrollX: width / 2 / zoom - centerX,
+    scrollY: height / 2 / zoom - centerY,
+  }
+}

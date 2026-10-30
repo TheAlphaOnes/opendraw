@@ -1,9 +1,11 @@
 import { onBeforeUnmount, onMounted } from 'vue'
 
-import type { Point, ToolId, VueDrawElement } from '@vuedraw/core'
-import { moveElements } from '@vuedraw/core'
+import type { Point, VueDrawElement } from '@vuedraw/core'
+import { elementsInGroup, moveElements, parentEditingGroupId } from '@vuedraw/core'
 
 import { dispatchActionKey } from '../actions/registry.js'
+import { isTypingTarget } from '../actions/keys.js'
+import { TOOL_BY_KEY } from '../constants/tools.js'
 import { finishLinearDraft } from './linearDraft.js'
 import type { CanvasRuntime } from './runtime.js'
 
@@ -13,21 +15,6 @@ import type { CanvasRuntime } from './runtime.js'
  * selection nudging and tool shortcuts.
  */
 
-const TOOL_SHORTCUTS: Record<string, ToolId> = {
-  '1': 'selection',
-  h: 'hand',
-  '2': 'rectangle',
-  '3': 'diamond',
-  '4': 'ellipse',
-  '5': 'arrow',
-  '6': 'line',
-  p: 'freedraw',
-  t: 'text',
-  '9': 'image',
-  e: 'eraser',
-  f: 'frame',
-  k: 'laser',
-}
 
 const NUDGE_STEP = 2
 const NUDGE_STEP_LARGE = 20
@@ -39,11 +26,18 @@ const ARROW_DIRECTIONS: Record<string, Point> = {
   ArrowDown: { x: 0, y: 1 },
 }
 
-export interface CanvasKeyboard {
-  onKeyDown: (event: KeyboardEvent) => void
+/** Controls that own Space/Enter themselves (activation keys). */
+function isActivatable(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && target.closest('button, [role="button"], [role="radio"], a, select') !== null
 }
 
-export function useCanvasKeyboard(rt: CanvasRuntime): CanvasKeyboard {
+/**
+ * Keys are handled on the whole editor (the `.vuedraw-root` around the
+ * canvas, or the canvas itself when mounted headless) — Excalidraw's
+ * container-level onKeyDown — so a shortcut still works right after a
+ * toolbar click moved focus onto a button.
+ */
+export function useCanvasKeyboard(rt: CanvasRuntime): void {
   const { ctx } = rt
 
   function nudge(direction: Point, large: boolean): void {
@@ -56,9 +50,31 @@ export function useCanvasKeyboard(rt: CanvasRuntime): CanvasKeyboard {
     }
   }
 
+  /**
+   * Escape inside an edited group climbs one level and reselects at that
+   * level (actionDeselect's parent-group walk); otherwise it deselects.
+   */
+  function stepOutOrDeselect(): void {
+    const editing = ctx.editingGroupId.value
+    if (!editing) {
+      ctx.select(null)
+      return
+    }
+    const elements = ctx.elements.value
+    const selected = ctx.selectedElements.value
+    const keep = selected.length > 0 ? selected : elementsInGroup(elements, editing)
+    ctx.setEditingGroup(parentEditingGroupId(keep, editing))
+    ctx.selectGrouped(keep.map((el) => el.id))
+  }
+
   function onKeyDown(event: KeyboardEvent): void {
-    // The text editor handles its own keys.
-    if (ctx.editingId.value) {
+    // The text editor and other inputs handle their own keys; a nested
+    // editor's own handler may also have consumed the event already.
+    if (ctx.editingId.value || event.defaultPrevented || isTypingTarget(event.target)) {
+      return
+    }
+    // A focused button keeps Space/Enter as its activation keys.
+    if ((event.code === 'Space' || event.key === 'Enter') && isActivatable(event.target)) {
       return
     }
     if (event.code === 'Space') {
@@ -75,7 +91,7 @@ export function useCanvasKeyboard(rt: CanvasRuntime): CanvasKeyboard {
         finishLinearDraft(rt)
         return
       }
-      ctx.select(null)
+      stepOutOrDeselect()
       return
     }
     if (event.key === 'Enter' && drafting) {
@@ -91,7 +107,8 @@ export function useCanvasKeyboard(rt: CanvasRuntime): CanvasKeyboard {
       nudge(direction, event.shiftKey)
       return
     }
-    const tool = event.metaKey || event.ctrlKey ? undefined : TOOL_SHORTCUTS[event.key.toLowerCase()]
+    const plain = !event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey
+    const tool = plain ? TOOL_BY_KEY.get(event.key.toLowerCase())?.tool : undefined
     if (tool) {
       if (drafting) {
         finishLinearDraft(rt)
@@ -119,14 +136,18 @@ export function useCanvasKeyboard(rt: CanvasRuntime): CanvasKeyboard {
     }
   }
 
+  let keyRoot: HTMLElement | null = null
+
   onMounted(() => {
+    const host = rt.hostRef.value
+    keyRoot = host?.closest<HTMLElement>('.vuedraw-root') ?? host
+    keyRoot?.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onWindowKeyUp)
     window.addEventListener('keydown', onWindowKeyDown)
   })
   onBeforeUnmount(() => {
+    keyRoot?.removeEventListener('keydown', onKeyDown)
     window.removeEventListener('keyup', onWindowKeyUp)
     window.removeEventListener('keydown', onWindowKeyDown)
   })
-
-  return { onKeyDown }
 }

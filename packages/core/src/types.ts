@@ -210,6 +210,18 @@ export interface ElementStyle {
   opacity: Opacity
 }
 
+/**
+ * A copied style (Mod+Alt+C): the element style plus the type-specific
+ * parts that only apply where they make sense on paste.
+ */
+export interface StylePayload {
+  style: ElementStyle
+  /** Present when copied from a text element. */
+  textStyle?: TextStyle
+  /** Present when copied from a rectangle or diamond. */
+  roundness?: Roundness | null
+}
+
 /** Style props relevant only to text elements. */
 export interface TextStyle {
   fontSize: number

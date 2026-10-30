@@ -1,7 +1,7 @@
 <script setup lang="ts">
 defineProps<{
   /** Fixed placement of the floating panel. */
-  position: 'left' | 'right' | 'bottom' | 'top-left' | 'bottom-left' | 'top-center'
+  position: 'left' | 'right' | 'bottom' | 'top-left' | 'bottom-left' | 'top-center' | 'properties'
 }>()
 </script>
 
@@ -16,12 +16,14 @@ defineProps<{
 
 <style scoped>
 /* Floating surface: radius 12, hairline border, two layered neutral shadows,
-   6px backdrop blur (inside the <= 8px performance budget). */
+   6px backdrop blur (inside the <= 8px performance budget). Panels are
+   positioned inside the editor root (absolute, not fixed) so an embedded
+   editor keeps its chrome within its own box — Excalidraw's container. */
 .ui-panel {
-  position: fixed;
+  position: absolute;
   z-index: 10;
-  max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 32px);
+  max-width: calc(100% - 32px);
+  max-height: calc(100% - 32px);
   overflow-y: auto;
   padding: 8px;
   background: var(--vd-surface-float);
@@ -44,10 +46,15 @@ defineProps<{
   transform: translateY(-50%);
 }
 
+/* Centered with auto margins, not left:50% + translate — a fixed box at
+   left:50% can only shrink-to-fit into HALF the viewport, which wraps a
+   wide island long before the screen runs out of room. */
 .ui-panel--bottom {
   bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  width: fit-content;
+  margin-inline: auto;
 }
 
 .ui-panel--top-left {
@@ -57,13 +64,34 @@ defineProps<{
 
 .ui-panel--top-center {
   top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  width: fit-content;
+  margin-inline: auto;
 }
 
 .ui-panel--bottom-left {
   bottom: 16px;
   left: 16px;
+}
+
+/* Excalidraw's properties island: top-left column, clear of the zoom
+   island below it; on phones it becomes a bottom sheet over the canvas. */
+.ui-panel--properties {
+  top: 16px;
+  left: 16px;
+  width: 232px;
+  max-height: calc(100% - 112px);
+}
+
+@media (max-width: 640px) {
+  .ui-panel--properties {
+    top: auto;
+    right: 16px;
+    bottom: 76px;
+    width: auto;
+    max-height: 40%;
+  }
 }
 
 .ui-panel__header {

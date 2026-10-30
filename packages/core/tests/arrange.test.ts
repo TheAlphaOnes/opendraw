@@ -106,3 +106,24 @@ describe('arrange — document', () => {
     expect(doc.getElement(a.id)!.x).toBe(0)
   })
 })
+
+describe('styles — copy and paste', async () => {
+  const { stylePayloadOf, newTextElement } = await import('../src/elements/factories.js')
+  it('pastes onto the selection in one step and leaves defaults alone', () => {
+    const source = { ...rect(0, 0), strokeColor: '#e03131', roundness: 'round' as const }
+    const target = rect(50, 0)
+    const text = newTextElement({ x: 0, y: 40, text: 'hi' })
+    const doc = new VueDrawDocument({ elements: [source, target, text] })
+    const payload = stylePayloadOf(source)
+    doc.select([target.id, text.id])
+    doc.pasteStyle(payload)
+    expect(doc.getElement(target.id)!.strokeColor).toBe('#e03131')
+    expect((doc.getElement(target.id) as typeof source).roundness).toBe('round')
+    expect(doc.getElement(text.id)!.strokeColor).toBe('#e03131')
+    doc.undo()
+    expect(doc.getElement(target.id)!.strokeColor).toBe('#1e1e1e')
+    doc.select(null)
+    doc.pasteStyle(payload)
+    expect(doc.getAppState().style.strokeColor).toBe('#1e1e1e')
+  })
+})

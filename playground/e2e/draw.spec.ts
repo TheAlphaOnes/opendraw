@@ -28,7 +28,7 @@ test('draws a rectangle that lands in the document selected', async ({ page }) =
   expect(drawn.type).toBe('rectangle')
   // The draw gesture ends with the shape selected and undo available.
   expect((await scene(page)).selection).toEqual([drawn.id])
-  await expect(page.getByRole('button', { name: 'Undo (Ctrl+Z)' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: /^Undo \(/ })).toBeEnabled()
 })
 
 test('leaves no selection-chrome trail while dragging', async ({ page }) => {
@@ -278,7 +278,7 @@ test('draws an ellipse that lands in the document selected', async ({ page }) =>
   expect(drawn.type).toBe('ellipse')
   // The draw gesture ends with the shape selected and undo available.
   expect((await scene(page)).selection).toEqual([drawn.id])
-  await expect(page.getByRole('button', { name: 'Undo (Ctrl+Z)' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: /^Undo \(/ })).toBeEnabled()
 })
 
 test('captures a freedraw stroke as a pointer-move pressure path', async ({ page }) => {

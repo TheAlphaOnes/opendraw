@@ -87,7 +87,7 @@ test('restores a shape and its bound arrow across a page reload', async ({ page 
 
   // The restore recorded no history: a freshly loaded page cannot undo
   // itself into an empty scene.
-  await expect(page.getByRole('button', { name: 'Undo (Ctrl+Z)' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: /^Undo \(/ })).toBeDisabled()
 })
 
 test('degrades to a fresh scene on a corrupted payload', async ({ page }) => {

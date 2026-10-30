@@ -14,7 +14,8 @@
  * every one of its members is selected. One source of truth, no drift.
  */
 
-import type { VueDrawElement } from '../types.js'
+import { getCommonBounds } from '../geometry/bounds.js'
+import type { Bounds, VueDrawElement } from '../types.js'
 import { newId } from '../utils/rng.js'
 
 export type GroupId = string
@@ -275,4 +276,35 @@ export function groupToEnter(
   editingGroupId: GroupId | null,
 ): GroupId | null {
   return outermostGroupId(element, editingGroupId)
+}
+
+/** What the selection chrome draws for groups (Excalidraw's interactiveScene). */
+export interface GroupSelectionChrome {
+  /** One dashed box per group selected as a unit. */
+  groupBounds: Bounds[]
+  /** Dashed box around the group being edited, or null. */
+  editingBounds: Bounds | null
+  /** Selected elements NOT selected via a group — each gets its own outline. */
+  individualIds: ReadonlySet<string>
+}
+
+export function groupSelectionChrome(
+  elements: readonly VueDrawElement[],
+  selectedIds: Readonly<Record<string, true>>,
+  editingGroupId: GroupId | null,
+): GroupSelectionChrome {
+  const groups = selectedGroupIds(elements, selectedIds, editingGroupId)
+  const groupSet = new Set(groups)
+  const individualIds = new Set<string>()
+  for (const element of elements) {
+    if (selectedIds[element.id] && !element.groupIds.some((id) => id !== editingGroupId && groupSet.has(id))) {
+      individualIds.add(element.id)
+    }
+  }
+  const editingMembers = editingGroupId ? elementsInGroup(elements, editingGroupId) : []
+  return {
+    groupBounds: groups.map((groupId) => getCommonBounds(elementsInGroup(elements, groupId))),
+    editingBounds: editingMembers.length > 0 ? getCommonBounds(editingMembers) : null,
+    individualIds,
+  }
 }

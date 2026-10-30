@@ -8,17 +8,24 @@ export interface UiSegmentedOption {
   label: string
   /** Optional registry icon — icon options render as 32x32 hit areas. */
   icon?: IconName
+  /** Shorter visible text when the label is too long for the track. */
+  text?: string
 }
 </script>
 
 <script setup lang="ts">
 import UiIcon from './UiIcon.vue'
 
-const props = defineProps<{
-  options: UiSegmentedOption[]
-  modelValue: string
-  ariaLabel: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    options: UiSegmentedOption[]
+    modelValue: string
+    ariaLabel: string
+    /** Stretch the track to its container, options sharing the width. */
+    block?: boolean
+  }>(),
+  { block: false },
+)
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
@@ -47,7 +54,7 @@ function onKeyDown(event: KeyboardEvent): void {
 </script>
 
 <template>
-  <div class="ui-segmented" role="radiogroup" :aria-label="props.ariaLabel" @keydown="onKeyDown">
+  <div class="ui-segmented" :class="{ 'ui-segmented--block': props.block }" role="radiogroup" :aria-label="props.ariaLabel" @keydown="onKeyDown">
     <button
       v-for="option in props.options"
       :key="option.value"
@@ -61,7 +68,7 @@ function onKeyDown(event: KeyboardEvent): void {
       @click="select(option)"
     >
       <UiIcon v-if="option.icon" :name="option.icon" :size="16" />
-      <span v-else class="ui-segmented__label">{{ option.label }}</span>
+      <span v-else class="ui-segmented__label">{{ option.text ?? option.label }}</span>
     </button>
   </div>
 </template>
@@ -75,6 +82,17 @@ function onKeyDown(event: KeyboardEvent): void {
   padding: 2px;
   border-radius: 10px;
   background: var(--vd-hover);
+}
+
+.ui-segmented--block {
+  display: flex;
+  width: 100%;
+}
+
+.ui-segmented--block .ui-segmented__option {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 4px;
 }
 
 .ui-segmented__option {

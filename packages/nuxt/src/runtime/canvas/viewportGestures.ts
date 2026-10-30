@@ -1,4 +1,10 @@
-import { screenToScene } from '@vuedraw/core'
+import {
+  findElementAt,
+  hitThreshold,
+  pointInSelectionFrame,
+  screenToScene,
+  selectionFrameOf,
+} from '@vuedraw/core'
 
 import { imageFilesOf } from '../services/image.service.js'
 import type { CanvasRuntime } from './runtime.js'
@@ -65,4 +71,35 @@ export function onWindowPaste(rt: CanvasRuntime, event: ClipboardEvent): void {
   event.preventDefault()
   const size = ctx.viewportSize.value
   ctx.insertImageFiles(images, screenToScene({ x: size.width / 2, y: size.height / 2 }, ctx.viewport.value))
+}
+
+/** Where a context menu opened, and over what. */
+export interface CanvasContextMenuRequest {
+  x: number
+  y: number
+  /** `element` when the press landed on an element (now selected). */
+  target: 'element' | 'canvas'
+}
+
+/**
+ * Right-click: an element under the pointer joins the selection first (its
+ * whole group, as a left click would), so the element menu acts on what
+ * the user pointed at — Excalidraw's contextmenu handler.
+ */
+export function resolveContextMenu(rt: CanvasRuntime, event: MouseEvent): CanvasContextMenuRequest {
+  const { ctx } = rt
+  const scenePoint = rt.toScene(event)
+  const hit = findElementAt(ctx.elements.value, scenePoint, hitThreshold(ctx.viewport.value.zoom))
+  if (hit && !ctx.isIdSelected(hit.id)) {
+    const editing = ctx.editingGroupId.value
+    if (editing && !hit.groupIds.includes(editing)) {
+      ctx.setEditingGroup(null)
+    }
+    ctx.selectGrouped([hit.id])
+  }
+  // Excalidraw: a hit, or a press inside the selection's common box, opens
+  // the element menu; anywhere else the canvas menu.
+  const frame = selectionFrameOf(ctx.selectedElements.value)
+  const insideSelection = frame !== null && pointInSelectionFrame(frame, scenePoint, 0)
+  return { x: event.clientX, y: event.clientY, target: hit || insideSelection ? 'element' : 'canvas' }
 }

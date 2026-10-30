@@ -41,6 +41,6 @@ test('a whole eraser stroke is a single undo step', async ({ page }) => {
 
   // One undo resurrects everything the stroke removed — beginStep on
   // pointerdown, endStep on pointerup.
-  await page.getByRole('button', { name: 'Undo (Ctrl+Z)' }).click()
+  await page.getByRole('button', { name: /^Undo \(/ }).click()
   await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
 })

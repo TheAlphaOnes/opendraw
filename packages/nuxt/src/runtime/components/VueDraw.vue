@@ -11,6 +11,7 @@ import {
 import { useScenePersistence } from '../composables/useScenePersistence.js'
 import { DEFAULT_SCENE_STORAGE_KEY } from '../persistence/persistedScene.js'
 import { resolveThemeDefault, type ThemeDefault } from '../persistence/systemTheme.js'
+import type { CanvasContextMenuRequest } from '../canvas/viewportGestures.js'
 import VueDrawCanvas from './VueDrawCanvas.vue'
 import ToolDock from './toolbar/ToolDock.vue'
 import StylePanel from './panels/StylePanel.vue'
@@ -114,14 +115,15 @@ onBeforeUnmount(() => {
 })
 
 // Context menu (full UI only).
-const menu = reactive({ x: 0, y: 0, visible: false })
-
-function openMenu(payload: { x: number; y: number }) {
-  menu.x = payload.x
-  menu.y = payload.y
-  menu.visible = true
+const menu = reactive<CanvasContextMenuRequest & { visible: boolean }>({
+  x: 0,
+  y: 0,
+  target: 'canvas',
+  visible: false,
+})
+function openMenu(payload: CanvasContextMenuRequest) {
+  Object.assign(menu, payload, { visible: true })
 }
-
 function closeMenu() {
   menu.visible = false
 }
@@ -141,6 +143,7 @@ const themeAttr = computed(() => ctx.theme.value)
       :x="menu.x"
       :y="menu.y"
       :visible="menu.visible"
+      :target="menu.target"
       @close="closeMenu"
     />
     <ShortcutsDialog v-if="ui !== 'none'" />

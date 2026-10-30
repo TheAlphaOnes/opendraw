@@ -126,7 +126,7 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
       // the element selected, and the tool reverted to selection.
       ctx.doc.beginStep()
       ctx.select(hit.id)
-      ctx.setActiveTool('selection')
+      ctx.finishToolUse()
       ctx.setEditing(hit.id)
       return
     }
@@ -263,9 +263,16 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
   if (hit) {
     const wasSelected = ctx.isIdSelected(hit.id)
     if (event.shiftKey) {
-      ctx.select(hit.id, 'toggle')
+      // Shift toggles the hit's whole (visible) group in or out.
+      ctx.selectGrouped([hit.id], 'toggle')
     } else if (!wasSelected) {
-      ctx.select(hit.id)
+      // Pressing outside the edited group leaves it (Excalidraw's
+      // clearSelection keeps editing only for a hit inside the group).
+      const editing = ctx.editingGroupId.value
+      if (editing && !hit.groupIds.includes(editing)) {
+        ctx.setEditingGroup(null)
+      }
+      ctx.selectGrouped([hit.id])
     }
     // Locked elements stay selectable but immovable.
     if (ctx.selectedElements.value.every((el) => el.locked)) {
@@ -281,6 +288,7 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
       originals: snapshotSelection(rt),
       hitId: !event.shiftKey && wasSelected ? hit.id : null,
       didDrag: false,
+      duplicated: false,
     }
     ctx.doc.beginStep()
     return
@@ -303,6 +311,7 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
       // No element was pressed, so a no-drag click keeps the selection.
       hitId: null,
       didDrag: false,
+      duplicated: false,
     }
     ctx.doc.beginStep()
     return
@@ -315,6 +324,8 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
     baseIds: event.shiftKey ? ctx.selectedElements.value.map((el) => el.id) : [],
   }
   if (!event.shiftKey) {
+    // An empty-canvas press leaves the edited group with the selection.
+    ctx.setEditingGroup(null)
     ctx.select(null)
   }
   rt.marquee.value = null
