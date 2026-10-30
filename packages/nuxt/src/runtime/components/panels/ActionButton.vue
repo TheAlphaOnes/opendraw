@@ -3,7 +3,7 @@ import { computed } from 'vue'
 
 import { formatKeys } from '../../actions/keys.js'
 import { actionById, isActionEnabled, runAction, type ActionId } from '../../actions/registry.js'
-import { useVueDraw } from '../../composables/useVueDraw.js'
+import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import type { IconName } from '../../constants/icons.js'
 import UiIconButton from '../ui/UiIconButton.vue'
 
@@ -24,7 +24,7 @@ const props = withDefaults(
   { icon: undefined, label: undefined, active: false },
 )
 
-const ctx = useVueDraw()
+const ctx = useOpenDraw()
 const definition = computed(() => actionById(props.action))
 
 const accessibleName = computed(() => {

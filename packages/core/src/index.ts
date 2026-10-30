@@ -1,5 +1,5 @@
 /**
- * @vuedraw/core — public API.
+ * @opendraw/core — public API.
  *
  * Layers, in dependency order:
  *   types          — the element model & app state contracts
@@ -7,7 +7,7 @@
  *   elements       — factories, copy-on-write mutation, hit-testing
  *   viewport       — scene ↔ screen transforms
  *   interaction    — handles + pure transform math
- *   scene          — VueDrawDocument store + history
+ *   scene          — OpenDrawDocument store + history
  *   render         — rough.js scene renderer + interactive overlay
  *   export         — JSON files + PNG and SVG export
  */

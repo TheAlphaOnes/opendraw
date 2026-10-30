@@ -7,12 +7,12 @@
  * threads an element into the middle of a group.
  */
 
-import type { ReorderAction, VueDrawElement } from '../types.js'
+import type { ReorderAction, OpenDrawElement } from '../types.js'
 import { isBoundText } from './boundText.js'
 import { outermostGroupId } from './groups.js'
 
 /** The unit an element belongs to when stepping past it. */
-function unitKey(element: VueDrawElement, editingGroupId: string | null): string {
+function unitKey(element: OpenDrawElement, editingGroupId: string | null): string {
   if (isBoundText(element)) {
     return `el:${element.containerId}`
   }
@@ -25,11 +25,11 @@ function unitKey(element: VueDrawElement, editingGroupId: string | null): string
  * when nothing moves.
  */
 export function reorderElements(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   ids: ReadonlySet<string>,
   action: ReorderAction,
   editingGroupId: string | null = null,
-): VueDrawElement[] | null {
+): OpenDrawElement[] | null {
   if (action === 'front' || action === 'back') {
     const selected = elements.filter((el) => ids.has(el.id))
     const rest = elements.filter((el) => !ids.has(el.id))

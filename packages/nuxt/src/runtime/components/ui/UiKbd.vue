@@ -36,7 +36,7 @@ const display = computed(() => formatKeys(props.keys))
 
 .ui-kbd--inline {
   gap: 0;
-  color: var(--vd-ink-soft);
+  color: var(--od-ink-soft);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -45,11 +45,11 @@ const display = computed(() => formatKeys(props.keys))
 .ui-kbd__cap {
   min-width: 20px;
   padding: 2px 6px;
-  border: 1px solid var(--vd-border);
-  border-radius: var(--vd-radius-s);
-  background: var(--vd-surface);
+  border: 1px solid var(--od-border);
+  border-radius: var(--od-radius-s);
+  background: var(--od-surface);
   font: 500 11px/1.4 inherit;
   text-align: center;
-  color: var(--vd-ink);
+  color: var(--od-ink);
 }
 </style>

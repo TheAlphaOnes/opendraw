@@ -81,7 +81,7 @@ function onKeyDown(event: KeyboardEvent): void {
   gap: 2px;
   padding: 2px;
   border-radius: 10px;
-  background: var(--vd-hover);
+  background: var(--od-hover);
 }
 
 .ui-segmented--block {
@@ -103,19 +103,19 @@ function onKeyDown(event: KeyboardEvent): void {
   height: 32px;
   padding: 0 8px;
   border: none;
-  border-radius: var(--vd-radius-m);
+  border-radius: var(--od-radius-m);
   background: transparent;
-  color: var(--vd-ink-soft);
+  color: var(--od-ink-soft);
   cursor: pointer;
   transition:
-    background-color 150ms var(--vd-ease),
-    color 150ms var(--vd-ease),
-    box-shadow 150ms var(--vd-ease),
-    transform var(--vd-fast) var(--vd-ease);
+    background-color 150ms var(--od-ease),
+    color 150ms var(--od-ease),
+    box-shadow 150ms var(--od-ease),
+    transform var(--od-fast) var(--od-ease);
 }
 
 .ui-segmented__option:hover {
-  color: var(--vd-ink);
+  color: var(--od-ink);
 }
 
 .ui-segmented__option:active {
@@ -123,14 +123,14 @@ function onKeyDown(event: KeyboardEvent): void {
 }
 
 .ui-segmented__option:focus-visible {
-  outline: 2px solid var(--vd-accent);
+  outline: 2px solid var(--od-accent);
   outline-offset: 1px;
 }
 
 .ui-segmented__option.is-active {
-  background: var(--vd-surface-raised);
-  color: var(--vd-ink);
-  box-shadow: var(--vd-shadow-1);
+  background: var(--od-surface-raised);
+  color: var(--od-ink);
+  box-shadow: var(--od-shadow-1);
 }
 
 .ui-segmented__label {

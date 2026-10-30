@@ -1,6 +1,6 @@
 import { onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
 
-import { groupSelectionChrome, renderOverlay, renderScene } from '@vuedraw/core'
+import { groupSelectionChrome, renderOverlay, renderScene } from '@opendraw/core'
 
 import { imageDataUrlsOf, imageResolver, requestImageDecode } from '../services/image.service.js'
 import type { CanvasRuntime } from './runtime.js'

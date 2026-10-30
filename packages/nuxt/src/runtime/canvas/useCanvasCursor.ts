@@ -11,7 +11,7 @@ import {
   pointInSelectionFrame,
   resizeCursorFor,
   selectionFrameOf,
-} from '@vuedraw/core'
+} from '@opendraw/core'
 
 import type { CanvasRuntime } from './runtime.js'
 import {

@@ -15,7 +15,7 @@ import { boundsContain, getElementBounds, boundsIntersect, pointInBounds } from 
 import { distanceToSegment, segmentsOf, unrotatePoint } from '../geometry/points.js'
 import { isLinearElement, isFreedrawElement } from './factories.js'
 import { TRANSPARENT } from './defaults.js'
-import type { Bounds, Point, VueDrawElement } from '../types.js'
+import type { Bounds, Point, OpenDrawElement } from '../types.js'
 
 /** Screen-space collision base (0.85 * Excalidraw's 8px), scene-scaled. */
 export function hitThreshold(zoom: number): number {
@@ -23,7 +23,7 @@ export function hitThreshold(zoom: number): number {
 }
 
 /** Local-space point: un-rotate about the element center. */
-function toLocal(element: VueDrawElement, point: Point): Point {
+function toLocal(element: OpenDrawElement, point: Point): Point {
   if (element.angle === 0) {
     return { ...point }
   }
@@ -35,7 +35,7 @@ function toLocal(element: VueDrawElement, point: Point): Point {
 }
 
 /** True when the element's background makes its interior clickable. */
-function hasOpaqueBackground(element: VueDrawElement): boolean {
+function hasOpaqueBackground(element: OpenDrawElement): boolean {
   return element.backgroundColor !== TRANSPARENT
 }
 
@@ -109,7 +109,7 @@ function diamondPoints(x: number, y: number, width: number, height: number): Poi
 }
 
 /** Precise point-in-element (local frame). */
-function pointInsideShape(element: VueDrawElement, local: Point): boolean {
+function pointInsideShape(element: OpenDrawElement, local: Point): boolean {
   const { x, y, width, height } = element
   switch (element.type) {
     case 'rectangle':
@@ -141,7 +141,7 @@ function pointInsideShape(element: VueDrawElement, local: Point): boolean {
 }
 
 /** Precise distance from the point to the element's outline (local frame). */
-function outlineDistance(element: VueDrawElement, local: Point): number {
+function outlineDistance(element: OpenDrawElement, local: Point): number {
   const { x, y, width, height } = element
   switch (element.type) {
     case 'rectangle':
@@ -188,7 +188,7 @@ function outlineDistance(element: VueDrawElement, local: Point): number {
  * `threshold` is in scene px (screen tolerance / zoom).
  */
 export function hitTestElement(
-  element: VueDrawElement,
+  element: OpenDrawElement,
   point: Point,
   threshold: number,
 ): boolean {
@@ -231,16 +231,16 @@ export function hitTestElement(
  * True when the scene point lies inside the element's area, regardless of
  * fill — the "inside" half of the hit test, rotation-aware.
  */
-export function isPointInsideElement(element: VueDrawElement, point: Point): boolean {
+export function isPointInsideElement(element: OpenDrawElement, point: Point): boolean {
   return pointInsideShape(element, toLocal(element, point))
 }
 
 /** Topmost element under the point (z-order: later wins), or null. */
 export function findElementAt(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   point: Point,
   threshold: number,
-): VueDrawElement | null {
+): OpenDrawElement | null {
   for (let i = elements.length - 1; i >= 0; i--) {
     const element = elements[i]!
     if (hitTestElement(element, point, threshold)) {
@@ -252,9 +252,9 @@ export function findElementAt(
 
 /** Elements whose (rotation-aware) bounds intersect `bounds` — marquee. */
 export function elementsInBounds(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   bounds: Bounds,
-): VueDrawElement[] {
+): OpenDrawElement[] {
   return elements.filter((element) => boundsIntersect(getElementBounds(element), bounds))
 }
 
@@ -264,9 +264,9 @@ export function elementsInBounds(
  * is "contain": brushing past an element's edge does not select it.
  */
 export function elementsWithinBounds(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   bounds: Bounds,
-): VueDrawElement[] {
+): OpenDrawElement[] {
   return elements.filter((element) => boundsContain(bounds, getElementBounds(element)))
 }
 
@@ -281,11 +281,11 @@ export function elementsWithinBounds(
  * tests (opaque shapes, text) come along for free.
  */
 export function elementsUnderEraser(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   from: Point,
   to: Point,
   zoom: number,
-): VueDrawElement[] {
+): OpenDrawElement[] {
   const threshold = hitThreshold(zoom) + 4 / zoom
   // Fast reject: anything outside the stroke's padded bounds is skipped
   // before the per-sample work.

@@ -1,24 +1,24 @@
 import { describe, expect, it } from 'vitest'
 
 import { newRectangleElement, newTextElement, newLinearElement, isTextElement } from '../src/elements/factories.js'
-import { VueDrawDocument } from '../src/scene/document.js'
+import { OpenDrawDocument } from '../src/scene/document.js'
 import { buildFile, parseFile } from '../src/export/serialize.js'
-import type { VueDrawRectangleElement } from '../src/types.js'
+import type { OpenDrawRectangleElement } from '../src/types.js'
 
 function rect(x = 0, y = 0, w = 10, h = 10) {
   return newRectangleElement({ x, y, width: w, height: h })
 }
 
-describe('VueDrawDocument — basics', () => {
+describe('OpenDrawDocument — basics', () => {
   it('starts empty with default app state', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     expect(doc.getElements()).toHaveLength(0)
     expect(doc.getAppState().activeTool).toBe('selection')
     expect(doc.getAppState().viewport.zoom).toBe(1)
   })
 
   it('adds and selects elements', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const el = rect()
     doc.addElement(el, { select: true })
     expect(doc.getElements()).toHaveLength(1)
@@ -28,7 +28,7 @@ describe('VueDrawDocument — basics', () => {
   })
 
   it('updates elements copy-on-write and bumps versions', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const el = rect()
     doc.addElement(el)
     doc.updateElement(el.id, { x: 42 })
@@ -39,7 +39,7 @@ describe('VueDrawDocument — basics', () => {
   })
 
   it('treats a no-op update as a non-change', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const el = rect(5, 5)
     doc.addElement(el)
     const before = doc.getElements()[0]
@@ -48,7 +48,7 @@ describe('VueDrawDocument — basics', () => {
   })
 
   it('deletes elements and cleans the selection', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const el = rect()
     doc.addElement(el, { select: true })
     doc.deleteElements([el.id])
@@ -58,7 +58,7 @@ describe('VueDrawDocument — basics', () => {
   })
 
   it('replaces selection instead of accumulating by default', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const a = rect()
     const b = rect(30, 30)
     doc.addElements([a, b])
@@ -72,7 +72,7 @@ describe('VueDrawDocument — basics', () => {
   })
 
   it('toggles selection members', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const a = rect()
     const b = rect(30, 30)
     doc.addElements([a, b])
@@ -82,9 +82,9 @@ describe('VueDrawDocument — basics', () => {
   })
 })
 
-describe('VueDrawDocument — history', () => {
+describe('OpenDrawDocument — history', () => {
   it('undoes and redoes an addition', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const el = rect()
     doc.addElement(el)
     expect(doc.getElements()).toHaveLength(1)
@@ -99,7 +99,7 @@ describe('VueDrawDocument — history', () => {
   })
 
   it('coalesces a step into one undo entry', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const el = rect()
     doc.addElement(el)
 
@@ -115,7 +115,7 @@ describe('VueDrawDocument — history', () => {
   })
 
   it('cancelStep restores the state the step started from', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const el = rect()
     doc.addElement(el)
     doc.beginStep()
@@ -125,7 +125,7 @@ describe('VueDrawDocument — history', () => {
   })
 
   it('never records appState-only changes as undo entries', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const el = rect()
     doc.addElement(el, { select: true })
 
@@ -141,14 +141,14 @@ describe('VueDrawDocument — history', () => {
   })
 
   it('does not record tool switches on a fresh scene', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     doc.setAppState({ activeTool: 'rectangle' })
     doc.setAppState({ activeTool: 'arrow' })
     expect(doc.canUndo).toBe(false)
   })
 
   it('clears redo only on element changes, not selection changes', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const a = rect()
     const b = rect(30, 30)
     doc.addElements([a, b])
@@ -163,7 +163,7 @@ describe('VueDrawDocument — history', () => {
   })
 
   it('restores selection and background color but not the tool', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const el = rect()
     doc.addElement(el, { select: true })
     doc.setAppState({ activeTool: 'rectangle', viewBackgroundColor: '#f8f9fa' })
@@ -177,15 +177,15 @@ describe('VueDrawDocument — history', () => {
   })
 
   it('does not record viewport changes', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     doc.setViewport({ scrollX: 100, scrollY: 50, zoom: 2 })
     expect(doc.canUndo).toBe(false)
   })
 })
 
-describe('VueDrawDocument — z-order', () => {
+describe('OpenDrawDocument — z-order', () => {
   it('moves a single selection forward and backward by one', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const a = rect()
     const b = rect(30, 30)
     const c = rect(60, 60)
@@ -200,7 +200,7 @@ describe('VueDrawDocument — z-order', () => {
   })
 
   it('brings the selection to front and sends it to back', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const a = rect()
     const b = rect(30, 30)
     const c = rect(60, 60)
@@ -215,7 +215,7 @@ describe('VueDrawDocument — z-order', () => {
   })
 
   it('keeps relative order inside a multi selection', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const a = rect()
     const b = rect(30, 30)
     const c = rect(60, 60)
@@ -228,9 +228,9 @@ describe('VueDrawDocument — z-order', () => {
   })
 })
 
-describe('VueDrawDocument — styles & duplication', () => {
+describe('OpenDrawDocument — styles & duplication', () => {
   it('styles the selection and defaults when nothing is selected', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const el = rect()
     doc.addElement(el, { select: true })
 
@@ -244,7 +244,7 @@ describe('VueDrawDocument — styles & duplication', () => {
   })
 
   it('re-measures text when its style changes', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const text = newTextElement({ x: 0, y: 0, text: 'hello' })
     doc.addElement(text, { select: true })
 
@@ -258,7 +258,7 @@ describe('VueDrawDocument — styles & duplication', () => {
   })
 
   it('duplicates the selection with an offset and selects the clones', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const el = rect(10, 10)
     doc.addElement(el, { select: true })
 
@@ -271,9 +271,9 @@ describe('VueDrawDocument — styles & duplication', () => {
   })
 })
 
-describe('VueDrawDocument — serialization', () => {
+describe('OpenDrawDocument — serialization', () => {
   it('round-trips through file format', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     doc.addElements([
       rect(),
       newLinearElement('arrow', { x: 5, y: 5, points: [{ x: 0, y: 0 }, { x: 40, y: 0 }] }),
@@ -282,7 +282,7 @@ describe('VueDrawDocument — serialization', () => {
     doc.setAppState({ viewBackgroundColor: '#f5faff' })
 
     const file = doc.serialize()
-    const restored = new VueDrawDocument({ elements: parseFile(JSON.parse(JSON.stringify(file))).elements })
+    const restored = new OpenDrawDocument({ elements: parseFile(JSON.parse(JSON.stringify(file))).elements })
     expect(restored.getElements()).toHaveLength(3)
     expect(restored.serialize().appState.viewBackgroundColor).toBe('#ffffff') // not carried by ctor
 
@@ -293,7 +293,7 @@ describe('VueDrawDocument — serialization', () => {
   })
 
   it('loadFile resets history to a fresh timeline', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     doc.addElement(rect())
     expect(doc.canUndo).toBe(true)
 
@@ -305,20 +305,20 @@ describe('VueDrawDocument — serialization', () => {
 
 describe('changeRoundness', () => {
   it('rounds the selected rectangles and diamonds in one undoable step', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     const el = rect()
     doc.addElement(el)
     doc.select(el.id)
 
     doc.changeRoundness('round')
-    expect((doc.getElement(el.id) as VueDrawRectangleElement).roundness).toBe('round')
+    expect((doc.getElement(el.id) as OpenDrawRectangleElement).roundness).toBe('round')
 
     doc.undo()
-    expect((doc.getElement(el.id) as VueDrawRectangleElement).roundness).toBeNull()
+    expect((doc.getElement(el.id) as OpenDrawRectangleElement).roundness).toBeNull()
   })
 
   it('falls back to the new-shape default when no shape is selected', () => {
-    const doc = new VueDrawDocument()
+    const doc = new OpenDrawDocument()
     doc.changeRoundness('round')
     expect(doc.getAppState().shapeRoundness).toBe('round')
     // appState-only: no history entry for a default change.

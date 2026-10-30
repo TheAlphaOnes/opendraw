@@ -6,15 +6,15 @@ test('switches the scene to dark and back', async ({ page }) => {
   await settleFrames(page)
 
   expect(await pixelAt(page, 6, 6)).toEqual([255, 255, 255])
-  await expect(page.locator('.vuedraw-root')).toHaveAttribute('data-theme', 'light')
+  await expect(page.locator('.opendraw-root')).toHaveAttribute('data-theme', 'light')
 
   await page.getByRole('button', { name: 'Dark theme' }).click()
-  await expect(page.locator('.vuedraw-root')).toHaveAttribute('data-theme', 'dark')
+  await expect(page.locator('.opendraw-root')).toHaveAttribute('data-theme', 'dark')
   await settleFrames(page)
   expect(await pixelAt(page, 6, 6)).toEqual([18, 18, 18])
 
   await page.getByRole('button', { name: 'Light theme' }).click()
-  await expect(page.locator('.vuedraw-root')).toHaveAttribute('data-theme', 'light')
+  await expect(page.locator('.opendraw-root')).toHaveAttribute('data-theme', 'light')
   await settleFrames(page)
   expect(await pixelAt(page, 6, 6)).toEqual([255, 255, 255])
 })
@@ -24,7 +24,7 @@ test('the wysiwyg editor types in the dark theme ink', async ({ page }) => {
   const box = await canvasBox(page)
 
   await page.getByRole('button', { name: 'Dark theme' }).click()
-  await expect(page.locator('.vuedraw-root')).toHaveAttribute('data-theme', 'dark')
+  await expect(page.locator('.opendraw-root')).toHaveAttribute('data-theme', 'dark')
 
   await pickTool(page, 'Text (T)')
   await page.mouse.click(at(box, 300, 200).x, at(box, 300, 200).y)

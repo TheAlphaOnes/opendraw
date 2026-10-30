@@ -5,7 +5,7 @@ import {
   screenToScene,
   selectableTarget,
   selectionFrameOf,
-} from '@vuedraw/core'
+} from '@opendraw/core'
 
 import { imageFilesOf } from '../services/image.service.js'
 import type { CanvasRuntime } from './runtime.js'

@@ -1,5 +1,5 @@
 /**
- * VueDrawDocument — the single source of truth for a drawing.
+ * OpenDrawDocument — the single source of truth for a drawing.
  *
  * Framework-agnostic: a plain observable store with a copy-on-write element
  * array and immutable app state. The Vue layer subscribes and mirrors state
@@ -43,21 +43,21 @@ import type {
   StylePayload,
   Roundness,
   TextStyle,
-  VueDrawAppState,
-  VueDrawElement,
-  VueDrawFile,
-  VueDrawLinearElement,
-  VueDrawState,
-  VueDrawStateListener,
+  OpenDrawAppState,
+  OpenDrawElement,
+  OpenDrawFile,
+  OpenDrawLinearElement,
+  OpenDrawState,
+  OpenDrawStateListener,
 } from '../types.js'
 import { layoutText, type TextLayout } from '../geometry/text.js'
 import { normalizeElement, parseFile } from '../export/serialize.js'
 import type { Point, Viewport } from '../types.js'
 import { type HistorySnapshot, SceneHistory } from './history.js'
 
-export interface VueDrawDocumentOptions {
-  elements?: readonly VueDrawElement[]
-  appState?: Partial<VueDrawAppState>
+export interface OpenDrawDocumentOptions {
+  elements?: readonly OpenDrawElement[]
+  appState?: Partial<OpenDrawAppState>
 }
 
 /** Excalidraw's FONT_SIZE_RELATIVE_INCREASE_STEP. */
@@ -65,7 +65,7 @@ const FONT_SIZE_STEP = 0.1
 /** Smallest font a keyboard step can reach (matches file coercion). */
 const MIN_FONT_SIZE = 8
 
-export const DEFAULT_APP_STATE: VueDrawAppState = {
+export const DEFAULT_APP_STATE: OpenDrawAppState = {
   activeTool: 'selection',
   theme: 'light',
   viewBackgroundColor: '#ffffff',
@@ -80,17 +80,17 @@ export const DEFAULT_APP_STATE: VueDrawAppState = {
   arrowheads: { start: null, end: 'arrow' },
 }
 
-export class VueDrawDocument {
-  private elements: VueDrawElement[]
-  private elementsMap: Map<string, VueDrawElement>
-  private appState: VueDrawAppState
+export class OpenDrawDocument {
+  private elements: OpenDrawElement[]
+  private elementsMap: Map<string, OpenDrawElement>
+  private appState: OpenDrawAppState
   private rev = 0
-  private listeners = new Set<VueDrawStateListener>()
+  private listeners = new Set<OpenDrawStateListener>()
   private history = new SceneHistory()
   /** Snapshot captured at `beginStep`, while a transaction is open. */
   private openStep: HistorySnapshot | null = null
 
-  constructor(options: VueDrawDocumentOptions = {}) {
+  constructor(options: OpenDrawDocumentOptions = {}) {
     // Hand-built elements may predate newer fields (groups, arrowheads),
     // and their labels may not be laid out yet.
     this.elements = syncBoundTexts([], (options.elements ?? []).map(normalizeElement), patchElement)
@@ -108,23 +108,23 @@ export class VueDrawDocument {
   // Reads
   // -------------------------------------------------------------------------
 
-  getState(): VueDrawState {
+  getState(): OpenDrawState {
     return { elements: this.elements, appState: this.appState, rev: this.rev }
   }
 
-  getElements(): readonly VueDrawElement[] {
+  getElements(): readonly OpenDrawElement[] {
     return this.elements
   }
 
-  getElement(id: string): VueDrawElement | undefined {
+  getElement(id: string): OpenDrawElement | undefined {
     return this.elementsMap.get(id)
   }
 
-  getAppState(): Readonly<VueDrawAppState> {
+  getAppState(): Readonly<OpenDrawAppState> {
     return this.appState
   }
 
-  getSelectedElements(): readonly VueDrawElement[] {
+  getSelectedElements(): readonly OpenDrawElement[] {
     const { selectedIds } = this.appState
     if (!selectedIds || Object.keys(selectedIds).length === 0) {
       return []
@@ -148,7 +148,7 @@ export class VueDrawDocument {
   // Subscription
   // -------------------------------------------------------------------------
 
-  subscribe(listener: VueDrawStateListener): () => void {
+  subscribe(listener: OpenDrawStateListener): () => void {
     this.listeners.add(listener)
     return () => {
       this.listeners.delete(listener)
@@ -262,7 +262,7 @@ export class VueDrawDocument {
   // Single write funnel
   // -------------------------------------------------------------------------
 
-  private replaceElements(next: VueDrawElement[]): void {
+  private replaceElements(next: OpenDrawElement[]): void {
     if (next === this.elements) {
       return
     }
@@ -275,7 +275,7 @@ export class VueDrawDocument {
    * App state is intent, not history: tool, selection, style and theme
    * changes never create undo entries (parity law in .agents/rules).
    */
-  private commitAppState(next: VueDrawAppState): void {
+  private commitAppState(next: OpenDrawAppState): void {
     if (next === this.appState) {
       return
     }
@@ -294,7 +294,7 @@ export class VueDrawDocument {
    * the before-snapshot is deferred to `endStep`; outside, the entry is
    * recorded immediately.
    */
-  private mutate(fn: (elements: readonly VueDrawElement[]) => VueDrawElement[] | null): void {
+  private mutate(fn: (elements: readonly OpenDrawElement[]) => OpenDrawElement[] | null): void {
     const before = this.captureBefore()
     const beforeElements = this.elements
     const produced = fn(this.elements)
@@ -315,12 +315,12 @@ export class VueDrawDocument {
   // Element mutations
   // -------------------------------------------------------------------------
 
-  addElement(element: VueDrawElement, options: { select?: boolean; after?: string } = {}): void {
+  addElement(element: OpenDrawElement, options: { select?: boolean; after?: string } = {}): void {
     this.addElements([element], options)
   }
 
   addElements(
-    elements: readonly VueDrawElement[],
+    elements: readonly OpenDrawElement[],
     options: { select?: boolean; after?: string } = {},
   ): void {
     if (elements.length === 0) {
@@ -348,14 +348,14 @@ export class VueDrawDocument {
     }
   }
 
-  updateElement<T extends VueDrawElement>(
+  updateElement<T extends OpenDrawElement>(
     id: string,
     patch: ElementPatch<T> | ((element: T) => ElementPatch<T>),
   ): void {
     this.updateElements<T>([id], patch)
   }
 
-  updateElements<T extends VueDrawElement>(
+  updateElements<T extends OpenDrawElement>(
     ids: readonly string[],
     patch: ElementPatch<T> | ((element: T) => ElementPatch<T>),
   ): void {
@@ -381,7 +381,7 @@ export class VueDrawDocument {
   }
 
   /** Forces an update bypassing no-op detection (live drag geometry). */
-  forceUpdateElement<T extends VueDrawElement>(id: string, patch: ElementPatch<T>): void {
+  forceUpdateElement<T extends OpenDrawElement>(id: string, patch: ElementPatch<T>): void {
     const idSet = new Set([id])
     this.mutate((current) => {
       let changed = false
@@ -415,7 +415,7 @@ export class VueDrawDocument {
     // Lines and arrows bound to deleted shapes lose those bindings — inside
     // the same undo step, so undo resurrects shape and binding together.
     for (const [id, patch] of orphanBindingPatches(idSet, this.elements)) {
-      this.updateElement<VueDrawLinearElement>(id, patch)
+      this.updateElement<OpenDrawLinearElement>(id, patch)
     }
     // Drop dangling selection.
     const selected = this.appState.selectedIds
@@ -477,7 +477,7 @@ export class VueDrawDocument {
     this.applyArrange(flipElements(selected, axis))
   }
 
-  private selectionUnits(): VueDrawElement[][] {
+  private selectionUnits(): OpenDrawElement[][] {
     const selected = this.getSelectedElements().filter((el) => !el.locked)
     return selectionUnits(this.elements, selected, this.appState.editingGroupId)
   }
@@ -509,7 +509,7 @@ export class VueDrawDocument {
       return changed ? next : null
     })
     for (const [id, patch] of bindingFollowPatches(new Set(byId.keys()), this.elements)) {
-      this.updateElement<VueDrawLinearElement>(id, patch)
+      this.updateElement<OpenDrawLinearElement>(id, patch)
     }
     if (topLevel) {
       this.endStep()
@@ -537,7 +537,7 @@ export class VueDrawDocument {
   // App state & selection
   // -------------------------------------------------------------------------
 
-  setAppState(patch: Partial<VueDrawAppState>): void {
+  setAppState(patch: Partial<OpenDrawAppState>): void {
     this.commitAppState({ ...this.appState, ...patch })
   }
 
@@ -796,9 +796,9 @@ export class VueDrawDocument {
       })
       return
     }
-    const patch: ElementPatch<VueDrawLinearElement> =
+    const patch: ElementPatch<OpenDrawLinearElement> =
       position === 'start' ? { startArrowhead: arrowhead } : { endArrowhead: arrowhead }
-    this.updateElements<VueDrawLinearElement>(ids, patch)
+    this.updateElements<OpenDrawLinearElement>(ids, patch)
   }
 
   /**
@@ -822,9 +822,9 @@ export class VueDrawDocument {
   // Serialization
   // -------------------------------------------------------------------------
 
-  serialize(): VueDrawFile {
+  serialize(): OpenDrawFile {
     return {
-      type: 'vuedraw',
+      type: 'opendraw',
       version: 1,
       elements: this.elements.map((el) => ({ ...el })),
       appState: { viewBackgroundColor: this.appState.viewBackgroundColor },
@@ -835,7 +835,7 @@ export class VueDrawDocument {
    * Replaces the scene wholesale. Resets history — a loaded scene is a new
    * timeline (Excalidraw behaves the same on scene load).
    */
-  loadFile(input: VueDrawFile): void {
+  loadFile(input: OpenDrawFile): void {
     // Files come from disk, storage or a host app: coerce defensively so a
     // malformed or older element is repaired (or dropped), never trusted.
     const file = parseFile(input)

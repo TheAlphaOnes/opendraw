@@ -6,7 +6,7 @@
 
 import { getCommonBounds, inflateBounds, boundsWidth, boundsHeight } from '../geometry/bounds.js'
 import { renderScene, type SceneImageResolver } from '../render/renderScene.js'
-import type { ThemeName, VueDrawElement } from '../types.js'
+import type { ThemeName, OpenDrawElement } from '../types.js'
 
 export interface ExportOptions {
   /** Whitespace around content, in scene px. */
@@ -29,7 +29,7 @@ function requireDocument(): Document {
 
 /** Renders elements to a fresh offscreen canvas sized to their bounds. */
 export function exportToCanvas(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   viewBackgroundColor: string,
   options: ExportOptions = {},
 ): HTMLCanvasElement {
@@ -75,7 +75,7 @@ export function exportToCanvas(
 }
 
 export function exportToDataURL(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   viewBackgroundColor: string,
   options: ExportOptions = {},
 ): string {
@@ -84,7 +84,7 @@ export function exportToDataURL(
 }
 
 export function exportToBlob(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   viewBackgroundColor: string,
   options: ExportOptions = {},
 ): Promise<Blob> {
@@ -102,7 +102,7 @@ export function exportToBlob(
 
 /** Triggers a browser download of the rendered PNG. */
 export function downloadPNG(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   viewBackgroundColor: string,
   filename: string,
   options: ExportOptions = {},

@@ -44,7 +44,7 @@ test('leaves no selection-chrome trail while dragging', async ({ page }) => {
   await pickTool(page, 'Selection (1)')
   await page.mouse.click(at(box, 300, 190).x, at(box, 300, 190).y)
   await settleFrames(page)
-  const before = await nonTransparentPixels(page, 'vuedraw-canvas__overlay')
+  const before = await nonTransparentPixels(page, 'opendraw-canvas__overlay')
 
   const grab = at(box, 300, 190)
   await page.mouse.move(grab.x, grab.y)
@@ -57,7 +57,7 @@ test('leaves no selection-chrome trail while dragging', async ({ page }) => {
   await settleFrames(page)
 
   // One clean frame: the overlay holds exactly the current selection box.
-  const after = await nonTransparentPixels(page, 'vuedraw-canvas__overlay')
+  const after = await nonTransparentPixels(page, 'opendraw-canvas__overlay')
   expect(after).toBeGreaterThan(0)
   expect(after).toBeLessThanOrEqual(before + 48)
 })
@@ -70,7 +70,7 @@ test('clears the marquee chrome when the drag ends empty', async ({ page }) => {
   await drag(page, at(box, 500, 120), at(box, 700, 260))
   await settleFrames(page)
 
-  expect(await nonTransparentPixels(page, 'vuedraw-canvas__overlay')).toBe(0)
+  expect(await nonTransparentPixels(page, 'opendraw-canvas__overlay')).toBe(0)
 })
 
 test('binds an arrow dropped over a shape and follows it', async ({ page }) => {

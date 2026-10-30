@@ -1,4 +1,4 @@
-import type { Point } from '@vuedraw/core'
+import type { Point } from '@opendraw/core'
 import {
   bindableShapeAt,
   computeLinearBindings,
@@ -6,7 +6,7 @@ import {
   localPointOf,
   maxBindingDistance,
   pointsPatch,
-} from '@vuedraw/core'
+} from '@opendraw/core'
 
 import type { CanvasRuntime } from './runtime.js'
 

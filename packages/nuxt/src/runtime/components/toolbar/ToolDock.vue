@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useVueDraw } from '../../composables/useVueDraw.js'
+import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import { TOOL_GROUPS, toolLabel, type ToolDefinition } from '../../constants/tools.js'
 import UiIconButton from '../ui/UiIconButton.vue'
 import UiPanel from '../ui/UiPanel.vue'
@@ -9,7 +9,7 @@ import UiPanel from '../ui/UiPanel.vue'
  * the tool lock (Q) exactly like Excalidraw's toolbar.
  */
 
-const ctx = useVueDraw()
+const ctx = useOpenDraw()
 
 function activate(entry: ToolDefinition): void {
   if (entry.opensPicker) {
@@ -68,7 +68,7 @@ function activate(entry: ToolDefinition): void {
 .tool-dock__group + .tool-dock__group {
   margin-left: 8px;
   padding-left: 8px;
-  border-left: 1px solid var(--vd-border);
+  border-left: 1px solid var(--od-border);
 }
 
 @media (max-width: 640px) {

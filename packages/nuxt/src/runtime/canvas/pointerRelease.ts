@@ -4,7 +4,7 @@ import {
   isFreedrawElement,
   isLinearElement,
   maxBindingDistance,
-} from '@vuedraw/core'
+} from '@opendraw/core'
 
 import type { CanvasRuntime } from './runtime.js'
 

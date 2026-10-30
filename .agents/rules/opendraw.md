@@ -1,11 +1,11 @@
-# vuedraw rules
+# opendraw rules
 
 project-specific law for this repo. the root `AGENTS.md` still applies in
 full; this file adds the contracts that keep a canvas engine correct.
 
 ## behavioral parity
 
-- vuedraw must look and behave like excalidraw. this is the contract, not an
+- opendraw must look and behave like excalidraw. this is the contract, not an
   aspiration: when any behavior is ambiguous, match excalidraw instead of
   inventing something.
 - the reference codebase is vendored at `.context/excalidraw/`. read it
@@ -24,7 +24,7 @@ full; this file adds the contracts that keep a canvas engine correct.
 - `packages/core` imports nothing from vue or nuxt. if a change needs vue
   reactivity, it belongs in `packages/nuxt` (or a core callback/hook).
 - `packages/nuxt` treats core as a published library: no deep imports —
-  go through `@vuedraw/core`'s index. the playground aliases core to src
+  go through `@opendraw/core`'s index. the playground aliases core to src
   for dev dx only.
 - all icons are lucide and all lucide imports go through
   `packages/nuxt/src/runtime/constants/icons.ts`. a component importing
@@ -37,7 +37,7 @@ full; this file adds the contracts that keep a canvas engine correct.
 
 - derivations of document state must read through the context: `ctx.state`,
   `ctx.elements`, `ctx.appState`, or a context computed. plain
-  `VueDrawDocument` fields never invalidate a vue computed — a computed
+  `OpenDrawDocument` fields never invalidate a vue computed — a computed
   that reads them silently freezes at its first value.
 - `state.value` is replaced on every mutation (copy-on-write) and `rev`
   bumps with it. subscribe/watch `rev`, not element contents.
@@ -89,7 +89,7 @@ full; this file adds the contracts that keep a canvas engine correct.
 before declaring any change done:
 
 - `pnpm -r test` (core suite) green.
-- `pnpm --filter vuedraw exec vue-tsc --noEmit` clean.
+- `pnpm --filter opendraw exec vue-tsc --noEmit` clean.
 - `pnpm build` emits for both packages.
 - canvas-behavior changes get a live check in the playground
   (`pnpm dev`), not just unit tests — the text

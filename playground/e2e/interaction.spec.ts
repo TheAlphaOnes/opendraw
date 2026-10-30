@@ -23,7 +23,7 @@ async function cursorAt(
   await page.mouse.move(at(box, x, y).x, at(box, x, y).y)
   await settleFrames(page)
   return page.evaluate(() => {
-    const host = document.querySelector<HTMLElement>('.vuedraw-canvas')
+    const host = document.querySelector<HTMLElement>('.opendraw-canvas')
     return host ? getComputedStyle(host).cursor : ''
   })
 }

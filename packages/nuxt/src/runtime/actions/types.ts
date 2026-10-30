@@ -1,12 +1,12 @@
 import type { IconName } from '../constants/icons.js'
-import type { VueDrawContext } from '../composables/useVueDraw.js'
+import type { OpenDrawContext } from '../composables/useOpenDraw.js'
 
 /**
  * A user command — Excalidraw's `Action`. One definition feeds every
  * surface: the keyboard dispatcher, the context menu, the panels and the
  * shortcuts dialog, so a shortcut can never be advertised without working.
  */
-export interface VueDrawAction {
+export interface OpenDrawAction {
   label: string
   icon?: IconName
   /**
@@ -17,8 +17,8 @@ export interface VueDrawAction {
   /** True when a keydown should trigger this action. */
   keyTest?: (event: KeyboardEvent) => boolean
   /** Whether the action applies to the current state (defaults to true). */
-  enabled?: (ctx: VueDrawContext) => boolean
-  perform: (ctx: VueDrawContext) => void
+  enabled?: (ctx: OpenDrawContext) => boolean
+  perform: (ctx: OpenDrawContext) => void
   /** Destructive actions render in the danger tone. */
   danger?: boolean
 }

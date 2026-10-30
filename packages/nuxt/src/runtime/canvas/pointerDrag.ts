@@ -1,4 +1,4 @@
-import type { Bounds, Point, VueDrawElement } from '@vuedraw/core'
+import type { Bounds, Point, OpenDrawElement } from '@opendraw/core'
 import {
   bindableShapeAt,
   bindingFollowPatches,
@@ -16,7 +16,7 @@ import {
   resizeMultipleElements,
   resizeSingleElement,
   rotateElements,
-} from '@vuedraw/core'
+} from '@opendraw/core'
 
 import { trackDraftPointer } from './linearDraft.js'
 import type { Interaction } from './runtime.js'
@@ -30,7 +30,7 @@ import type { LaserTrail } from './useLaserTrail.js'
  * just-moved elements re-dock their tips onto the new geometry, and moved
  * linear elements glide along the edges of the shapes they are bound to.
  */
-export function followBindings(rt: CanvasRuntime, originals: readonly VueDrawElement[]): void {
+export function followBindings(rt: CanvasRuntime, originals: readonly OpenDrawElement[]): void {
   const movedIds = new Set(originals.map((el) => el.id))
   for (const [id, patch] of bindingFollowPatches(movedIds, rt.ctx.elements.value)) {
     rt.ctx.doc.updateElement(id, patch)

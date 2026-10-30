@@ -47,18 +47,18 @@ const emit = defineEmits<{ click: [event: MouseEvent] }>()
   height: 40px;
   padding: 0;
   border: none;
-  border-radius: var(--vd-radius-m);
+  border-radius: var(--od-radius-m);
   background: transparent;
-  color: var(--vd-ink);
+  color: var(--od-ink);
   cursor: pointer;
   transition:
-    background-color var(--vd-fast) var(--vd-ease),
-    color var(--vd-fast) var(--vd-ease),
-    transform var(--vd-fast) var(--vd-ease);
+    background-color var(--od-fast) var(--od-ease),
+    color var(--od-fast) var(--od-ease),
+    transform var(--od-fast) var(--od-ease);
 }
 
 .ui-icon-button:hover {
-  background: var(--vd-hover);
+  background: var(--od-hover);
 }
 
 .ui-icon-button:active {
@@ -66,18 +66,18 @@ const emit = defineEmits<{ click: [event: MouseEvent] }>()
 }
 
 .ui-icon-button:focus-visible {
-  outline: 2px solid var(--vd-accent);
+  outline: 2px solid var(--od-accent);
   outline-offset: 2px;
 }
 
 .ui-icon-button.is-active {
-  background: var(--vd-accent-soft);
-  color: var(--vd-accent);
+  background: var(--od-accent-soft);
+  color: var(--od-accent);
 }
 
 .ui-icon-button.is-danger:hover {
-  background: var(--vd-danger-soft);
-  color: var(--vd-danger);
+  background: var(--od-danger-soft);
+  color: var(--od-danger);
 }
 
 .ui-icon-button:disabled {

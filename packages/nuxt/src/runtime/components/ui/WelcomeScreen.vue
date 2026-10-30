@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { useVueDraw } from '../../composables/useVueDraw.js'
+import { useOpenDraw } from '../../composables/useOpenDraw.js'
 
 /**
  * WelcomeScreen — Excalidraw's empty-canvas welcome (parity copy from
@@ -14,7 +14,7 @@ import { useVueDraw } from '../../composables/useVueDraw.js'
  * dock hint each animate on their own duration/easing so the composition
  * settles in stages instead of one monotone fade.
  */
-const ctx = useVueDraw()
+const ctx = useOpenDraw()
 
 const visible = computed(() => ctx.elements.value.length === 0)
 </script>
@@ -48,7 +48,7 @@ const visible = computed(() => ctx.elements.value.length === 0)
   justify-content: center;
   gap: 12px;
   pointer-events: none;
-  color: var(--vd-ink-soft);
+  color: var(--od-ink-soft);
   font: 500 22px/1.35 'Virgil', 'Segoe UI', -apple-system, sans-serif;
 }
 
@@ -62,7 +62,7 @@ const visible = computed(() => ctx.elements.value.length === 0)
   font-size: 44px;
   font-weight: 700;
   line-height: 1.15;
-  color: var(--vd-ink);
+  color: var(--od-ink);
   text-align: center;
 }
 
@@ -70,7 +70,7 @@ const visible = computed(() => ctx.elements.value.length === 0)
    the underline stroke then draws itself over a slower 700ms. */
 .welcome__line {
   opacity: 0;
-  animation: welcome-line 480ms var(--vd-ease) forwards;
+  animation: welcome-line 480ms var(--od-ease) forwards;
 }
 
 .welcome__line:nth-child(1) { animation-delay: 80ms }
@@ -100,12 +100,12 @@ const visible = computed(() => ctx.elements.value.length === 0)
 
 .welcome__underline path {
   fill: none;
-  stroke: var(--vd-accent);
+  stroke: var(--od-accent);
   stroke-width: 3.5;
   stroke-linecap: round;
   stroke-dasharray: 240;
   stroke-dashoffset: 240;
-  animation: welcome-stroke 700ms var(--vd-ease) 520ms forwards;
+  animation: welcome-stroke 700ms var(--od-ease) 520ms forwards;
 }
 
 @keyframes welcome-stroke {
@@ -117,7 +117,7 @@ const visible = computed(() => ctx.elements.value.length === 0)
   padding-top: 14px;
   font-size: 14px;
   opacity: 0;
-  animation: welcome-hint 420ms var(--vd-ease) 720ms forwards;
+  animation: welcome-hint 420ms var(--od-ease) 720ms forwards;
 }
 
 .welcome__zoom-hint {
@@ -127,7 +127,7 @@ const visible = computed(() => ctx.elements.value.length === 0)
   margin: 0;
   font-size: 13px;
   opacity: 0;
-  animation: welcome-hint 480ms var(--vd-ease) 940ms forwards;
+  animation: welcome-hint 480ms var(--od-ease) 940ms forwards;
 }
 
 @keyframes welcome-hint {
@@ -140,7 +140,7 @@ const visible = computed(() => ctx.elements.value.length === 0)
 
 /* Leave as one motion: the whole composition sinks away on first stroke. */
 .welcome-leave-active {
-  transition: opacity 300ms var(--vd-ease);
+  transition: opacity 300ms var(--od-ease);
 }
 
 .welcome-leave-to {

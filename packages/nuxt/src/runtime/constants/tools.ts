@@ -1,4 +1,4 @@
-import type { ToolId } from '@vuedraw/core'
+import type { ToolId } from '@opendraw/core'
 
 import type { IconName } from './icons.js'
 

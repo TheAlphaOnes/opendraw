@@ -8,14 +8,14 @@
  * single elements), exactly like `selectGroupsForSelectedElements`
  * (packages/excalidraw/components/App.selection.ts).
  *
- * vuedraw derives the "selected groups" from the selection instead of
+ * opendraw derives the "selected groups" from the selection instead of
  * storing Excalidraw's parallel `selectedGroupIds` map: a group is
  * selected iff it is some selected element's outermost visible group and
  * every one of its members is selected. One source of truth, no drift.
  */
 
 import { getCommonBounds } from '../geometry/bounds.js'
-import type { Bounds, VueDrawElement } from '../types.js'
+import type { Bounds, OpenDrawElement } from '../types.js'
 import { newId } from '../utils/rng.js'
 
 export type GroupId = string
@@ -25,7 +25,7 @@ export type GroupId = string
  * groupIds below (inner to) the editing group, or all of them when the
  * element is not inside the editing group.
  */
-function visibleGroupIds(element: VueDrawElement, editingGroupId: GroupId | null): readonly GroupId[] {
+function visibleGroupIds(element: OpenDrawElement, editingGroupId: GroupId | null): readonly GroupId[] {
   if (!editingGroupId) {
     return element.groupIds
   }
@@ -38,21 +38,21 @@ function visibleGroupIds(element: VueDrawElement, editingGroupId: GroupId | null
  * still below the editing group, or null when it selects alone.
  */
 export function outermostGroupId(
-  element: VueDrawElement,
+  element: OpenDrawElement,
   editingGroupId: GroupId | null = null,
 ): GroupId | null {
   const visible = visibleGroupIds(element, editingGroupId)
   return visible.length > 0 ? visible[visible.length - 1]! : null
 }
 
-export function isElementInGroup(element: VueDrawElement, groupId: GroupId): boolean {
+export function isElementInGroup(element: OpenDrawElement, groupId: GroupId): boolean {
   return element.groupIds.includes(groupId)
 }
 
 export function elementsInGroup(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   groupId: GroupId,
-): VueDrawElement[] {
+): OpenDrawElement[] {
   return elements.filter((element) => isElementInGroup(element, groupId))
 }
 
@@ -61,7 +61,7 @@ export function elementsInGroup(
  * its outermost visible group. Order follows the scene (z-order).
  */
 export function expandIdsToGroups(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   ids: Iterable<string>,
   editingGroupId: GroupId | null = null,
 ): string[] {
@@ -95,7 +95,7 @@ export function expandIdsToGroups(
  * A one-member "group" never counts, matching `selectGroup`'s `< 2` guard.
  */
 export function selectedGroupIds(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   selectedIds: Readonly<Record<string, true>>,
   editingGroupId: GroupId | null = null,
 ): GroupId[] {
@@ -123,7 +123,7 @@ export function selectedGroupIds(
  * them again would add nothing (Excalidraw's `allElementsInSameGroup`).
  */
 export function allInSameGroup(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   editingGroupId: GroupId | null = null,
 ): boolean {
   if (elements.length < 2) {
@@ -150,7 +150,7 @@ export function addToGroup(
 
 export interface GroupResult {
   /** The full scene with the members re-tagged and made z-contiguous. */
-  elements: VueDrawElement[]
+  elements: OpenDrawElement[]
   /** Ids of the grouped members (the selection to keep). */
   memberIds: string[]
 }
@@ -162,10 +162,10 @@ export interface GroupResult {
  * new element (callers pass their copy-on-write patcher).
  */
 export function groupElements(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   ids: ReadonlySet<string>,
   editingGroupId: GroupId | null,
-  retag: (element: VueDrawElement, groupIds: GroupId[]) => VueDrawElement,
+  retag: (element: OpenDrawElement, groupIds: GroupId[]) => OpenDrawElement,
   groupId: GroupId = newId(),
 ): GroupResult | null {
   const members = elements.filter((el) => ids.has(el.id))
@@ -196,11 +196,11 @@ export function groupElements(
  * actionUngroup. Returns null when no group is selected.
  */
 export function ungroupElements(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   selectedIds: Readonly<Record<string, true>>,
   editingGroupId: GroupId | null,
-  retag: (element: VueDrawElement, groupIds: GroupId[]) => VueDrawElement,
-): VueDrawElement[] | null {
+  retag: (element: OpenDrawElement, groupIds: GroupId[]) => OpenDrawElement,
+): OpenDrawElement[] | null {
   const groups = new Set(selectedGroupIds(elements, selectedIds, editingGroupId))
   if (groups.size === 0) {
     return null
@@ -222,7 +222,7 @@ export function ungroupElements(
  * the editing group (and anything outside it) is kept — a copy made inside
  * a group stays in it (Excalidraw's `getNewGroupIdsForDuplication`).
  */
-export function remapGroupIdsForCopies<T extends VueDrawElement>(
+export function remapGroupIdsForCopies<T extends OpenDrawElement>(
   copies: readonly T[],
   editingGroupId: GroupId | null,
 ): T[] {
@@ -252,7 +252,7 @@ export function remapGroupIdsForCopies<T extends VueDrawElement>(
  * `getParentEditingGroupId`).
  */
 export function parentEditingGroupId(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   editingGroupId: GroupId | null,
 ): GroupId | null {
   if (!editingGroupId) {
@@ -272,7 +272,7 @@ export function parentEditingGroupId(
  * group is selected: the visible outermost group it belongs to.
  */
 export function groupToEnter(
-  element: VueDrawElement,
+  element: OpenDrawElement,
   editingGroupId: GroupId | null,
 ): GroupId | null {
   return outermostGroupId(element, editingGroupId)
@@ -289,7 +289,7 @@ export interface GroupSelectionChrome {
 }
 
 export function groupSelectionChrome(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   selectedIds: Readonly<Record<string, true>>,
   editingGroupId: GroupId | null,
 ): GroupSelectionChrome {

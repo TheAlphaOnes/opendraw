@@ -3,16 +3,16 @@ import { describe, expect, it } from 'vitest'
 import { newLinearElement, newRectangleElement } from '../src/elements/factories.js'
 import { alignUnits, distributeUnits, flipElements, selectionUnits } from '../src/elements/arrange.js'
 import { getCommonBounds } from '../src/geometry/bounds.js'
-import { VueDrawDocument } from '../src/scene/document.js'
-import type { VueDrawElement, VueDrawLinearElement } from '../src/types.js'
+import { OpenDrawDocument } from '../src/scene/document.js'
+import type { OpenDrawElement, OpenDrawLinearElement } from '../src/types.js'
 
 function rect(x: number, y: number, w = 10, h = 10, groupIds: string[] = []) {
   return newRectangleElement({ x, y, width: w, height: h, groupIds })
 }
 
-function apply(elements: VueDrawElement[], entries: ReturnType<typeof alignUnits>): VueDrawElement[] {
+function apply(elements: OpenDrawElement[], entries: ReturnType<typeof alignUnits>): OpenDrawElement[] {
   const byId = new Map(entries.map((e) => [e.id, e.patch]))
-  return elements.map((el) => ({ ...el, ...(byId.get(el.id) ?? {}) }) as VueDrawElement)
+  return elements.map((el) => ({ ...el, ...(byId.get(el.id) ?? {}) }) as OpenDrawElement)
 }
 
 describe('arrange — align', () => {
@@ -78,9 +78,9 @@ describe('arrange — flip', () => {
       width: 100,
       height: 50,
       points: [{ x: 0, y: 0 }, { x: 100, y: 50 }],
-    }) as VueDrawLinearElement
+    }) as OpenDrawLinearElement
     const before = getCommonBounds([line])
-    const [flipped] = apply([line], flipElements([line], 'horizontal')) as VueDrawLinearElement[]
+    const [flipped] = apply([line], flipElements([line], 'horizontal')) as OpenDrawLinearElement[]
     expect(flipped!.points).toEqual([{ x: 100, y: 0 }, { x: 0, y: 50 }])
     expect(getCommonBounds([flipped!])).toEqual(before)
   })
@@ -97,7 +97,7 @@ describe('arrange — document', () => {
     const a = rect(0, 0)
     const b = rect(50, 0)
     const locked = { ...rect(200, 0), locked: true }
-    const doc = new VueDrawDocument({ elements: [a, b, locked] })
+    const doc = new OpenDrawDocument({ elements: [a, b, locked] })
     doc.select([a.id, b.id, locked.id])
     doc.alignSelection({ axis: 'x', position: 'end' })
     expect(doc.getElement(a.id)!.x).toBe(50)
@@ -113,7 +113,7 @@ describe('styles — copy and paste', async () => {
     const source = { ...rect(0, 0), strokeColor: '#e03131', roundness: 'round' as const }
     const target = rect(50, 0)
     const text = newTextElement({ x: 0, y: 40, text: 'hi' })
-    const doc = new VueDrawDocument({ elements: [source, target, text] })
+    const doc = new OpenDrawDocument({ elements: [source, target, text] })
     const payload = stylePayloadOf(source)
     doc.select([target.id, text.id])
     doc.pasteStyle(payload)

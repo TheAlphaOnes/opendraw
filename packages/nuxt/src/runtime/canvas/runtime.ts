@@ -5,12 +5,12 @@ import type {
   HandleDirection,
   Point,
   SelectionFrame,
-  VueDrawBindableShape,
-  VueDrawElement,
-} from '@vuedraw/core'
-import { screenToScene } from '@vuedraw/core'
+  OpenDrawBindableShape,
+  OpenDrawElement,
+} from '@opendraw/core'
+import { screenToScene } from '@opendraw/core'
 
-import type { VueDrawContext } from '../composables/useVueDraw.js'
+import type { OpenDrawContext } from '../composables/useOpenDraw.js'
 
 /**
  * The canvas's pointer state machine, one variant per live gesture.
@@ -26,17 +26,17 @@ export type Interaction =
   | {
       kind: 'moving'
       originScene: Point
-      originals: readonly VueDrawElement[]
+      originals: readonly OpenDrawElement[]
       /** Element to narrow the selection to on a no-drag pointerup, or null. */
       hitId: string | null
       didDrag: boolean
       /** Alt-drag already swapped the drag onto fresh duplicates. */
       duplicated: boolean
     }
-  | { kind: 'resizing'; handle: HandleDirection; originals: readonly VueDrawElement[] }
+  | { kind: 'resizing'; handle: HandleDirection; originals: readonly OpenDrawElement[] }
   | {
       kind: 'rotating'
-      originals: readonly VueDrawElement[]
+      originals: readonly OpenDrawElement[]
       frame: SelectionFrame
       startAngle: number
     }
@@ -68,14 +68,14 @@ export interface CanvasModifiers {
  * of this is document state — it lives and dies with the mounted canvas.
  */
 export interface CanvasRuntime {
-  ctx: VueDrawContext
+  ctx: OpenDrawContext
   hostRef: Ref<HTMLDivElement | null>
   interaction: ShallowRef<Interaction>
   modifiers: ShallowRef<CanvasModifiers>
   /** Marquee rect while drag-selecting, in scene coords. */
   marquee: ShallowRef<Bounds | null>
   /** Shapes the live line/arrow probes would dock onto — outlined on the overlay. */
-  bindingCandidates: ShallowRef<readonly VueDrawBindableShape[]>
+  bindingCandidates: ShallowRef<readonly OpenDrawBindableShape[]>
   /** Scene point under an idle pointer — drives the hover cursor + probes. */
   hoverScene: ShallowRef<Point | null>
   /** Space bar held → temporary pan mode. */
@@ -88,7 +88,7 @@ export interface CanvasRuntime {
   scheduleRender: () => void
 }
 
-export function createCanvasRuntime(ctx: VueDrawContext): CanvasRuntime {
+export function createCanvasRuntime(ctx: OpenDrawContext): CanvasRuntime {
   const hostRef = ref<HTMLDivElement | null>(null)
   const toHost = (event: { clientX: number; clientY: number }): Point => {
     const rect = hostRef.value!.getBoundingClientRect()
@@ -100,7 +100,7 @@ export function createCanvasRuntime(ctx: VueDrawContext): CanvasRuntime {
     interaction: shallowRef<Interaction>({ kind: 'none' }),
     modifiers: shallowRef<CanvasModifiers>({ shift: false, alt: false }),
     marquee: shallowRef<Bounds | null>(null),
-    bindingCandidates: shallowRef<readonly VueDrawBindableShape[]>([]),
+    bindingCandidates: shallowRef<readonly OpenDrawBindableShape[]>([]),
     hoverScene: shallowRef<Point | null>(null),
     spaceDown: ref(false),
     toHost,

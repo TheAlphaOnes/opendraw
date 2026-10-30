@@ -25,10 +25,10 @@ import {
 import { coerceElement } from '../src/export/serialize.js'
 import type { NewLinearElementOptions } from '../src/elements/factories.js'
 import type {
-  VueDrawArrowElement,
-  VueDrawBinding,
-  VueDrawElement,
-  VueDrawLineElement,
+  OpenDrawArrowElement,
+  OpenDrawBinding,
+  OpenDrawElement,
+  OpenDrawLineElement,
 } from '../src/types.js'
 
 // ---------------------------------------------------------------------------
@@ -47,8 +47,8 @@ function makeArrow(
   id: string,
   start: [number, number],
   end: [number, number],
-  bindings: { start?: VueDrawBinding | null; end?: VueDrawBinding | null } = {},
-): VueDrawArrowElement {
+  bindings: { start?: OpenDrawBinding | null; end?: OpenDrawBinding | null } = {},
+): OpenDrawArrowElement {
   const opts: NewLinearElementOptions = {
     id,
     x: start[0],
@@ -62,15 +62,15 @@ function makeArrow(
     ...newLinearElement('arrow', opts),
     startBinding: bindings.start ?? null,
     endBinding: bindings.end ?? null,
-  } as VueDrawArrowElement
+  } as OpenDrawArrowElement
 }
 
 function makeLine(
   id: string,
   start: [number, number],
   end: [number, number],
-  bindings: { start?: VueDrawBinding | null; end?: VueDrawBinding | null } = {},
-): VueDrawLineElement {
+  bindings: { start?: OpenDrawBinding | null; end?: OpenDrawBinding | null } = {},
+): OpenDrawLineElement {
   const opts: NewLinearElementOptions = {
     id,
     x: start[0],
@@ -84,7 +84,7 @@ function makeLine(
     ...newLinearElement('line', opts),
     startBinding: bindings.start ?? null,
     endBinding: bindings.end ?? null,
-  } as VueDrawLineElement
+  } as OpenDrawLineElement
 }
 
 describe('binding targets', () => {
@@ -115,7 +115,7 @@ describe('binding targets', () => {
     const rectA = rect('a', 100, 100)
     const overlayLine = newLinearElement('line', { x: 90, y: 140, points: [{ x: 0, y: 0 }, { x: 120, y: 0 }] })
     const above = rect('above', 100, 100, 50, 40)
-    const elements: VueDrawElement[] = [rectA, overlayLine, above]
+    const elements: OpenDrawElement[] = [rectA, overlayLine, above]
 
     // The line overlays the rect but cannot be a bind target.
     expect(bindableShapeAt(elements, { x: 150, y: 140 }, 0)?.id).toBe('above')
@@ -251,7 +251,7 @@ describe('computeLinearBindings (create-time)', () => {
         { x: 40, y: 0 },
         { x: 110, y: 0 },
       ],
-    } as VueDrawArrowElement
+    } as OpenDrawArrowElement
     const patch = computeLinearBindings(arrow, [rectA], 15)
 
     expect(patch!.points![0]).toEqual({ x: 0, y: 0 })
@@ -262,9 +262,9 @@ describe('computeLinearBindings (create-time)', () => {
 
 describe('bindingFollowPatches (move/resize follow-through)', () => {
   function boundArrow(
-    startBinding: VueDrawBinding | null,
-    endBinding: VueDrawBinding | null,
-  ): VueDrawArrowElement {
+    startBinding: OpenDrawBinding | null,
+    endBinding: OpenDrawBinding | null,
+  ): OpenDrawArrowElement {
     // Start tip docked at (94,140) — A's left dilated edge; loose end at (40,140).
     return makeArrow('ar', [94, 140], [40, 140], { start: startBinding, end: endBinding })
   }
@@ -314,7 +314,7 @@ describe('bindingFollowPatches (move/resize follow-through)', () => {
       ...makeArrow('ar', [206, 140], [394, 140]),
       startBinding: { elementId: 'a' },
       endBinding: { elementId: 'b' },
-    } as VueDrawArrowElement
+    } as OpenDrawArrowElement
     const patches = bindingFollowPatches(new Set(['b']), [rectA, movedB, arrow])
 
     const patch = patches.get('ar')
@@ -344,7 +344,7 @@ describe('orphanBindingPatches (deletion cleanup)', () => {
       ...makeArrow('ar', [94, 140], [300, 140]),
       startBinding: { elementId: 'a' },
       endBinding: { elementId: 'b' },
-    } as VueDrawArrowElement
+    } as OpenDrawArrowElement
     const patches = orphanBindingPatches(new Set(['a']), [rectA, arrow])
 
     expect(patches.get('ar')).toEqual({
@@ -357,7 +357,7 @@ describe('orphanBindingPatches (deletion cleanup)', () => {
     const arrow = boundArrowOnly()
     expect(orphanBindingPatches(new Set(['zzz']), [arrow]).size).toBe(0)
 
-    function boundArrowOnly(): VueDrawArrowElement {
+    function boundArrowOnly(): OpenDrawArrowElement {
       return {
         ...makeArrow('ar', [0, 0], [10, 0]),
         startBinding: { elementId: 'a' },
@@ -375,7 +375,7 @@ describe('binding coercion on restore', () => {
       points: [{ x: 0, y: 0 }, { x: 10, y: 0 }],
       startBinding: { elementId: 'shape-a' },
       endBinding: { elementId: 42 },
-    }) as VueDrawArrowElement | null
+    }) as OpenDrawArrowElement | null
 
     expect(el).not.toBeNull()
     expect(el!.startBinding).toEqual({ elementId: 'shape-a' })
@@ -384,7 +384,7 @@ describe('binding coercion on restore', () => {
 
   it('coerces missing arrow bindings to null', () => {
     const el = coerceElement({ id: 'ar', type: 'arrow', points: [{ x: 0, y: 0 }] }) as
-      | VueDrawArrowElement
+      | OpenDrawArrowElement
       | null
     expect(el!.startBinding).toBeNull()
     expect(el!.endBinding).toBeNull()
@@ -397,7 +397,7 @@ describe('binding coercion on restore', () => {
       points: [{ x: 0, y: 0 }, { x: 5, y: 5 }],
       startBinding: { elementId: 'shape-a' },
       endBinding: 'not-a-binding',
-    }) as VueDrawLineElement | null
+    }) as OpenDrawLineElement | null
     expect(el).not.toBeNull()
     expect(el!.startBinding).toEqual({ elementId: 'shape-a' })
     expect(el!.endBinding).toBeNull()

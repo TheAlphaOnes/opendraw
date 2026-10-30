@@ -3,11 +3,11 @@ import type {
   HandleDirection,
   Point,
   SelectionFrame,
-  VueDrawBindableShape,
-  VueDrawElement,
-  VueDrawLinearElement,
-} from '@vuedraw/core'
-import { getHandleLayout, isLinearElement, selectionFrameOf, sideHandleAt } from '@vuedraw/core'
+  OpenDrawBindableShape,
+  OpenDrawElement,
+  OpenDrawLinearElement,
+} from '@opendraw/core'
+import { getHandleLayout, isLinearElement, selectionFrameOf, sideHandleAt } from '@opendraw/core'
 
 import type { CanvasRuntime } from './runtime.js'
 
@@ -49,7 +49,7 @@ export function sideGrabAt(
 }
 
 /** The lone selected, unlocked line/arrow — or null. */
-export function loneSelectedLinear(rt: CanvasRuntime): VueDrawLinearElement | null {
+export function loneSelectedLinear(rt: CanvasRuntime): OpenDrawLinearElement | null {
   const selected = rt.ctx.selectedElements.value
   const only = selected.length === 1 ? selected[0] : null
   return only && !only.locked && isLinearElement(only) ? only : null
@@ -57,9 +57,9 @@ export function loneSelectedLinear(rt: CanvasRuntime): VueDrawLinearElement | nu
 
 /** Both-end probe results, deduped — a drag from a shape onto itself outlines it once. */
 export function mergeBindingCandidates(
-  shapes: ReadonlyArray<VueDrawBindableShape | null>,
-): readonly VueDrawBindableShape[] {
-  const merged: VueDrawBindableShape[] = []
+  shapes: ReadonlyArray<OpenDrawBindableShape | null>,
+): readonly OpenDrawBindableShape[] {
+  const merged: OpenDrawBindableShape[] = []
   const seen = new Set<string>()
   for (const shape of shapes) {
     if (shape && !seen.has(shape.id)) {
@@ -71,6 +71,6 @@ export function mergeBindingCandidates(
 }
 
 /** Live copies of the selection — the pointerdown snapshot transforms read. */
-export function snapshotSelection(rt: CanvasRuntime): readonly VueDrawElement[] {
+export function snapshotSelection(rt: CanvasRuntime): readonly OpenDrawElement[] {
   return rt.ctx.selectedElements.value.map((el) => rt.ctx.doc.getElement(el.id) ?? el)
 }

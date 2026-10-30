@@ -2,7 +2,7 @@
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 
 import { actionById, isActionEnabled, runAction, type ActionId } from '../../actions/registry.js'
-import { useVueDraw } from '../../composables/useVueDraw.js'
+import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import UiMenuItem from '../ui/UiMenuItem.vue'
 
 /**
@@ -21,7 +21,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{ close: [] }>()
 
-const ctx = useVueDraw()
+const ctx = useOpenDraw()
 const rootEl = ref<HTMLElement | null>(null)
 
 const SEPARATOR = '|'
@@ -201,10 +201,10 @@ function select(id: ActionId): void {
   max-height: calc(100vh - 16px);
   overflow-y: auto;
   padding: 4px;
-  background: var(--vd-surface);
-  border: 1px solid var(--vd-border);
-  border-radius: var(--vd-radius-l);
-  box-shadow: var(--vd-shadow-1), var(--vd-shadow-2);
+  background: var(--od-surface);
+  border: 1px solid var(--od-border);
+  border-radius: var(--od-radius-l);
+  box-shadow: var(--od-shadow-1), var(--od-shadow-2);
 }
 
 .context-menu:focus {
@@ -214,7 +214,7 @@ function select(id: ActionId): void {
 .context-menu__separator {
   height: 1px;
   margin: 4px 8px;
-  background: var(--vd-border);
+  background: var(--od-border);
 }
 
 .context-menu-enter-active {

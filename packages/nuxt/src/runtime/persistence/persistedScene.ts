@@ -1,7 +1,7 @@
 /**
  * Scene persistence payload (de)serialization.
  *
- * The persisted envelope wraps the core file format: core's `VueDrawFile`
+ * The persisted envelope wraps the core file format: core's `OpenDrawFile`
  * carries the elements and the canvas background, and the nuxt side adds the
  * editor chrome state (theme, viewport, grid) that core deliberately does
  * not model in its file format. All parsing is defensive — a corrupted or
@@ -15,17 +15,24 @@ import {
   buildFile,
   parseFile,
   type ThemeName,
-  type VueDrawAppState,
-  type VueDrawElement,
-  type VueDrawFile,
-} from '@vuedraw/core'
+  type OpenDrawAppState,
+  type OpenDrawElement,
+  type OpenDrawFile,
+} from '@opendraw/core'
 
 /** Discriminant + version of the localStorage envelope. */
-export const PERSISTED_SCENE_TYPE = 'vuedraw-scene'
+export const PERSISTED_SCENE_TYPE = 'opendraw-scene'
 export const PERSISTED_SCENE_VERSION = 1
 
 /** The default localStorage key; override per-instance via options. */
-export const DEFAULT_SCENE_STORAGE_KEY = 'vuedraw:scene'
+export const DEFAULT_SCENE_STORAGE_KEY = 'opendraw:scene'
+
+/**
+ * Key and envelope type used before the project was renamed to opendraw.
+ * Read once as a fallback so no saved drawing is lost across the rename.
+ */
+export const LEGACY_SCENE_STORAGE_KEY = 'vuedraw:scene'
+const LEGACY_SCENE_TYPE = 'vuedraw-scene'
 
 /** The viewport subset that survives a reload (pan + zoom). */
 export interface PersistedViewport {
@@ -45,14 +52,14 @@ export interface PersistedAppState {
 export interface PersistedScene {
   type: typeof PERSISTED_SCENE_TYPE
   version: typeof PERSISTED_SCENE_VERSION
-  file: VueDrawFile
+  file: OpenDrawFile
   appState: PersistedAppState
 }
 
 /** Builds a persistable envelope from live document state. */
 export function buildPersistedScene(
-  elements: readonly VueDrawElement[],
-  appState: Readonly<VueDrawAppState>,
+  elements: readonly OpenDrawElement[],
+  appState: Readonly<OpenDrawAppState>,
 ): PersistedScene {
   return {
     type: PERSISTED_SCENE_TYPE,
@@ -107,14 +114,14 @@ function gridSize(value: unknown): number | null {
 export function parsePersistedScene(input: unknown): PersistedScene | null {
   if (
     !isRecord(input)
-    || input.type !== PERSISTED_SCENE_TYPE
+    || (input.type !== PERSISTED_SCENE_TYPE && input.type !== LEGACY_SCENE_TYPE)
     || input.version !== PERSISTED_SCENE_VERSION
   ) {
     return null
   }
   // Reuse core's defensive file parsing: malformed elements are dropped,
-    // only a payload that is not a vuedraw file at all throws.
-  let file: VueDrawFile
+    // only a payload that is not a opendraw file at all throws.
+  let file: OpenDrawFile
   try {
     file = parseFile(input.file)
   } catch {

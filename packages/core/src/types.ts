@@ -1,5 +1,5 @@
 /**
- * @vuedraw/core — public type surface.
+ * @opendraw/core — public type surface.
  *
  * The element model follows Excalidraw's proven shape (x/y anchored to the
  * un-rotated top-left, `angle` rotating around the center, style props on
@@ -69,7 +69,7 @@ export type Roundness = 'round'
  * new object (copy-on-write) so history snapshots and Vue consumers can rely
  * on reference identity.
  */
-export interface VueDrawElementBase {
+export interface OpenDrawElementBase {
   id: string
   type: ElementType
   /** Un-rotated top-left corner in scene coordinates. */
@@ -116,7 +116,7 @@ export type Arrowhead =
   | 'diamond_outline'
 
 /** Elements whose geometry is a polyline in local element space. */
-export interface VueDrawLinearElement extends VueDrawElementBase {
+export interface OpenDrawLinearElement extends OpenDrawElementBase {
   type: 'line' | 'arrow'
   points: Point[]
   /** Head drawn at the first point, or null. Only arrows render heads. */
@@ -124,9 +124,9 @@ export interface VueDrawLinearElement extends VueDrawElementBase {
   /** Head drawn at the last point, or null. */
   endArrowhead: Arrowhead | null
   /** Shape the start tip is docked to, or null when loose. */
-  startBinding: VueDrawBinding | null
+  startBinding: OpenDrawBinding | null
   /** Shape the end tip is docked to, or null when loose. */
-  endBinding: VueDrawBinding | null
+  endBinding: OpenDrawBinding | null
 }
 
 /**
@@ -134,28 +134,28 @@ export interface VueDrawLinearElement extends VueDrawElementBase {
  * shape around (Excalidraw's `startBinding`/`endBinding` — lines and arrows
  * both bind).
  */
-export interface VueDrawBinding {
+export interface OpenDrawBinding {
   /** Id of the shape the tip is docked to. */
   elementId: string
 }
 
-export interface VueDrawLineElement extends VueDrawLinearElement {
+export interface OpenDrawLineElement extends OpenDrawLinearElement {
   type: 'line'
 }
 
-export interface VueDrawArrowElement extends VueDrawLinearElement {
+export interface OpenDrawArrowElement extends OpenDrawLinearElement {
   type: 'arrow'
 }
 
 /** Freedraw strokes store `[x, y, pressure]` triples in local space. */
-export interface VueDrawFreedrawElement extends VueDrawElementBase {
+export interface OpenDrawFreedrawElement extends OpenDrawElementBase {
   type: 'freedraw'
   points: number[][]
   /** True when the input device had no pressure channel (mouse). */
   simulatePressure: boolean
 }
 
-export interface VueDrawTextElement extends VueDrawElementBase {
+export interface OpenDrawTextElement extends OpenDrawElementBase {
   type: 'text'
   /** The text as rendered — wrapped to the container when bound. */
   text: string
@@ -173,30 +173,30 @@ export interface VueDrawTextElement extends VueDrawElementBase {
   lineHeight: number
 }
 
-export interface VueDrawRectangleElement extends VueDrawElementBase {
+export interface OpenDrawRectangleElement extends OpenDrawElementBase {
   type: 'rectangle'
   /** 'round' renders curved corners; null (or absent) keeps them sharp. */
   roundness?: Roundness | null
 }
 
-export interface VueDrawDiamondElement extends VueDrawElementBase {
+export interface OpenDrawDiamondElement extends OpenDrawElementBase {
   type: 'diamond'
   /** 'round' renders curved corners; null (or absent) keeps them sharp. */
   roundness?: Roundness | null
 }
 
-export interface VueDrawEllipseElement extends VueDrawElementBase {
+export interface OpenDrawEllipseElement extends OpenDrawElementBase {
   type: 'ellipse'
 }
 
 /**
  * An image, carried inline as a data URL (Excalidraw keeps bitmaps in a
- * separate file store keyed by `fileId`; vuedraw's single-document model
+ * separate file store keyed by `fileId`; opendraw's single-document model
  * embeds the data on the element instead, so scenes stay one payload).
  * Geometry is box-like: bounds, hit testing, resize and rotation treat it
  * exactly like a rectangle.
  */
-export interface VueDrawImageElement extends VueDrawElementBase {
+export interface OpenDrawImageElement extends OpenDrawElementBase {
   type: 'image'
   /** Self-contained `data:image/...;base64,` payload — survives export as-is. */
   dataUrl: string
@@ -206,23 +206,23 @@ export interface VueDrawImageElement extends VueDrawElementBase {
  * A frame: a named, dashed outline that visually groups its contents.
  * Box-like geometry; the name renders above the top-left corner.
  */
-export interface VueDrawFrameElement extends VueDrawElementBase {
+export interface OpenDrawFrameElement extends OpenDrawElementBase {
   type: 'frame'
   name: string
 }
 
-export type VueDrawElement =
-  | VueDrawRectangleElement
-  | VueDrawDiamondElement
-  | VueDrawEllipseElement
-  | VueDrawArrowElement
-  | VueDrawLineElement
-  | VueDrawFreedrawElement
-  | VueDrawTextElement
-  | VueDrawImageElement
-  | VueDrawFrameElement
+export type OpenDrawElement =
+  | OpenDrawRectangleElement
+  | OpenDrawDiamondElement
+  | OpenDrawEllipseElement
+  | OpenDrawArrowElement
+  | OpenDrawLineElement
+  | OpenDrawFreedrawElement
+  | OpenDrawTextElement
+  | OpenDrawImageElement
+  | OpenDrawFrameElement
 
-export type ElementOf<T extends ElementType> = Extract<VueDrawElement, { type: T }>
+export type ElementOf<T extends ElementType> = Extract<OpenDrawElement, { type: T }>
 
 // ---------------------------------------------------------------------------
 // Style payload — the subset of props style panels mutate on a selection
@@ -284,7 +284,7 @@ export interface Viewport {
   zoom: number
 }
 
-export interface VueDrawAppState {
+export interface OpenDrawAppState {
   activeTool: ToolId
   theme: ThemeName
   viewBackgroundColor: string
@@ -313,15 +313,15 @@ export interface VueDrawAppState {
 // Document state snapshot
 // ---------------------------------------------------------------------------
 
-export interface VueDrawState {
+export interface OpenDrawState {
   /** Ordered back-to-front. */
-  elements: readonly VueDrawElement[]
-  appState: Readonly<VueDrawAppState>
+  elements: readonly OpenDrawElement[]
+  appState: Readonly<OpenDrawAppState>
   /** Monotonic revision counter — bumped on every committed change. */
   rev: number
 }
 
-export type VueDrawStateListener = (state: VueDrawState) => void
+export type OpenDrawStateListener = (state: OpenDrawState) => void
 
 // ---------------------------------------------------------------------------
 // Interaction
@@ -349,10 +349,10 @@ export type ChangeReason =
 // Serialization
 // ---------------------------------------------------------------------------
 
-export interface VueDrawFile {
-  type: 'vuedraw'
+export interface OpenDrawFile {
+  type: 'opendraw'
   version: 1
-  elements: VueDrawElement[]
+  elements: OpenDrawElement[]
   appState: {
     viewBackgroundColor: string
   }

@@ -1,6 +1,6 @@
 <template>
   <main class="demo">
-    <VueDraw class="demo__draw" />
+    <OpenDraw class="demo__draw" />
   </main>
 </template>
 

@@ -2,7 +2,7 @@ import { test as base, expect, type Page } from '@playwright/test'
 
 /**
  * Shared e2e toolkit: document state through the public change/select
- * events (mirrored onto `window.__vuedraw` by the playground page), pointer
+ * events (mirrored onto `window.__opendraw` by the playground page), pointer
  * helpers, and canvas pixel probes.
  */
 
@@ -33,7 +33,7 @@ export interface MirroredScene {
 
 declare global {
   interface Window {
-    __vuedraw?: MirroredScene
+    __opendraw?: MirroredScene
   }
 }
 
@@ -52,7 +52,7 @@ export const STAGE_X = 260
 
 /** Latest mirrored state (in stage space); empty before the first event lands. */
 export async function scene(page: Page): Promise<MirroredScene> {
-  const raw = await page.evaluate(() => window.__vuedraw ?? { elements: [], selection: [] })
+  const raw = await page.evaluate(() => window.__opendraw ?? { elements: [], selection: [] })
   return {
     selection: raw.selection,
     elements: raw.elements.map((el) => ({ ...el, x: el.x - STAGE_X })),
@@ -104,9 +104,9 @@ export async function openEditor(page: Page): Promise<void> {
  */
 export async function openApp(page: Page, path: string): Promise<void> {
   await page.goto(path)
-  await page.locator('.vuedraw-canvas').waitFor({ state: 'visible' })
+  await page.locator('.opendraw-canvas').waitFor({ state: 'visible' })
   await page.waitForFunction(() => {
-    const canvas = document.querySelector<HTMLCanvasElement>('canvas.vuedraw-canvas__static')
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas.opendraw-canvas__static')
     return canvas !== null && canvas.width > 300
   })
 }
@@ -115,9 +115,9 @@ export async function openApp(page: Page, path: string): Promise<void> {
 export async function canvasBox(
   page: Page,
 ): Promise<{ x: number; y: number; width: number; height: number }> {
-  const box = await page.locator('.vuedraw-canvas').boundingBox()
+  const box = await page.locator('.opendraw-canvas').boundingBox()
   if (!box) {
-    throw new Error('vuedraw canvas did not mount')
+    throw new Error('opendraw canvas did not mount')
   }
   return box
 }
@@ -204,7 +204,7 @@ export async function pixelAt(
   x += STAGE_X
   return page.evaluate(
     ({ x, y }) => {
-      const canvas = document.querySelector<HTMLCanvasElement>('canvas.vuedraw-canvas__static')
+      const canvas = document.querySelector<HTMLCanvasElement>('canvas.opendraw-canvas__static')
       if (!canvas) {
         throw new Error('static canvas missing')
       }
@@ -240,7 +240,7 @@ export async function overlayPixelAt(
   x += STAGE_X
   return page.evaluate(
     ({ x, y }) => {
-      const canvas = document.querySelector<HTMLCanvasElement>('canvas.vuedraw-canvas__overlay')
+      const canvas = document.querySelector<HTMLCanvasElement>('canvas.opendraw-canvas__overlay')
       if (!canvas) {
         throw new Error('overlay canvas missing')
       }
@@ -277,7 +277,7 @@ export async function staticInkPixels(
   x += STAGE_X
   return page.evaluate(
     ({ x, y, w, h }) => {
-      const canvas = document.querySelector<HTMLCanvasElement>('canvas.vuedraw-canvas__static')
+      const canvas = document.querySelector<HTMLCanvasElement>('canvas.opendraw-canvas__static')
       if (!canvas) {
         throw new Error('static canvas missing')
       }
@@ -343,7 +343,7 @@ export async function staticInkCentroid(
   x += STAGE_X
   const centroid = await page.evaluate(
     ({ x, y, w, h }) => {
-      const canvas = document.querySelector<HTMLCanvasElement>('canvas.vuedraw-canvas__static')
+      const canvas = document.querySelector<HTMLCanvasElement>('canvas.opendraw-canvas__static')
       if (!canvas) {
         throw new Error('static canvas missing')
       }
@@ -410,7 +410,7 @@ export async function overlayInkBounds(
   page: Page,
 ): Promise<{ minX: number; minY: number; maxX: number; maxY: number } | null> {
   const bounds = await page.evaluate(() => {
-    const canvas = document.querySelector<HTMLCanvasElement>('canvas.vuedraw-canvas__overlay')
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas.opendraw-canvas__overlay')
     if (!canvas) {
       throw new Error('overlay canvas missing')
     }

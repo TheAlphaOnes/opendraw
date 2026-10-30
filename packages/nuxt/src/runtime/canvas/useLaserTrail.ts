@@ -1,7 +1,7 @@
 import { onBeforeUnmount } from 'vue'
 
-import type { Point } from '@vuedraw/core'
-import { applyViewportTransform } from '@vuedraw/core'
+import type { Point } from '@opendraw/core'
+import { applyViewportTransform } from '@opendraw/core'
 
 import type { CanvasRuntime } from './runtime.js'
 

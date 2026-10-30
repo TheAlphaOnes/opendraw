@@ -1,8 +1,8 @@
 /**
- * vuedraw — global design tokens for the editor chrome.
+ * opendraw — global design tokens for the editor chrome.
  *
  * Every chrome component consumes these custom properties. Themes switch by
- * setting `data-theme="dark"` on the `.vuedraw-root` container.
+ * setting `data-theme="dark"` on the `.opendraw-root` container.
  *
  * Aesthetic law (Maya / userinterface-wiki):
  * - flat surfaces + hairlines, no gradients, no heavy glass;
@@ -11,45 +11,45 @@
  * - one easing curve and a fast/standard duration pair for all chrome motion.
  */
 
-.vuedraw-root {
+.opendraw-root {
   /* Surfaces */
-  --vd-surface: #ffffff;
-  --vd-surface-raised: #ffffff;
+  --od-surface: #ffffff;
+  --od-surface-raised: #ffffff;
   /* Floating panels keep a little translucency so the capped 6px backdrop
      blur reads as quiet glass rather than fog. */
-  --vd-surface-float: rgba(255, 255, 255, 0.92);
+  --od-surface-float: rgba(255, 255, 255, 0.92);
 
   /* Ink */
-  --vd-ink: #1e1e1e;
-  --vd-ink-soft: #6c757d;
-  --vd-border: rgba(30, 30, 30, 0.12);
+  --od-ink: #1e1e1e;
+  --od-ink-soft: #6c757d;
+  --od-border: rgba(30, 30, 30, 0.12);
 
   /* Accents & intents */
-  --vd-accent: #0c8599;
-  --vd-accent-soft: rgba(12, 133, 153, 0.12);
-  --vd-danger: #e03131;
-  --vd-danger-soft: rgba(224, 49, 49, 0.1);
-  --vd-hover: rgba(30, 30, 30, 0.06);
+  --od-accent: #0c8599;
+  --od-accent-soft: rgba(12, 133, 153, 0.12);
+  --od-danger: #e03131;
+  --od-danger-soft: rgba(224, 49, 49, 0.1);
+  --od-hover: rgba(30, 30, 30, 0.06);
 
   /* Elevation — two layered depths, neutral tone, shared light direction */
-  --vd-shadow-1: 0 1px 2px rgba(73, 80, 87, 0.08);
-  --vd-shadow-2: 0 4px 12px rgba(73, 80, 87, 0.12);
+  --od-shadow-1: 0 1px 2px rgba(73, 80, 87, 0.08);
+  --od-shadow-2: 0 4px 12px rgba(73, 80, 87, 0.12);
 
   /* Radii */
-  --vd-radius-s: 4px;
-  --vd-radius-m: 8px;
-  --vd-radius-l: 12px;
-  --vd-radius-xl: 20px;
+  --od-radius-s: 4px;
+  --od-radius-m: 8px;
+  --od-radius-l: 12px;
+  --od-radius-xl: 20px;
 
   /* Motion */
-  --vd-ease: cubic-bezier(0.19, 1, 0.22, 1);
-  --vd-fast: 120ms;
-  --vd-transition: 180ms;
+  --od-ease: cubic-bezier(0.19, 1, 0.22, 1);
+  --od-fast: 120ms;
+  --od-transition: 180ms;
 
   position: relative;
   width: 100%;
   height: 100%;
-  color: var(--vd-ink);
+  color: var(--od-ink);
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -62,33 +62,33 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.vuedraw-root[data-theme='dark'] {
-  --vd-surface: #1e1e1e;
-  --vd-surface-raised: #2a2a2a;
-  --vd-surface-float: rgba(30, 30, 30, 0.92);
-  --vd-ink: #e9ecef;
-  --vd-ink-soft: #adb5bd;
-  --vd-border: rgba(233, 236, 239, 0.12);
-  --vd-hover: rgba(233, 236, 239, 0.08);
+.opendraw-root[data-theme='dark'] {
+  --od-surface: #1e1e1e;
+  --od-surface-raised: #2a2a2a;
+  --od-surface-float: rgba(30, 30, 30, 0.92);
+  --od-ink: #e9ecef;
+  --od-ink-soft: #adb5bd;
+  --od-border: rgba(233, 236, 239, 0.12);
+  --od-hover: rgba(233, 236, 239, 0.08);
 }
 
 /* Box-sizing reset scoped to the editor so host pages stay untouched. */
-.vuedraw-root *,
-.vuedraw-root *::before,
-.vuedraw-root *::after {
+.opendraw-root *,
+.opendraw-root *::before,
+.opendraw-root *::after {
   box-sizing: border-box;
 }
 
-.vuedraw-root button {
+.opendraw-root button {
   font: inherit;
   color: inherit;
 }
 
 /* Respect users who prefer stillness: collapse chrome motion to a tick. */
 @media (prefers-reduced-motion: reduce) {
-  .vuedraw-root *,
-  .vuedraw-root *::before,
-  .vuedraw-root *::after {
+  .opendraw-root *,
+  .opendraw-root *::before,
+  .opendraw-root *::after {
     transition-duration: 1ms !important;
     animation-duration: 1ms !important;
   }

@@ -1,4 +1,4 @@
-import type { Point, VueDrawElement } from '@vuedraw/core'
+import type { Point, OpenDrawElement } from '@opendraw/core'
 import {
   bindableShapeAt,
   elementsUnderEraser,
@@ -20,7 +20,7 @@ import {
   selectableTarget,
   selectionFrameOf,
   startRotationAngle,
-} from '@vuedraw/core'
+} from '@opendraw/core'
 
 import { appendDraftPoint, finishLinearDraft } from './linearDraft.js'
 import { setModifiers, type CanvasRuntime } from './runtime.js'
@@ -52,7 +52,7 @@ export function eraseAlong(rt: CanvasRuntime, from: Point, to: Point): void {
   }
 }
 
-function draftElement(rt: CanvasRuntime, tool: string, at: Point): VueDrawElement {
+function draftElement(rt: CanvasRuntime, tool: string, at: Point): OpenDrawElement {
   const { style, shapeRoundness, arrowheads } = rt.ctx.appState.value
   if (tool === 'line') {
     return newLinearElement(tool, { x: at.x, y: at.y, style, points: [{ x: 0, y: 0 }] })

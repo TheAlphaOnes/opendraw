@@ -1,13 +1,13 @@
 {
-  "name": "vuedraw",
+  "name": "@opendraw/nuxt",
   "version": "0.1.0",
-  "description": "Excalidraw-style hand-drawn canvas for Nuxt 4 — a drop-in <VueDraw /> editor module.",
+  "description": "Excalidraw-style hand-drawn canvas for Nuxt 4 — a drop-in <OpenDraw /> editor module.",
   "type": "module",
   "license": "MIT",
   "author": "Vishnu",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vishnu/vuedraw",
+    "url": "https://github.com/vishnu/opendraw",
     "directory": "packages/nuxt"
   },
   "exports": {
@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@nuxt/kit": "^4.0.0",
-    "@vuedraw/core": "workspace:*",
+    "@opendraw/core": "workspace:*",
     "lucide-vue-next": "^1.0.0"
   },
   "devDependencies": {

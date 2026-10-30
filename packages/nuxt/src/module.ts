@@ -3,20 +3,20 @@ import { addComponent, addImports, createResolver, defineNuxtModule } from '@nux
 import type { NuxtModule } from '@nuxt/schema'
 
 /**
- * vuedraw — Excalidraw-style hand-drawn canvas for Nuxt 4.
+ * opendraw — Excalidraw-style hand-drawn canvas for Nuxt 4.
  *
- * Registers the editor components and the useVueDraw() composable with
+ * Registers the editor components and the useOpenDraw() composable with
  * auto-import. Everything ships as ESM; no transpile config needed.
  *
  * ```ts
  * export default defineNuxtConfig({
- *   modules: ['vuedraw'],
+ *   modules: ['@opendraw/nuxt'],
  * })
  * ```
  *
  * ```vue
  * <template>
- *   <VueDraw ui="full" theme="light" />
+ *   <OpenDraw ui="full" theme="light" />
  * </template>
  * ```
  */
@@ -25,37 +25,37 @@ export interface ModuleOptions {
   // props today. Keeping dead options out is deliberate.
 }
 
-const vuedrawModule: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
+const opendrawModule: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
   meta: {
-    name: 'vuedraw',
-    configKey: 'vuedraw',
+    name: '@opendraw/nuxt',
+    configKey: 'opendraw',
   },
   defaults: {},
   setup(_options, _nuxt) {
     const resolver = createResolver(import.meta.url)
 
     addComponent({
-      name: 'VueDraw',
-      filePath: resolver.resolve('./runtime/components/VueDraw.vue'),
+      name: 'OpenDraw',
+      filePath: resolver.resolve('./runtime/components/OpenDraw.vue'),
     })
 
     addComponent({
-      name: 'VueDrawCanvas',
-      filePath: resolver.resolve('./runtime/components/VueDrawCanvas.vue'),
+      name: 'OpenDrawCanvas',
+      filePath: resolver.resolve('./runtime/components/OpenDrawCanvas.vue'),
     })
 
     addImports([
       {
-        name: 'useVueDraw',
-        from: resolver.resolve('./runtime/composables/useVueDraw'),
+        name: 'useOpenDraw',
+        from: resolver.resolve('./runtime/composables/useOpenDraw'),
       },
       {
-        name: 'createVueDrawContext',
-        from: resolver.resolve('./runtime/composables/useVueDraw'),
+        name: 'createOpenDrawContext',
+        from: resolver.resolve('./runtime/composables/useOpenDraw'),
       },
       {
-        name: 'provideVueDraw',
-        from: resolver.resolve('./runtime/composables/useVueDraw'),
+        name: 'provideOpenDraw',
+        from: resolver.resolve('./runtime/composables/useOpenDraw'),
       },
       {
         name: 'useScenePersistence',
@@ -65,4 +65,4 @@ const vuedrawModule: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>
   },
 })
 
-export default vuedrawModule
+export default opendrawModule

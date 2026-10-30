@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import type { Point } from '@vuedraw/core'
+import type { Point } from '@opendraw/core'
 
-import { useVueDraw } from '../../composables/useVueDraw.js'
+import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import UiIconButton from '../ui/UiIconButton.vue'
 import UiPanel from '../ui/UiPanel.vue'
 
@@ -12,14 +12,14 @@ import UiPanel from '../ui/UiPanel.vue'
  * the bottom-left of the canvas as one row: zoom out, the live zoom
  * percentage (clickable to reset), zoom in.
  */
-const ctx = useVueDraw()
+const ctx = useOpenDraw()
 
 const percent = computed(() => `${Math.round(ctx.viewport.value.zoom * 100)}%`)
 
 // ---------------------------------------------------------------------------
 // Button zoom anchors at the canvas center, in canvas-local screen coords —
 // the space zoomAt() expects. The lookup stays inside this editor's own
-// .vuedraw-root subtree, so several editors on one page never cross anchors.
+// .opendraw-root subtree, so several editors on one page never cross anchors.
 // ---------------------------------------------------------------------------
 
 const rootEl = ref<HTMLElement | null>(null)
@@ -28,7 +28,7 @@ function zoomAnchor(): Point {
   if (typeof window === 'undefined') {
     return { x: 0, y: 0 }
   }
-  const canvas = rootEl.value?.closest('.vuedraw-root')?.querySelector('.vuedraw-canvas')
+  const canvas = rootEl.value?.closest('.opendraw-root')?.querySelector('.opendraw-canvas')
   const rect = canvas?.getBoundingClientRect()
   if (rect) {
     return { x: rect.width / 2, y: rect.height / 2 }
@@ -73,20 +73,20 @@ function zoomAnchor(): Point {
   min-width: 48px;
   padding: 0 10px;
   border: none;
-  border-radius: var(--vd-radius-m);
+  border-radius: var(--od-radius-m);
   background: transparent;
-  color: var(--vd-ink);
+  color: var(--od-ink);
   font-size: 13px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   transition:
-    background-color var(--vd-fast) var(--vd-ease),
-    transform var(--vd-fast) var(--vd-ease);
+    background-color var(--od-fast) var(--od-ease),
+    transform var(--od-fast) var(--od-ease);
 }
 
 .zoom-controls__reset:hover {
-  background: var(--vd-hover);
+  background: var(--od-hover);
 }
 
 .zoom-controls__reset:active {
@@ -94,7 +94,7 @@ function zoomAnchor(): Point {
 }
 
 .zoom-controls__reset:focus-visible {
-  outline: 2px solid var(--vd-accent);
+  outline: 2px solid var(--od-accent);
   outline-offset: 2px;
 }
 </style>

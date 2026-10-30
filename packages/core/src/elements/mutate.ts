@@ -6,7 +6,7 @@
  * patch is a no-op (Excalidraw's `newElementWith` discipline).
  */
 
-import type { VueDrawElement } from '../types.js'
+import type { OpenDrawElement } from '../types.js'
 import { newNonce } from '../utils/rng.js'
 
 /**
@@ -15,12 +15,12 @@ import { newNonce } from '../utils/rng.js'
  * text-specific patches (fontSize, fontFamily, …) typecheck on text
  * elements.
  */
-export type ElementPatch<T extends VueDrawElement = VueDrawElement> = T extends VueDrawElement
+export type ElementPatch<T extends OpenDrawElement = OpenDrawElement> = T extends OpenDrawElement
   ? Partial<Omit<T, 'id' | 'version' | 'versionNonce'>>
   : never
 
 /** True when every key in `patch` is shallow-equal to the element. */
-function isNoOp<T extends VueDrawElement>(element: T, patch: ElementPatch<T>): boolean {
+function isNoOp<T extends OpenDrawElement>(element: T, patch: ElementPatch<T>): boolean {
   for (const key of Object.keys(patch)) {
     const current = (element as unknown as Record<string, unknown>)[key]
     const next = (patch as unknown as Record<string, unknown>)[key]
@@ -35,7 +35,7 @@ function isNoOp<T extends VueDrawElement>(element: T, patch: ElementPatch<T>): b
  * Applies a patch copy-on-write. Returns the same reference when nothing
  * actually changed — callers (history, Vue reactivity) rely on that.
  */
-export function patchElement<T extends VueDrawElement>(element: T, patch: ElementPatch<T>): T {
+export function patchElement<T extends OpenDrawElement>(element: T, patch: ElementPatch<T>): T {
   if (isNoOp(element, patch)) {
     return element
   }
@@ -51,7 +51,7 @@ export function patchElement<T extends VueDrawElement>(element: T, patch: Elemen
  * Applies a patch regardless of no-op detection — for interactive drags
  * where the patch function recomputes fresh geometry each move anyway.
  */
-export function forcePatchElement<T extends VueDrawElement>(
+export function forcePatchElement<T extends OpenDrawElement>(
   element: T,
   patch: ElementPatch<T>,
 ): T {

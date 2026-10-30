@@ -13,7 +13,7 @@ import {
 import { selectionFrameOf } from '../src/interaction/handles.js'
 import { rotatePoint } from '../src/geometry/points.js'
 import { newFreedrawElement, newLinearElement, newRectangleElement, newTextElement } from '../src/elements/factories.js'
-import type { VueDrawRectangleElement } from '../src/types.js'
+import type { OpenDrawRectangleElement } from '../src/types.js'
 
 
 describe('creation drafting', () => {
@@ -69,7 +69,7 @@ describe('moving', () => {
 })
 
 describe('single-element resize', () => {
-  const rect = (): VueDrawRectangleElement =>
+  const rect = (): OpenDrawRectangleElement =>
     newRectangleElement({ x: 10, y: 10, width: 100, height: 50 })
 
   it('grows from the se handle keeping nw anchored', () => {
@@ -100,7 +100,7 @@ describe('single-element resize', () => {
   })
 
   it('keeps text clamped to a minimum instead of flipping', () => {
-    const text = { ...newTextElement({ x: 10, y: 10, text: 'vuedraw' }), width: 100, height: 50 }
+    const text = { ...newTextElement({ x: 10, y: 10, text: 'opendraw' }), width: 100, height: 50 }
     const patch = resizeSingleElement(text, 'se', { x: -500, y: -500 }, { shift: false })
     expect(patch).toMatchObject({ x: 10, y: 10, width: 1, height: 1 })
   })

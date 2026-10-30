@@ -1,7 +1,7 @@
 /**
  * Arrowheads — Excalidraw's element/src/bounds.ts `getArrowheadPoints`
  * geometry and element/src/shape.ts `getArrowheadShapes` drawing, for the
- * straight polylines vuedraw renders.
+ * straight polylines opendraw renders.
  *
  * Sizes and angles are Excalidraw's; each head shrinks on short segments so
  * it never swallows the line (half the last segment, a quarter for
@@ -11,7 +11,7 @@
 import type { Drawable, Options } from 'roughjs/bin/core.js'
 import type { RoughGenerator } from 'roughjs/bin/generator.js'
 
-import type { Arrowhead, VueDrawLinearElement } from '../types.js'
+import type { Arrowhead, OpenDrawLinearElement } from '../types.js'
 
 type Position = 'start' | 'end'
 
@@ -53,7 +53,7 @@ function rotate(x: number, y: number, cx: number, cy: number, angle: number): [n
  * Null when the end segment has no length to point along.
  */
 export function arrowheadPoints(
-  element: Pick<VueDrawLinearElement, 'points' | 'strokeWidth'>,
+  element: Pick<OpenDrawLinearElement, 'points' | 'strokeWidth'>,
   position: Position,
   arrowhead: Arrowhead,
 ): number[] | null {
@@ -100,7 +100,7 @@ export function arrowheadPoints(
  */
 export function arrowheadDrawables(
   generator: RoughGenerator,
-  element: VueDrawLinearElement,
+  element: OpenDrawLinearElement,
   position: Position,
   arrowhead: Arrowhead,
   options: Options,

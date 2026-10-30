@@ -53,7 +53,7 @@ const current = computed(
 const POPOVER_GAP = 6
 
 onMounted(() => {
-  teleportTarget.value = triggerRef.value?.closest<HTMLElement>('.vuedraw-root') ?? null
+  teleportTarget.value = triggerRef.value?.closest<HTMLElement>('.opendraw-root') ?? null
 })
 
 function place(): void {
@@ -188,17 +188,17 @@ onBeforeUnmount(() => {
   height: 36px;
   padding: 0 6px 0 10px;
   border: none;
-  border-radius: var(--vd-radius-m);
-  background: var(--vd-hover);
-  color: var(--vd-ink);
+  border-radius: var(--od-radius-m);
+  background: var(--od-hover);
+  color: var(--od-ink);
   cursor: pointer;
   transition:
-    background-color var(--vd-fast) ease-out,
-    transform var(--vd-fast) var(--vd-ease);
+    background-color var(--od-fast) ease-out,
+    transform var(--od-fast) var(--od-ease);
 }
 
 .ui-popover-select:hover {
-  background: var(--vd-accent-soft);
+  background: var(--od-accent-soft);
 }
 
 .ui-popover-select:active {
@@ -206,12 +206,12 @@ onBeforeUnmount(() => {
 }
 
 .ui-popover-select:focus-visible {
-  outline: 2px solid var(--vd-accent);
+  outline: 2px solid var(--od-accent);
   outline-offset: 1px;
 }
 
 .ui-popover-select__caret {
-  color: var(--vd-ink-soft);
+  color: var(--od-ink-soft);
 }
 
 .ui-popover {
@@ -220,10 +220,10 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 4px;
   padding: 6px;
-  background: var(--vd-surface);
-  border: 1px solid var(--vd-border);
-  border-radius: var(--vd-radius-l);
-  box-shadow: var(--vd-shadow-1), var(--vd-shadow-2);
+  background: var(--od-surface);
+  border: 1px solid var(--od-border);
+  border-radius: var(--od-radius-l);
+  box-shadow: var(--od-shadow-1), var(--od-shadow-2);
 }
 
 .ui-popover__option {
@@ -233,24 +233,24 @@ onBeforeUnmount(() => {
   width: 36px;
   height: 36px;
   border: none;
-  border-radius: var(--vd-radius-m);
+  border-radius: var(--od-radius-m);
   background: transparent;
-  color: var(--vd-ink);
+  color: var(--od-ink);
   cursor: pointer;
-  transition: background-color var(--vd-fast) ease-out;
+  transition: background-color var(--od-fast) ease-out;
 }
 
 .ui-popover__option:hover {
-  background: var(--vd-hover);
+  background: var(--od-hover);
 }
 
 .ui-popover__option.is-active {
-  background: var(--vd-accent-soft);
-  color: var(--vd-accent);
+  background: var(--od-accent-soft);
+  color: var(--od-accent);
 }
 
 .ui-popover__option:focus-visible {
-  outline: 2px solid var(--vd-accent);
+  outline: 2px solid var(--od-accent);
   outline-offset: -2px;
 }
 

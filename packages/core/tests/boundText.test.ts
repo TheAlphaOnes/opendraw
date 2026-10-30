@@ -10,8 +10,8 @@ import {
 } from '../src/elements/boundText.js'
 import { newEllipseElement, newRectangleElement, newTextElement } from '../src/elements/factories.js'
 import { wrapText } from '../src/geometry/text.js'
-import { VueDrawDocument } from '../src/scene/document.js'
-import type { VueDrawTextElement } from '../src/types.js'
+import { OpenDrawDocument } from '../src/scene/document.js'
+import type { OpenDrawTextElement } from '../src/types.js'
 
 /** Node has no canvas: the measurer estimates 8px per character. */
 const CHAR = 8
@@ -29,8 +29,8 @@ function boxWithLabel(text: string, width = 200, height = 100) {
   return { box, label }
 }
 
-function label(doc: VueDrawDocument, id: string): VueDrawTextElement {
-  return doc.getElement(id) as VueDrawTextElement
+function label(doc: OpenDrawDocument, id: string): OpenDrawTextElement {
+  return doc.getElement(id) as OpenDrawTextElement
 }
 
 describe('wrapText', () => {
@@ -64,7 +64,7 @@ describe('bound text — container math (Excalidraw textElement.ts)', () => {
 describe('bound text — document invariants', () => {
   it('lays the label out when added and follows the container as it moves', () => {
     const { box, label: text } = boxWithLabel('hello')
-    const doc = new VueDrawDocument({ elements: [box] })
+    const doc = new OpenDrawDocument({ elements: [box] })
     doc.addElement(text, { after: box.id })
     const placed = label(doc, text.id)
     expect(placed.x + placed.width / 2).toBeCloseTo(200)
@@ -77,17 +77,17 @@ describe('bound text — document invariants', () => {
 
   it('re-wraps when the container narrows and when the text changes', () => {
     const { box, label: text } = boxWithLabel('aaa bbb')
-    const doc = new VueDrawDocument({ elements: [box, text] })
+    const doc = new OpenDrawDocument({ elements: [box, text] })
     doc.updateElement(box.id, { x: box.x })
     doc.updateElement(box.id, { width: 4 * CHAR + BOUND_TEXT_PADDING * 2 })
     expect(label(doc, text.id).text).toBe('aaa\nbbb')
-    doc.updateElement<VueDrawTextElement>(text.id, { originalText: 'zz' })
+    doc.updateElement<OpenDrawTextElement>(text.id, { originalText: 'zz' })
     expect(label(doc, text.id).text).toBe('zz')
   })
 
   it('rotates the label with its container', () => {
     const { box, label: text } = boxWithLabel('x')
-    const doc = new VueDrawDocument({ elements: [box, text] })
+    const doc = new OpenDrawDocument({ elements: [box, text] })
     doc.updateElement(box.id, { angle: 1 })
     expect(label(doc, text.id).angle).toBe(1)
   })
@@ -95,7 +95,7 @@ describe('bound text — document invariants', () => {
   it('deletes, duplicates and reorders the label with its container', () => {
     const { box, label: text } = boxWithLabel('x')
     const other = newRectangleElement({ x: 0, y: 0, width: 10, height: 10 })
-    const doc = new VueDrawDocument({ elements: [box, text, other] })
+    const doc = new OpenDrawDocument({ elements: [box, text, other] })
     doc.select(box.id)
     doc.reorderSelection('front')
     expect(doc.getElements().map((el) => el.id)).toEqual([other.id, box.id, text.id])
@@ -113,7 +113,7 @@ describe('bound text — document invariants', () => {
 
   it('resolves a click on the label to its container and keeps it out of select-all', () => {
     const { box, label: text } = boxWithLabel('x')
-    const doc = new VueDrawDocument({ elements: [box, text] })
+    const doc = new OpenDrawDocument({ elements: [box, text] })
     expect(selectableTarget(text, doc.getElements()).id).toBe(box.id)
     doc.selectAll()
     expect(Object.keys(doc.getAppState().selectedIds)).toEqual([box.id])

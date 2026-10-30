@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import type { ActionId } from '../../actions/registry.js'
-import { useVueDraw } from '../../composables/useVueDraw.js'
+import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import ActionButton from './ActionButton.vue'
 import StyleSection from './StyleSection.vue'
 
@@ -11,7 +11,7 @@ import StyleSection from './StyleSection.vue'
  * "Layers", "Align" and "Actions" rows. Align appears from two selected
  * elements, distribute from three.
  */
-const ctx = useVueDraw()
+const ctx = useOpenDraw()
 const count = computed(() => ctx.selectedElements.value.length)
 const anyLocked = computed(() => ctx.selectedElements.value.some((el) => el.locked))
 

@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import type { Arrowhead, VueDrawLinearElement } from '@vuedraw/core'
+import type { Arrowhead, OpenDrawLinearElement } from '@opendraw/core'
 
-import { useVueDraw } from '../../composables/useVueDraw.js'
+import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import UiPopoverSelect, { type UiPopoverOption } from '../ui/UiPopoverSelect.vue'
 
 /**
  * Start / end arrowhead pickers — Excalidraw's "Arrowheads" property. The
  * start options are mirrored so every glyph points the way its head will.
  */
-const ctx = useVueDraw()
+const ctx = useOpenDraw()
 
 const NONE = 'none'
 
@@ -50,7 +50,7 @@ const startOptions = optionsFor('start')
 const endOptions = optionsFor('end')
 
 const firstArrow = computed(
-  () => ctx.selectedElements.value.find((el): el is VueDrawLinearElement => el.type === 'arrow') ?? null,
+  () => ctx.selectedElements.value.find((el): el is OpenDrawLinearElement => el.type === 'arrow') ?? null,
 )
 const current = computed(() => {
   const arrow = firstArrow.value

@@ -1,8 +1,8 @@
-# vuedraw
+# opendraw
 
-An Excalidraw-style hand-drawn canvas for the Nuxt 4 ecosystem. Drop `<VueDraw />` into any Nuxt app and get the full whiteboard: shapes, arrows, freehand, text, selection, transforms, undo/redo, themes, and export.
+An Excalidraw-style hand-drawn canvas for the Nuxt 4 ecosystem. Drop `<OpenDraw />` into any Nuxt app and get the full whiteboard: shapes, arrows, freehand, text, selection, transforms, undo/redo, themes, and export.
 
-vuedraw is a pnpm monorepo built on a framework-free engine, published as a Nuxt module.
+opendraw is a pnpm monorepo built on a framework-free engine, published as a Nuxt module.
 
 ## Features
 
@@ -14,11 +14,11 @@ vuedraw is a pnpm monorepo built on a framework-free engine, published as a Nuxt
 - **Themes** — dark mode inverts element colors in-canvas; your canvas background is user data and is never filtered
 - **Export** — PNG download and JSON scene save/load
 - **Headless mode** — every panel is optional; build your own UI on the same editor context
-- **A framework-free core** — `@vuedraw/core` runs anywhere TypeScript does: tests, workers, other frameworks
+- **A framework-free core** — `@opendraw/core` runs anywhere TypeScript does: tests, workers, other frameworks
 
 ## Credits
 
-vuedraw exists because [Excalidraw](https://github.com/excalidraw/excalidraw) showed how a canvas editor should feel. Its behavior contract was learned by reading the Excalidraw codebase: the element model, the single mutation funnel and history semantics, selection and transform math, text WYSIWYG, and the two-canvas render split. vuedraw is an independent implementation for the Nuxt ecosystem; it is not a fork and is not affiliated with the Excalidraw team.
+opendraw exists because [Excalidraw](https://github.com/excalidraw/excalidraw) showed how a canvas editor should feel. Its behavior contract was learned by reading the Excalidraw codebase: the element model, the single mutation funnel and history semantics, selection and transform math, text WYSIWYG, and the two-canvas render split. opendraw is an independent implementation for the Nuxt ecosystem; it is not a fork and is not affiliated with the Excalidraw team.
 
 Built on open source:
 
@@ -31,8 +31,8 @@ Built on open source:
 
 | Package | What it is |
 | --- | --- |
-| [`vuedraw`](./packages/nuxt) | The Nuxt module. Registers the `<VueDraw>` and `<VueDrawCanvas>` components and auto-imports the `useVueDraw()` family. Ships the editor chrome: tool dock, style and actions panels, context menu. |
-| [`@vuedraw/core`](./packages/core) | The engine. Element model, geometry, scene document with snapshot history, hit testing, transforms, the rough.js renderer, and PNG/JSON export. No Vue or Nuxt imports, so it is usable standalone in any TypeScript project. |
+| [`opendraw`](./packages/nuxt) | The Nuxt module. Registers the `<OpenDraw>` and `<OpenDrawCanvas>` components and auto-imports the `useOpenDraw()` family. Ships the editor chrome: tool dock, style and actions panels, context menu. |
+| [`@opendraw/core`](./packages/core) | The engine. Element model, geometry, scene document with snapshot history, hit testing, transforms, the rough.js renderer, and PNG/JSON export. No Vue or Nuxt imports, so it is usable standalone in any TypeScript project. |
 
 ## Requirements
 
@@ -42,19 +42,19 @@ Built on open source:
 ## Quickstart
 
 ```bash
-pnpm add vuedraw
+pnpm add opendraw
 ```
 
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ['vuedraw'],
+  modules: ['opendraw'],
 })
 ```
 
 ```vue
 <template>
-  <VueDraw theme="light" @change="onChange" @select="onSelect" />
+  <OpenDraw theme="light" @change="onChange" @select="onSelect" />
 </template>
 
 <script setup lang="ts">
@@ -70,12 +70,12 @@ function onSelect(ids: string[]) {
 ```
 
 Components and composables are auto-imported by the module. Element types such
-as `VueDrawElement` come from `@vuedraw/core` (a direct dependency of vuedraw);
+as `OpenDrawElement` come from `@opendraw/core` (a direct dependency of opendraw);
 add it to your own dependencies if you want explicit type imports.
 
 ## API
 
-### `<VueDraw>`
+### `<OpenDraw>`
 
 The full editor, ready to drop on a page.
 
@@ -84,20 +84,20 @@ The full editor, ready to drop on a page.
 | `ui` | `'full' \| 'minimal' \| 'none'` | `'full'` | Chrome level. `full` adds the tool dock, style panel, actions panel, and context menu. `minimal` keeps the dock and actions. `none` is the bare canvas for custom UI. |
 | `theme` | `'light' \| 'dark'` | `'light'` | Editor theme. Switching swaps the default canvas background (`#ffffff` to `#121212` and back); a background you customized is left untouched. |
 | `grid` | `boolean \| number` | `false` | `true` shows a 20px grid; a number sets the cell size. |
-| `initialElements` | `VueDrawElement[]` | `[]` | Scene to open with. |
+| `initialElements` | `OpenDrawElement[]` | `[]` | Scene to open with. |
 
 | Event | Payload | Fires |
 | --- | --- | --- |
 | `change` | `{ elements, appState }` | On every scene mutation. `elements` is the full scene, in z-order. |
 | `select` | `ids: string[]` | When the selection set changes. |
 
-### `<VueDrawCanvas>`
+### `<OpenDrawCanvas>`
 
 The canvas on its own: pointer interactions, rendering, and the text editing
 session. No chrome and no context creation. Pair it with
-`createVueDrawContext()`.
+`createOpenDrawContext()`.
 
-### `useVueDraw()`
+### `useOpenDraw()`
 
 The editor context. Every shipped component consumes it through
 provide/inject, and any chrome you build consumes the same:
@@ -121,23 +121,23 @@ Reactive members are refs and computeds: read `ctx.elements.value` in script,
 
 ## Headless: build your own UI
 
-`<VueDraw ui="none" />` and `<VueDrawCanvas />` render no chrome. Create the
+`<OpenDraw ui="none" />` and `<OpenDrawCanvas />` render no chrome. Create the
 context yourself, provide it, and talk to the same API the shipped chrome
 uses:
 
 ```vue
 <script setup lang="ts">
-const ctx = createVueDrawContext({
+const ctx = createOpenDrawContext({
   // The dark theme inverts element colors, so give the canvas a dark
   // background to go with it.
   appState: { theme: 'dark', viewBackgroundColor: '#121212' },
 })
-provideVueDraw(ctx)
+provideOpenDraw(ctx)
 </script>
 
 <template>
   <div class="stage">
-    <VueDrawCanvas />
+    <OpenDrawCanvas />
 
     <div class="dock">
       <button
@@ -156,9 +156,9 @@ provideVueDraw(ctx)
 </template>
 ```
 
-`createVueDrawContext(options?)` accepts `elements` (the initial scene) and
+`createOpenDrawContext(options?)` accepts `elements` (the initial scene) and
 `appState` (a partial state: theme, background, grid, and friends).
-`useVueDraw()` inside any descendant returns the provided context.
+`useOpenDraw()` inside any descendant returns the provided context.
 
 The complete headless example lives in
 [`playground/app/pages/headless.vue`](./playground/app/pages/headless.vue).
@@ -175,7 +175,7 @@ This is a pnpm monorepo:
 ```bash
 pnpm install            # workspace dependencies
 pnpm dev                # prepare packages, then run the playground at :3000
-pnpm build              # build @vuedraw/core and the vuedraw module
+pnpm build              # build @opendraw/core and the opendraw module
 pnpm test               # run the test suites (core: 111 tests)
 pnpm typecheck          # typecheck every package
 pnpm build:playground   # production build of the playground

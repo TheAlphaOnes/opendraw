@@ -1,4 +1,4 @@
-import type { ElementType, ToolId, VueDrawElement } from '@vuedraw/core'
+import type { ElementType, ToolId, OpenDrawElement } from '@opendraw/core'
 
 /**
  * Which property sections the properties island shows — Excalidraw's
@@ -44,7 +44,7 @@ const INKED: ReadonlySet<ElementType> = new Set([
 ])
 
 export function panelTargets(
-  selected: readonly VueDrawElement[],
+  selected: readonly OpenDrawElement[],
   tool: ToolId,
   hasLabels = false,
 ): PanelTargets {

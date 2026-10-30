@@ -13,8 +13,8 @@ import type {
   HandleDirection,
   Point,
   ResizeHandle,
-  VueDrawElement,
-  VueDrawLinearElement,
+  OpenDrawElement,
+  OpenDrawLinearElement,
 } from '../types.js'
 
 export type PointerKind = 'mouse' | 'pen' | 'touch'
@@ -51,7 +51,7 @@ export interface SelectionFrame {
  * The frame for a selection: a single element uses its own rotated frame,
  * multiple elements share the axis-aligned common bounds at angle 0.
  */
-export function selectionFrameOf(elements: readonly VueDrawElement[]): SelectionFrame | null {
+export function selectionFrameOf(elements: readonly OpenDrawElement[]): SelectionFrame | null {
   if (elements.length === 0) {
     return null
   }
@@ -293,7 +293,7 @@ export interface LinearHandle {
 }
 
 /** Scene positions of a linear element's point handles, in point order. */
-export function linearPointHandles(element: VueDrawLinearElement): LinearHandle[] {
+export function linearPointHandles(element: OpenDrawLinearElement): LinearHandle[] {
   return element.points.map((point, index) => ({ index, at: scenePointOf(element, point) }))
 }
 
@@ -301,9 +301,9 @@ export function linearPointHandles(element: VueDrawLinearElement): LinearHandle[
  * The segment-midpoint handle of a two-point linear — the small circle
  * Excalidraw renders on a selected two-point line, whose press inserts a
  * point there and drags it. Longer polylines only grow midpoints in the
- * point editor, which vuedraw does not have.
+ * point editor, which opendraw does not have.
  */
-export function linearMidpointHandle(element: VueDrawLinearElement): LinearHandle | null {
+export function linearMidpointHandle(element: OpenDrawLinearElement): LinearHandle | null {
   if (element.points.length !== 2) {
     return null
   }

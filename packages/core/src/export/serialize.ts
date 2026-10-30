@@ -16,15 +16,18 @@ import type {
   StrokeStyle,
   StrokeWidth,
   TextAlign,
-  VueDrawBinding,
-  VueDrawElement,
-  VueDrawFile,
+  OpenDrawBinding,
+  OpenDrawElement,
+  OpenDrawFile,
 } from '../types.js'
 
 const FILL_STYLES: readonly FillStyle[] = ['hachure', 'cross-hatch', 'solid']
 const STROKE_STYLES: readonly StrokeStyle[] = ['solid', 'dashed', 'dotted']
 const STROKE_WIDTHS: readonly StrokeWidth[] = [1, 2, 4]
 const ROUGHNESS_LEVELS: readonly Roughness[] = [0, 1, 2]
+
+/** The file type written before the project was renamed to opendraw. */
+const LEGACY_FILE_TYPE = 'vuedraw'
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -61,7 +64,7 @@ function freedrawPoints(value: unknown): number[][] {
 }
 
 /** Coerces a linear tip binding: a record with a string elementId, else null. */
-function linearBinding(value: unknown): VueDrawBinding | null {
+function linearBinding(value: unknown): OpenDrawBinding | null {
   if (!isRecord(value) || typeof value.elementId !== 'string') {
     return null
   }
@@ -87,11 +90,11 @@ function arrowhead(value: unknown, fallback: Arrowhead | null): Arrowhead | null
  * Coerces unknown data into a valid element, or null when it isn't one.
  * Unknown props are dropped; invalid values fall back to defaults.
  */
-export function coerceElement(input: unknown): VueDrawElement | null {
+export function coerceElement(input: unknown): OpenDrawElement | null {
   if (!isRecord(input) || typeof input.id !== 'string' || !isElementType(String(input.type))) {
     return null
   }
-  const type = input.type as VueDrawElement['type']
+  const type = input.type as OpenDrawElement['type']
   const base = {
     id: input.id,
     type,
@@ -166,7 +169,7 @@ export function coerceElement(input: unknown): VueDrawElement | null {
  * same reference when nothing is missing — the cheap repair for elements a
  * host app builds by hand (full coercion is for untrusted files).
  */
-export function normalizeElement(element: VueDrawElement): VueDrawElement {
+export function normalizeElement(element: OpenDrawElement): OpenDrawElement {
   const missingGroups = !Array.isArray(element.groupIds)
   const missingFrame = !('frameId' in element)
   const linear = element.type === 'line' || element.type === 'arrow'
@@ -179,7 +182,7 @@ export function normalizeElement(element: VueDrawElement): VueDrawElement {
     ...element,
     groupIds: missingGroups ? [] : element.groupIds,
     frameId: missingFrame ? null : element.frameId,
-  } as VueDrawElement
+  } as OpenDrawElement
   if (missingHeads && (repaired.type === 'line' || repaired.type === 'arrow')) {
     repaired.startArrowhead = repaired.startArrowhead ?? null
     repaired.endArrowhead = repaired.endArrowhead === undefined ? (repaired.type === 'arrow' ? 'arrow' : null) : repaired.endArrowhead
@@ -193,11 +196,11 @@ export function normalizeElement(element: VueDrawElement): VueDrawElement {
 
 /** Builds a scene file from elements (+ document background). */
 export function buildFile(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   viewBackgroundColor: string,
-): VueDrawFile {
+): OpenDrawFile {
   return {
-    type: 'vuedraw',
+    type: 'opendraw',
     version: 1,
     elements: elements.map((el) => ({ ...el })),
     appState: { viewBackgroundColor },
@@ -205,20 +208,21 @@ export function buildFile(
 }
 
 /**
- * Parses unknown input as a vuedraw file. Throws only for clearly-wrong
+ * Parses unknown input as a opendraw file. Throws only for clearly-wrong
  * payloads (not our file type); malformed elements are dropped.
  */
-export function parseFile(input: unknown): VueDrawFile {
-  if (!isRecord(input) || input.type !== 'vuedraw') {
-    throw new Error('not a vuedraw file (missing type: "vuedraw")')
+export function parseFile(input: unknown): OpenDrawFile {
+  // Files saved before the rename to opendraw carry `type: "vuedraw"`.
+  if (!isRecord(input) || (input.type !== 'opendraw' && input.type !== LEGACY_FILE_TYPE)) {
+    throw new Error('not an opendraw file (missing type: "opendraw")')
   }
   const rawElements = Array.isArray(input.elements) ? input.elements : []
   const elements = rawElements
     .map((el) => coerceElement(el))
-    .filter((el): el is VueDrawElement => el !== null)
+    .filter((el): el is OpenDrawElement => el !== null)
   const appState = isRecord(input.appState) ? input.appState : {}
   return {
-    type: 'vuedraw',
+    type: 'opendraw',
     version: 1,
     elements,
     appState: {
@@ -227,10 +231,10 @@ export function parseFile(input: unknown): VueDrawFile {
   }
 }
 
-export function serializeToJSON(file: VueDrawFile): string {
+export function serializeToJSON(file: OpenDrawFile): string {
   return JSON.stringify(file, null, 2)
 }
 
-export function parseFromJSON(text: string): VueDrawFile {
+export function parseFromJSON(text: string): OpenDrawFile {
   return parseFile(JSON.parse(text))
 }

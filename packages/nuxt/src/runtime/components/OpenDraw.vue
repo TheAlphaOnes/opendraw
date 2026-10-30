@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 
-import type { VueDrawElement } from '@vuedraw/core'
+import type { OpenDrawElement } from '@opendraw/core'
 
 import {
-  createVueDrawContext,
-  provideVueDraw,
-  type VueDrawChangeDetail,
-} from '../composables/useVueDraw.js'
+  createOpenDrawContext,
+  provideOpenDraw,
+  type OpenDrawChangeDetail,
+} from '../composables/useOpenDraw.js'
 import { useScenePersistence } from '../composables/useScenePersistence.js'
 import { DEFAULT_SCENE_STORAGE_KEY } from '../persistence/persistedScene.js'
 import { resolveThemeDefault, type ThemeDefault } from '../persistence/systemTheme.js'
 import type { CanvasContextMenuRequest } from '../canvas/viewportGestures.js'
-import VueDrawCanvas from './VueDrawCanvas.vue'
+import OpenDrawCanvas from './OpenDrawCanvas.vue'
 import ToolDock from './toolbar/ToolDock.vue'
 import StylePanel from './panels/StylePanel.vue'
 import ActionsPanel from './panels/ActionsPanel.vue'
@@ -22,15 +22,15 @@ import ShortcutsDialog from './ui/ShortcutsDialog.vue'
 import WelcomeScreen from './ui/WelcomeScreen.vue'
 
 /**
- * VueDraw — the full editor, ready to drop into any page:
+ * OpenDraw — the full editor, ready to drop into any page:
  *
- *   <VueDraw theme="dark" ui="full" />
+ *   <OpenDraw theme="dark" ui="full" />
  *
  * `ui` gates the chrome: "full" adds dock + panels + context menu,
  * "minimal" keeps only the tool dock, "none" is a pure canvas for
- * building your own UI with useVueDraw().
+ * building your own UI with useOpenDraw().
  */
-export interface VueDrawProps {
+export interface OpenDrawProps {
   /**
    * Starting theme. `"system"` (the default) follows the browser color
    * scheme, matching Excalidraw's first-load detection; a persisted
@@ -39,7 +39,7 @@ export interface VueDrawProps {
   theme?: ThemeDefault
   ui?: 'full' | 'minimal' | 'none'
   grid?: boolean | number
-  initialElements?: VueDrawElement[]
+  initialElements?: OpenDrawElement[]
   /**
    * Automatic localStorage persistence (Excalidraw parity). `true` (default)
    * saves the scene under the shared key; a string saves under that key;
@@ -48,7 +48,7 @@ export interface VueDrawProps {
   persist?: boolean | string
 }
 
-const props = withDefaults(defineProps<VueDrawProps>(), {
+const props = withDefaults(defineProps<OpenDrawProps>(), {
   theme: 'system',
   ui: 'full',
   grid: false,
@@ -57,7 +57,7 @@ const props = withDefaults(defineProps<VueDrawProps>(), {
 })
 
 const emit = defineEmits<{
-  (e: 'change', detail: VueDrawChangeDetail): void
+  (e: 'change', detail: OpenDrawChangeDetail): void
   (e: 'select', ids: string[]): void
 }>()
 
@@ -66,11 +66,11 @@ const emit = defineEmits<{
 // render (both must agree — the media query only exists after mount), then
 // the persisted restore runs first and, when a theme was saved, wins; a
 // fresh scene resolves the system scheme on mount.
-const ctx = createVueDrawContext({
+const ctx = createOpenDrawContext({
   elements: props.initialElements,
   appState: { theme: props.theme === 'system' ? 'light' : resolveThemeDefault(props.theme) },
 })
-provideVueDraw(ctx)
+provideOpenDraw(ctx)
 
 // Prop → context sync. `'system'` is a first-load default, not a live state
 // to push — after mount the editor owns the theme (and persists it).
@@ -132,8 +132,8 @@ const themeAttr = computed(() => ctx.theme.value)
 </script>
 
 <template>
-  <div class="vuedraw-root" :data-theme="themeAttr">
-    <VueDrawCanvas @contextmenu="openMenu" />
+  <div class="opendraw-root" :data-theme="themeAttr">
+    <OpenDrawCanvas @contextmenu="openMenu" />
     <ToolDock v-if="ui !== 'none'" />
     <StylePanel v-if="ui === 'full'" />
     <ActionsPanel v-if="ui !== 'none'" />
@@ -152,5 +152,5 @@ const themeAttr = computed(() => ctx.theme.value)
 </template>
 
 <style>
-@import '../styles/vuedraw.css';
+@import '../styles/opendraw.css';
 </style>

@@ -141,9 +141,9 @@ test('trackpad pinch-zoom surfaces as ctrl+wheel and zooms toward the cursor', a
   const cursor = at(box, 320, 200)
   await page.evaluate(
     ({ x, y }) => {
-      const host = document.querySelector('.vuedraw-canvas')
+      const host = document.querySelector('.opendraw-canvas')
       if (!(host instanceof HTMLElement)) {
-        throw new Error('vuedraw canvas missing')
+        throw new Error('opendraw canvas missing')
       }
       // A pinch-in: small negative deltaY ticks, ~one per frame.
       for (let i = 0; i < 10; i++) {

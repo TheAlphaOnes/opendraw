@@ -79,7 +79,7 @@ import {
   ZoomOut,
 } from 'lucide-vue-next'
 
-/** Semantic icon names used across the vuedraw chrome. */
+/** Semantic icon names used across the opendraw chrome. */
 export type IconName =
   // tools
   | 'selection'

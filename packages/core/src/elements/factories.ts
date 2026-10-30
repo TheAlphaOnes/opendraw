@@ -15,15 +15,15 @@ import type {
   StylePayload,
   TextStyle,
   VerticalAlign,
-  VueDrawElement,
-  VueDrawElementBase,
-  VueDrawFreedrawElement,
-  VueDrawFrameElement,
-  VueDrawImageElement,
-  VueDrawLinearElement,
-  VueDrawTextElement,
+  OpenDrawElement,
+  OpenDrawElementBase,
+  OpenDrawFreedrawElement,
+  OpenDrawFrameElement,
+  OpenDrawImageElement,
+  OpenDrawLinearElement,
+  OpenDrawTextElement,
 } from '../types.js'
-import type { VueDrawArrowElement, VueDrawLineElement } from '../types.js'
+import type { OpenDrawArrowElement, OpenDrawLineElement } from '../types.js'
 import { DEFAULT_ELEMENT_STYLE, DEFAULT_TEXT_STYLE, TRANSPARENT } from './defaults.js'
 import { newId, newNonce, randomSeed } from '../utils/rng.js'
 
@@ -40,9 +40,9 @@ export const ELEMENT_TYPES = [
   'frame',
 ] as const
 
-export type VueDrawElementType = (typeof ELEMENT_TYPES)[number]
+export type OpenDrawElementType = (typeof ELEMENT_TYPES)[number]
 
-export function isElementType(value: string): value is VueDrawElementType {
+export function isElementType(value: string): value is OpenDrawElementType {
   return (ELEMENT_TYPES as readonly string[]).includes(value)
 }
 
@@ -104,13 +104,13 @@ export interface NewFrameOptions extends NewElementOptions {
 }
 
 /** The base fields every element carries, with the literal type plugged in. */
-type ElementBaseInit<T extends VueDrawElementType> = Omit<VueDrawElementBase, 'type'> & { type: T }
+type ElementBaseInit<T extends OpenDrawElementType> = Omit<OpenDrawElementBase, 'type'> & { type: T }
 
 // ---------------------------------------------------------------------------
 // Base construction
 // ---------------------------------------------------------------------------
 
-function baseElement<T extends VueDrawElementType>(
+function baseElement<T extends OpenDrawElementType>(
   type: T,
   opts: NewElementOptions,
 ): ElementBaseInit<T> {
@@ -170,10 +170,10 @@ export function newLinearElement(
     endBinding: null,
     startArrowhead: opts.startArrowhead ?? null,
     endArrowhead: opts.endArrowhead === undefined ? (type === 'arrow' ? 'arrow' : null) : opts.endArrowhead,
-  } as VueDrawLineElement | VueDrawArrowElement
+  } as OpenDrawLineElement | OpenDrawArrowElement
 }
 
-export function newFreedrawElement(opts: NewFreedrawOptions): VueDrawFreedrawElement {
+export function newFreedrawElement(opts: NewFreedrawOptions): OpenDrawFreedrawElement {
   return {
     ...baseElement('freedraw', opts),
     points: opts.points ?? [],
@@ -181,7 +181,7 @@ export function newFreedrawElement(opts: NewFreedrawOptions): VueDrawFreedrawEle
   }
 }
 
-export function newTextElement(opts: NewTextOptions): VueDrawTextElement {
+export function newTextElement(opts: NewTextOptions): OpenDrawTextElement {
   const textStyle = { ...DEFAULT_TEXT_STYLE, ...opts.textStyle }
   const layout = opts.layout ?? layoutText(opts.text, textStyle.fontFamily, textStyle.fontSize)
   return {
@@ -200,7 +200,7 @@ export function newTextElement(opts: NewTextOptions): VueDrawTextElement {
 }
 
 /** Generic dispatcher — the Vue layer stores the active tool, not a factory. */
-export function newElement<T extends VueDrawElementType>(
+export function newElement<T extends OpenDrawElementType>(
   type: T,
   opts: NewElementOptions & { text?: string; dataUrl?: string },
 ): ElementOf<T> {
@@ -234,7 +234,7 @@ export function newElement<T extends VueDrawElementType>(
     case 'frame':
       return newFrameElement(opts) as ElementOf<T>
   }
-  // Unreachable for the closed VueDrawElementType union; the guard keeps the
+  // Unreachable for the closed OpenDrawElementType union; the guard keeps the
   // generic dispatcher total without lying about its return type.
   throw new Error(`unsupported element type: ${String(type)}`)
 }
@@ -271,7 +271,7 @@ export function newFrameElement(opts: NewFrameOptions): ElementOf<'frame'> {
 }
 
 /** The style payload a selection panel reads back from an element. */
-export function elementStyleOf(element: VueDrawElement): ElementStyle {
+export function elementStyleOf(element: OpenDrawElement): ElementStyle {
   return {
     strokeColor: element.strokeColor,
     backgroundColor: element.backgroundColor,
@@ -284,7 +284,7 @@ export function elementStyleOf(element: VueDrawElement): ElementStyle {
 }
 
 /** Everything Mod+Alt+C copies from an element. */
-export function stylePayloadOf(element: VueDrawElement): StylePayload {
+export function stylePayloadOf(element: OpenDrawElement): StylePayload {
   const payload: StylePayload = { style: elementStyleOf(element) }
   if (element.type === 'text') {
     payload.textStyle = textStyleOf(element)
@@ -295,7 +295,7 @@ export function stylePayloadOf(element: VueDrawElement): StylePayload {
   return payload
 }
 
-export function textStyleOf(element: VueDrawTextElement): TextStyle {
+export function textStyleOf(element: OpenDrawTextElement): TextStyle {
   return {
     fontSize: element.fontSize,
     fontFamily: element.fontFamily,
@@ -307,7 +307,7 @@ export function textStyleOf(element: VueDrawTextElement): TextStyle {
  * Duplicate an element: fresh identity, identical look. Keeping the seed
  * makes the copy render with the same hand-drawn jitter.
  */
-export function duplicateElement<T extends VueDrawElement>(
+export function duplicateElement<T extends OpenDrawElement>(
   element: T,
   patch: Partial<NewElementOptions> = {},
 ): T {
@@ -329,26 +329,26 @@ export function duplicateElement<T extends VueDrawElement>(
  * arrows carry `startBinding`/`endBinding`.
  */
 export function isLinearElement(
-  element: VueDrawElement,
-): element is VueDrawLineElement | VueDrawArrowElement {
+  element: OpenDrawElement,
+): element is OpenDrawLineElement | OpenDrawArrowElement {
   return element.type === 'line' || element.type === 'arrow'
 }
 
 export function isFreedrawElement(
-  element: VueDrawElement,
-): element is VueDrawFreedrawElement {
+  element: OpenDrawElement,
+): element is OpenDrawFreedrawElement {
   return element.type === 'freedraw'
 }
 
-export function isTextElement(element: VueDrawElement): element is VueDrawTextElement {
+export function isTextElement(element: OpenDrawElement): element is OpenDrawTextElement {
   return element.type === 'text'
 }
 
-export function isImageElement(element: VueDrawElement): element is VueDrawImageElement {
+export function isImageElement(element: OpenDrawElement): element is OpenDrawImageElement {
   return element.type === 'image'
 }
 
-export function isFrameElement(element: VueDrawElement): element is VueDrawFrameElement {
+export function isFrameElement(element: OpenDrawElement): element is OpenDrawFrameElement {
   return element.type === 'frame'
 }
 
@@ -356,6 +356,6 @@ export function isFrameElement(element: VueDrawElement): element is VueDrawFrame
  * Narrow to the arrow element — the only linear type that carries
  * `startBinding`/`endBinding` (binding logic relies on this).
  */
-export function isArrowElement(element: VueDrawElement): element is VueDrawArrowElement {
+export function isArrowElement(element: OpenDrawElement): element is OpenDrawArrowElement {
   return element.type === 'arrow'
 }

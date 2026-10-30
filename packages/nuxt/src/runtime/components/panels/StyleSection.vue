@@ -22,6 +22,6 @@ defineProps<{ label: string }>()
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--vd-ink-soft);
+  color: var(--od-ink-soft);
 }
 </style>

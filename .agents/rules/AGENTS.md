@@ -641,20 +641,20 @@ Maintainable software is the goal.
 
 ---
 
-# Project: vuedraw
+# Project: opendraw
 
-This repository is vuedraw: an Excalidraw-style hand-drawn canvas for the Nuxt 4 ecosystem, published as a pnpm monorepo.
+This repository is opendraw: an Excalidraw-style hand-drawn canvas for the Nuxt 4 ecosystem, published as a pnpm monorepo.
 
-* `packages/core` — `@vuedraw/core`: the engine. Element model, geometry, scene document, history, hit testing, transforms, rough.js renderer, export. No Vue or Nuxt imports.
-* `packages/nuxt` — `vuedraw`: the Nuxt module. `<VueDraw>` shell, `<VueDrawCanvas>` headless core, `useVueDraw()`, and the central UI kit.
+* `packages/core` — `@opendraw/core`: the engine. Element model, geometry, scene document, history, hit testing, transforms, rough.js renderer, export. No Vue or Nuxt imports.
+* `packages/nuxt` — `opendraw`: the Nuxt module. `<OpenDraw>` shell, `<OpenDrawCanvas>` headless core, `useOpenDraw()`, and the central UI kit.
 * `playground/` — a Nuxt 4 app for manual verification.
 
-The full project doc lives in `.agents/project.md`. The project rules live in `.agents/rules/vuedraw.md`. Read both before any task in this repo.
+The full project doc lives in `.agents/project.md`. The project rules live in `.agents/rules/opendraw.md`. Read both before any task in this repo.
 
 Laws that bear repeating:
 
-* **Excalidraw parity is the behavior contract.** vuedraw must look and behave like Excalidraw. When any behavior is ambiguous, match Excalidraw: the reference codebase is vendored at `.context/excalidraw/` — read it before inventing behavior. Selection semantics, binding, history granularity, transforms: parity over invention.
-* All document mutations go through `VueDrawDocument.mutate()`. There is no other write path.
+* **Excalidraw parity is the behavior contract.** opendraw must look and behave like Excalidraw. When any behavior is ambiguous, match Excalidraw: the reference codebase is vendored at `.context/excalidraw/` — read it before inventing behavior. Selection semantics, binding, history granularity, transforms: parity over invention.
+* All document mutations go through `OpenDrawDocument.mutate()`. There is no other write path.
 * Vue derivations of document state read through the injected context: `ctx.state`, `ctx.elements`, `ctx.rev`. Plain document fields never invalidate a computed.
 * `<TextEditor>` mounts per editing session. The textarea is uncontrolled while typing and keeps a stable layout box for the session.
 * The user's canvas background is data. Dark mode inverts element colors, never the background.
@@ -664,7 +664,7 @@ Laws that bear repeating:
 ## Project commands
 
 * `pnpm dev` — prepare workspace packages, then run the playground
-* `pnpm build` — build `@vuedraw/core` and the `vuedraw` module
+* `pnpm build` — build `@opendraw/core` and the `opendraw` module
 * `pnpm test` — run the test suites
 * `pnpm typecheck` — typecheck every package (the playground included: two vue-tsc passes, with the e2e specs covered by their own strict `tsconfig.e2e.json`)
 * `pnpm e2e` — Playwright e2e suite against the playground (boots the dev server itself)

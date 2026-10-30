@@ -13,7 +13,7 @@
  * its placeholder until the decode lands.
  */
 
-import { newImageElement, type Point, type VueDrawElement, type VueDrawImageElement } from '@vuedraw/core'
+import { newImageElement, type Point, type OpenDrawElement, type OpenDrawImageElement } from '@opendraw/core'
 
 /** Decoded bitmaps keyed by data URL — shared across editor instances. */
 const bitmapCache = new Map<string, HTMLImageElement>()
@@ -41,7 +41,7 @@ export function imageFilesOf(files: FileList | null | undefined): File[] {
  * The resolver handed to core's renderer and PNG exporter: synchronous cache
  * lookup only — a bitmap that is not decoded yet yields null (placeholder).
  */
-export function imageResolver(element: VueDrawImageElement): CanvasImageSource | null {
+export function imageResolver(element: OpenDrawImageElement): CanvasImageSource | null {
   const bitmap = bitmapCache.get(element.dataUrl)
   return bitmap && bitmap.complete && bitmap.naturalWidth > 0 ? bitmap : null
 }
@@ -68,7 +68,7 @@ export function requestImageDecode(dataUrl: string, onDecoded: () => void): void
   }
   image.onerror = () => {
     // eslint-disable-next-line no-console -- degrade visibly per repo error rules
-    console.error('[vuedraw] image failed to decode', { dataUrlLength: dataUrl.length })
+    console.error('[opendraw] image failed to decode', { dataUrlLength: dataUrl.length })
   }
   image.src = dataUrl
 }
@@ -132,7 +132,7 @@ export async function prepareImageFile(file: File, onDecoded?: () => void): Prom
 export function imageElementFromPrepared(
   prepared: PreparedImage,
   at: Point,
-): VueDrawImageElement {
+): OpenDrawImageElement {
   return newImageElement({
     x: at.x - prepared.width / 2,
     y: at.y - prepared.height / 2,
@@ -143,7 +143,7 @@ export function imageElementFromPrepared(
 }
 
 /** Every image data URL currently present in a scene (drives decode sweeps). */
-export function imageDataUrlsOf(elements: readonly VueDrawElement[]): string[] {
+export function imageDataUrlsOf(elements: readonly OpenDrawElement[]): string[] {
   const urls: string[] = []
   for (const element of elements) {
     if (element.type === 'image' && !urls.includes(element.dataUrl)) {

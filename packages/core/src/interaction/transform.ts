@@ -11,7 +11,7 @@ import { rotatePoint } from '../geometry/points.js'
 import type {
   HandleDirection,
   Point,
-  VueDrawElement,
+  OpenDrawElement,
 } from '../types.js'
 import type { ElementPatch } from '../elements/mutate.js'
 import type { SelectionFrame } from './handles.js'
@@ -87,7 +87,7 @@ export function freedrawPoint(current: Point, origin: Point, pressure: number): 
  * rounded so the selection's top-left lands on the grid.
  */
 export function moveElements(
-  originals: readonly VueDrawElement[],
+  originals: readonly OpenDrawElement[],
   delta: Point,
   gridSize: number | null = null,
 ): Array<{ id: string; patch: ElementPatch }> {
@@ -137,7 +137,7 @@ function withMinSize(size: number): number {
  * linear/freedraw points by the same flip. Text alone clamps to a minimum.
  */
 export function resizeSingleElement(
-  original: VueDrawElement,
+  original: OpenDrawElement,
   handle: HandleDirection,
   pointer: Point,
   modifiers: PointerModifiers,
@@ -266,7 +266,7 @@ function isCorner(handle: HandleDirection): boolean {
  * scales its fontSize instead of stretching.
  */
 export function resizeMultipleElements(
-  originals: readonly VueDrawElement[],
+  originals: readonly OpenDrawElement[],
   handle: HandleDirection,
   pointer: Point,
   modifiers: PointerModifiers,
@@ -373,7 +373,7 @@ export function normalizeAngle(angle: number): number {
  * Each element keeps its pose relative to the group.
  */
 export function rotateElements(
-  originals: readonly VueDrawElement[],
+  originals: readonly OpenDrawElement[],
   frame: SelectionFrame,
   startAngle: number,
   pointer: Point,

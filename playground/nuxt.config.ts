@@ -1,14 +1,14 @@
 export default defineNuxtConfig({
   compatibilityDate: '2026-10-01',
 
-  modules: ['vuedraw'],
+  modules: ['@opendraw/nuxt'],
 
   // Dev DX: alias the engine to its TypeScript source so playground edits are live.
-  // The built module still consumes @vuedraw/core's dist in published form.
+  // The built module still consumes @opendraw/core's dist in published form.
   vite: {
     resolve: {
       alias: {
-        '@vuedraw/core': '../packages/core/src/index.ts',
+        '@opendraw/core': '../packages/core/src/index.ts',
       },
     },
     optimizeDeps: {
@@ -20,7 +20,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'vuedraw — playground',
+      title: 'opendraw — playground',
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       ],

@@ -24,26 +24,26 @@ import type { ElementPatch } from './mutate.js'
 import type {
   Bounds,
   Point,
-  VueDrawBinding,
-  VueDrawDiamondElement,
-  VueDrawEllipseElement,
-  VueDrawElement,
-  VueDrawLinearElement,
-  VueDrawRectangleElement,
-  VueDrawTextElement,
+  OpenDrawBinding,
+  OpenDrawDiamondElement,
+  OpenDrawEllipseElement,
+  OpenDrawElement,
+  OpenDrawLinearElement,
+  OpenDrawRectangleElement,
+  OpenDrawTextElement,
 } from '../types.js'
 
 /** Shapes an arrow tip can dock onto (Excalidraw's bindable set, unlocked). */
-export type VueDrawBindableShape =
-  | VueDrawRectangleElement
-  | VueDrawDiamondElement
-  | VueDrawEllipseElement
-  | VueDrawTextElement
+export type OpenDrawBindableShape =
+  | OpenDrawRectangleElement
+  | OpenDrawDiamondElement
+  | OpenDrawEllipseElement
+  | OpenDrawTextElement
 
 /** Gaps exclude the shape's stroke width (must stay > 0, per Excalidraw). */
 export const BASE_BINDING_GAP = 5
 
-export function isBindableShape(element: VueDrawElement): element is VueDrawBindableShape {
+export function isBindableShape(element: OpenDrawElement): element is OpenDrawBindableShape {
   return (
     !element.locked &&
     (element.type === 'rectangle' ||
@@ -54,7 +54,7 @@ export function isBindableShape(element: VueDrawElement): element is VueDrawBind
 }
 
 /** Kept clear of the shape edge by this much (scene px). */
-export function bindingGap(shape: Pick<VueDrawBindableShape, 'strokeWidth'>): number {
+export function bindingGap(shape: Pick<OpenDrawBindableShape, 'strokeWidth'>): number {
   return BASE_BINDING_GAP + shape.strokeWidth / 2
 }
 
@@ -73,11 +73,11 @@ export function maxBindingDistance(zoom = 1): number {
  * is boxy by design (Excalidraw compares against the padded box too).
  */
 export function bindableShapeAt(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   point: Point,
   threshold: number,
   excludeId?: string,
-): VueDrawBindableShape | null {
+): OpenDrawBindableShape | null {
   for (let i = elements.length - 1; i >= 0; i--) {
     const element = elements[i]!
     if (element.id === excludeId || !isBindableShape(element)) {
@@ -103,7 +103,7 @@ export function bindableShapeAt(
 // ---------------------------------------------------------------------------
 
 /** The shape's local box dilated by the binding gap, in element coordinates. */
-function dilatedLocalBounds(shape: VueDrawBindableShape, gap: number): Bounds {
+function dilatedLocalBounds(shape: OpenDrawBindableShape, gap: number): Bounds {
   return {
     x1: -gap,
     y1: -gap,
@@ -191,7 +191,7 @@ function closestPointOnSegment(p: Point, a: Point, b: Point): Point {
 }
 
 /** The dilated rhombus vertices, clockwise from the top, in local coords. */
-function diamondVertices(shape: VueDrawBindableShape, gap: number): readonly Point[] {
+function diamondVertices(shape: OpenDrawBindableShape, gap: number): readonly Point[] {
   const cx = shape.width / 2
   const cy = shape.height / 2
   return [
@@ -209,7 +209,7 @@ function diamondVertices(shape: VueDrawBindableShape, gap: number): readonly Poi
  * never crosses.
  */
 function outlineCrossing(
-  shape: VueDrawBindableShape,
+  shape: OpenDrawBindableShape,
   from: Point,
   toward: Point,
   gap: number,
@@ -266,7 +266,7 @@ function outlineCrossing(
 }
 
 /** Whether `point` (local coords) lies inside the shape's dilated outline. */
-function outlineContains(shape: VueDrawBindableShape, point: Point, gap: number): boolean {
+function outlineContains(shape: OpenDrawBindableShape, point: Point, gap: number): boolean {
   if (shape.type === 'ellipse') {
     const a = shape.width / 2 + gap
     const b = shape.height / 2 + gap
@@ -296,7 +296,7 @@ function outlineContains(shape: VueDrawBindableShape, point: Point, gap: number)
 }
 
 /** The point on the shape's dilated outline nearest `point` (local coords). */
-function nearestOutlinePoint(shape: VueDrawBindableShape, point: Point, gap: number): Point {
+function nearestOutlinePoint(shape: OpenDrawBindableShape, point: Point, gap: number): Point {
   if (shape.type === 'ellipse') {
     const a = shape.width / 2 + gap
     const b = shape.height / 2 + gap
@@ -348,7 +348,7 @@ function nearestOutlinePoint(shape: VueDrawBindableShape, point: Point, gap: num
  * rotated edges.
  */
 export function dockPoint(
-  shape: VueDrawBindableShape,
+  shape: OpenDrawBindableShape,
   focus: Point,
   current?: Point,
 ): Point {
@@ -371,24 +371,24 @@ export function dockPoint(
 // Scene <-> local space (same pivot as the hit-tester: x + width / 2)
 // ---------------------------------------------------------------------------
 
-function pivotOf(element: VueDrawElement): Point {
+function pivotOf(element: OpenDrawElement): Point {
   return { x: element.x + element.width / 2, y: element.y + element.height / 2 }
 }
 
 /** Scene-space position of an element-local point, rotated about the pivot. */
-export function scenePointOf(element: VueDrawElement, point: Point): Point {
+export function scenePointOf(element: OpenDrawElement, point: Point): Point {
   const base = { x: element.x + point.x, y: element.y + point.y }
   return element.angle === 0 ? base : rotatePoint(base, pivotOf(element), element.angle)
 }
 
 /** Element-local position of a scene point, un-rotated about the pivot. */
-export function localPointOf(element: VueDrawElement, scene: Point): Point {
+export function localPointOf(element: OpenDrawElement, scene: Point): Point {
   const base = element.angle === 0 ? scene : unrotatePoint(scene, pivotOf(element), element.angle)
   return { x: base.x - element.x, y: base.y - element.y }
 }
 
 /** Scene-space positions of the element's first and last tip. */
-function tipScenes(element: VueDrawLinearElement): { start: Point; end: Point } {
+function tipScenes(element: OpenDrawLinearElement): { start: Point; end: Point } {
   const points = element.points
   return {
     start: scenePointOf(element, points[0]!),
@@ -403,10 +403,10 @@ function tipScenes(element: VueDrawLinearElement): { start: Point; end: Point } 
  * the app goes through here so the size fields never go stale.
  */
 export function pointsPatch(
-  element: VueDrawLinearElement,
+  element: OpenDrawLinearElement,
   points: Point[],
-): ElementPatch<VueDrawLinearElement> {
-  const patch: ElementPatch<VueDrawLinearElement> = { points }
+): ElementPatch<OpenDrawLinearElement> {
+  const patch: ElementPatch<OpenDrawLinearElement> = { points }
   if (element.angle === 0) {
     const xs = points.map((point) => point.x)
     const ys = points.map((point) => point.y)
@@ -421,9 +421,9 @@ export function pointsPatch(
  * space.
  */
 function retipPatch(
-  element: VueDrawLinearElement,
+  element: OpenDrawLinearElement,
   tips: { start?: Point; end?: Point },
-): ElementPatch<VueDrawLinearElement> {
+): ElementPatch<OpenDrawLinearElement> {
   const points = element.points.map((point) => ({ ...point }))
   if (tips.start) {
     points[0] = localPointOf(element, tips.start)
@@ -441,10 +441,10 @@ function retipPatch(
  * {@link computeTipBinding}.
  */
 export function moveLinearPoint(
-  element: VueDrawLinearElement,
+  element: OpenDrawLinearElement,
   index: number,
   scene: Point,
-): ElementPatch<VueDrawLinearElement> {
+): ElementPatch<OpenDrawLinearElement> {
   const points = element.points.map((point) => ({ ...point }))
   points[index] = localPointOf(element, scene)
   return pointsPatch(element, points)
@@ -461,10 +461,10 @@ export function moveLinearPoint(
  * is near a shape.
  */
 export function computeLinearBindings(
-  element: VueDrawLinearElement,
-  elements: readonly VueDrawElement[],
+  element: OpenDrawLinearElement,
+  elements: readonly OpenDrawElement[],
   threshold: number,
-): ElementPatch<VueDrawLinearElement> | null {
+): ElementPatch<OpenDrawLinearElement> | null {
   const { start, end } = tipScenes(element)
   const startShape = bindableShapeAt(elements, start, threshold, element.id)
   const endShape = bindableShapeAt(elements, end, threshold, element.id)
@@ -489,9 +489,9 @@ export function computeLinearBindings(
  * (a hand-edited file can bind anything) count as unbound.
  */
 function boundShape(
-  binding: VueDrawBinding | null,
-  byId: Map<string, VueDrawElement>,
-): VueDrawBindableShape | undefined {
+  binding: OpenDrawBinding | null,
+  byId: Map<string, OpenDrawElement>,
+): OpenDrawBindableShape | undefined {
   if (!binding) {
     return undefined
   }
@@ -506,16 +506,16 @@ function boundShape(
  * this is the release-time commit of an endpoint drag.
  */
 export function computeTipBinding(
-  element: VueDrawLinearElement,
+  element: OpenDrawLinearElement,
   end: 'start' | 'end',
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   threshold: number,
-): ElementPatch<VueDrawLinearElement> {
+): ElementPatch<OpenDrawLinearElement> {
   const { start, end: endTip } = tipScenes(element)
   const tip = end === 'start' ? start : endTip
   const opposite = end === 'start' ? endTip : start
   const shape = bindableShapeAt(elements, tip, threshold, element.id)
-  const patch: ElementPatch<VueDrawLinearElement> = {}
+  const patch: ElementPatch<OpenDrawLinearElement> = {}
   if (shape) {
     // The opposite tip drives the dock; a self-loop spreads the two tips
     // onto different edges of the same shape.
@@ -541,9 +541,9 @@ export function computeTipBinding(
  */
 export function bindingFollowPatches(
   movedIds: ReadonlySet<string>,
-  elements: readonly VueDrawElement[],
-): Map<string, ElementPatch<VueDrawLinearElement>> {
-  const patches = new Map<string, ElementPatch<VueDrawLinearElement>>()
+  elements: readonly OpenDrawElement[],
+): Map<string, ElementPatch<OpenDrawLinearElement>> {
+  const patches = new Map<string, ElementPatch<OpenDrawLinearElement>>()
   const byId = new Map(elements.map((element) => [element.id, element]))
   for (const element of elements) {
     if (!isLinearElement(element)) {
@@ -578,9 +578,9 @@ export function bindingFollowPatches(
  */
 export function orphanBindingPatches(
   deletedIds: ReadonlySet<string>,
-  elements: readonly VueDrawElement[],
-): Map<string, ElementPatch<VueDrawLinearElement>> {
-  const patches = new Map<string, ElementPatch<VueDrawLinearElement>>()
+  elements: readonly OpenDrawElement[],
+): Map<string, ElementPatch<OpenDrawLinearElement>> {
+  const patches = new Map<string, ElementPatch<OpenDrawLinearElement>>()
   for (const element of elements) {
     if (!isLinearElement(element)) {
       continue

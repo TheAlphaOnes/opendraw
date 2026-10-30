@@ -13,16 +13,16 @@
  */
 
 import { boundsContain, getElementBounds, pointInBounds } from '../geometry/bounds.js'
-import type { Point, VueDrawElement, VueDrawFrameElement } from '../types.js'
+import type { Point, OpenDrawElement, OpenDrawFrameElement } from '../types.js'
 import { isBoundText } from './boundText.js'
 import { isFrameElement } from './factories.js'
 
 /** The topmost unlocked frame whose box contains the point, or null. */
 export function frameAt(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   point: Point,
   excludeIds: ReadonlySet<string> = new Set(),
-): VueDrawFrameElement | null {
+): OpenDrawFrameElement | null {
   for (let i = elements.length - 1; i >= 0; i--) {
     const element = elements[i]!
     if (
@@ -38,7 +38,7 @@ export function frameAt(
 }
 
 /** The elements currently belonging to the frame. */
-export function frameChildren(elements: readonly VueDrawElement[], frameId: string): VueDrawElement[] {
+export function frameChildren(elements: readonly OpenDrawElement[], frameId: string): OpenDrawElement[] {
   return elements.filter((el) => el.frameId === frameId)
 }
 
@@ -47,9 +47,9 @@ export function frameChildren(elements: readonly VueDrawElement[], frameId: stri
  * groups whole: a group joins only when every member is inside.
  */
 export function elementsCompletelyInFrame(
-  elements: readonly VueDrawElement[],
-  frame: VueDrawFrameElement,
-): VueDrawElement[] {
+  elements: readonly OpenDrawElement[],
+  frame: OpenDrawFrameElement,
+): OpenDrawElement[] {
   const box = getElementBounds(frame)
   const inside = new Set(
     elements
@@ -70,9 +70,9 @@ export function elementsCompletelyInFrame(
  * move, nudge, duplicate and delete carry along with a frame.
  */
 export function withFrameChildren(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   ids: Iterable<string>,
-): VueDrawElement[] {
+): OpenDrawElement[] {
   const wanted = new Set(ids)
   const frames = new Set(
     elements.filter((el) => wanted.has(el.id) && isFrameElement(el)).map((el) => el.id),
@@ -86,8 +86,8 @@ export function withFrameChildren(
  * nest, so frames themselves are skipped. Only real changes are returned.
  */
 export function frameMembershipPatches(
-  elements: readonly VueDrawElement[],
-  members: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
+  members: readonly OpenDrawElement[],
   frameId: string | null,
 ): Map<string, string | null> {
   const ids = new Set(members.filter((el) => !isFrameElement(el)).map((el) => el.id))

@@ -16,10 +16,10 @@ import {
   type StrokeWidth,
   type TextAlign,
   type TextStyle,
-  type VueDrawTextElement,
-} from '@vuedraw/core'
+  type OpenDrawTextElement,
+} from '@opendraw/core'
 
-import { useVueDraw } from '../../composables/useVueDraw.js'
+import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import { panelTargets, type PanelTargets } from './panelTargets.js'
 import ArrowheadPicker from './ArrowheadPicker.vue'
 import SelectionActions from './SelectionActions.vue'
@@ -36,12 +36,12 @@ import UiSwatchRow from '../ui/UiSwatchRow.vue'
  * patch the selection, or set the defaults for the next element when
  * nothing is selected (the document decides which).
  */
-const ctx = useVueDraw()
+const ctx = useOpenDraw()
 
 /** Labels inside the selected shapes — styled through the text section. */
 const labels = computed(() =>
   withBoundTexts(ctx.elements.value, ctx.selectedElements.value.map((el) => el.id)).filter(
-    (el): el is VueDrawTextElement => el.type === 'text' && el.containerId !== null,
+    (el): el is OpenDrawTextElement => el.type === 'text' && el.containerId !== null,
   ),
 )
 
@@ -66,7 +66,7 @@ const style = computed<ElementStyle>(() => {
     : ctx.appState.value.style
 })
 const textStyle = computed<TextStyle>(() => {
-  const el = ctx.selectedElements.value.find((e): e is VueDrawTextElement => e.type === 'text') ?? labels.value[0]
+  const el = ctx.selectedElements.value.find((e): e is OpenDrawTextElement => e.type === 'text') ?? labels.value[0]
   return el ? { fontSize: el.fontSize, fontFamily: el.fontFamily, textAlign: el.textAlign } : ctx.appState.value.textStyle
 })
 const roundness = computed(() => {

@@ -7,7 +7,7 @@
     "noEmit": true,
     "types": [],
     "paths": {
-      "@vuedraw/core": ["../core/src/index.ts"]
+      "@opendraw/core": ["../core/src/index.ts"]
     }
   },
   "include": ["src"]

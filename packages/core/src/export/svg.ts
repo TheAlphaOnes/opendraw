@@ -15,7 +15,7 @@ import {
 } from '../render/renderScene.js'
 import { themeColor } from '../render/theme.js'
 import type { Drawable, Op } from 'roughjs/bin/core.js'
-import type { ThemeName, VueDrawElement, VueDrawFreedrawElement, VueDrawTextElement } from '../types.js'
+import type { ThemeName, OpenDrawElement, OpenDrawFreedrawElement, OpenDrawTextElement } from '../types.js'
 import type { ExportOptions } from './png.js'
 
 // ---------------------------------------------------------------------------
@@ -91,7 +91,7 @@ function escapeXml(value: string): string {
 }
 
 /** Freedraw strokes fill a single smoothed path (no rough.js involved). */
-function freedrawToPathData(element: VueDrawFreedrawElement): string {
+function freedrawToPathData(element: OpenDrawFreedrawElement): string {
   const commands = outlineCommands(getFreedrawOutline(element))
   if (commands.length === 0) {
     return ''
@@ -111,7 +111,7 @@ function freedrawToPathData(element: VueDrawFreedrawElement): string {
   return parts.join(' ')
 }
 
-function textAnchorOf(align: VueDrawTextElement['textAlign']): string {
+function textAnchorOf(align: OpenDrawTextElement['textAlign']): string {
   if (align === 'center') {
     return 'middle'
   }
@@ -119,7 +119,7 @@ function textAnchorOf(align: VueDrawTextElement['textAlign']): string {
 }
 
 /** Text lines as `<text>` nodes, matching the canvas baseline math. */
-function textToSvg(element: VueDrawTextElement, dark: boolean): string {
+function textToSvg(element: OpenDrawTextElement, dark: boolean): string {
   const fill = themeColor(element.strokeColor, dark)
   const anchorX =
     element.textAlign === 'center' ? element.width / 2 : element.textAlign === 'right' ? element.width : 0
@@ -144,7 +144,7 @@ function textToSvg(element: VueDrawTextElement, dark: boolean): string {
  * One element as a positioned `<g>`: translate to the element origin, rotate
  * around its center — the same transform the canvas renderer applies.
  */
-function elementToSvg(element: VueDrawElement, dark: boolean, background: string): string {
+function elementToSvg(element: OpenDrawElement, dark: boolean, background: string): string {
   const rotate =
     element.angle !== 0
       ? ` rotate(${formatNumber((element.angle * 180) / Math.PI)} ${formatNumber(element.width / 2)} ${formatNumber(element.height / 2)})`
@@ -199,7 +199,7 @@ function elementToSvg(element: VueDrawElement, dark: boolean, background: string
  * their absolute positions and the output scales losslessly.
  */
 export function exportToSvg(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   viewBackgroundColor: string,
   options: ExportOptions = {},
 ): string {
@@ -238,7 +238,7 @@ export function exportToSvg(
 
 /** Triggers a browser download of the serialized SVG. */
 export function downloadSVG(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   viewBackgroundColor: string,
   filename: string,
   options: ExportOptions = {},

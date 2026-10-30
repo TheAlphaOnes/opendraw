@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import { newRectangleElement } from '../src/elements/factories.js'
 import { reorderElements } from '../src/elements/zindex.js'
-import type { VueDrawElement } from '../src/types.js'
+import type { OpenDrawElement } from '../src/types.js'
 
-function rect(id: string, groupIds: string[] = []): VueDrawElement {
+function rect(id: string, groupIds: string[] = []): OpenDrawElement {
   return newRectangleElement({ id, x: 0, y: 0, width: 10, height: 10, groupIds })
 }
 
-const order = (els: VueDrawElement[] | null) => els?.map((el) => el.id)
+const order = (els: OpenDrawElement[] | null) => els?.map((el) => el.id)
 
 describe('z-order — excalidraw unit stepping', () => {
   it('steps forward past a whole group, never into it', () => {

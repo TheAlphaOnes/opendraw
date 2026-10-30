@@ -1,7 +1,7 @@
 import { onBeforeUnmount, onMounted } from 'vue'
 
-import type { Point, VueDrawElement } from '@vuedraw/core'
-import { elementsInGroup, moveElements, parentEditingGroupId } from '@vuedraw/core'
+import type { Point, OpenDrawElement } from '@opendraw/core'
+import { elementsInGroup, moveElements, parentEditingGroupId } from '@opendraw/core'
 
 import { dispatchActionKey } from '../actions/registry.js'
 import { isTypingTarget } from '../actions/keys.js'
@@ -37,7 +37,7 @@ function isActivatable(target: EventTarget | null): boolean {
 }
 
 /**
- * Keys are handled on the whole editor (the `.vuedraw-root` around the
+ * Keys are handled on the whole editor (the `.opendraw-root` around the
  * canvas, or the canvas itself when mounted headless) — Excalidraw's
  * container-level onKeyDown — so a shortcut still works right after a
  * toolbar click moved focus onto a button.
@@ -51,7 +51,7 @@ export function useCanvasKeyboard(rt: CanvasRuntime): void {
     const delta = { x: direction.x * step, y: direction.y * step }
     for (const { id, patch } of moveElements(ctx.selectedElements.value, delta)) {
       // The selection mixes element kinds, so patches are base-union typed.
-      ctx.doc.updateElement<VueDrawElement>(id, patch)
+      ctx.doc.updateElement<OpenDrawElement>(id, patch)
     }
   }
 
@@ -151,7 +151,7 @@ export function useCanvasKeyboard(rt: CanvasRuntime): void {
 
   onMounted(() => {
     const host = rt.hostRef.value
-    keyRoot = host?.closest<HTMLElement>('.vuedraw-root') ?? host
+    keyRoot = host?.closest<HTMLElement>('.opendraw-root') ?? host
     keyRoot?.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onWindowKeyUp)
     window.addEventListener('keydown', onWindowKeyDown)

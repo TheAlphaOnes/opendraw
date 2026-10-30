@@ -184,10 +184,10 @@ onBeforeUnmount(() => {
   max-height: min(80vh, 560px);
   overflow-y: auto;
   padding: 20px 24px 24px;
-  border: 1px solid var(--vd-border);
-  border-radius: var(--vd-radius-l);
-  background: var(--vd-surface-raised);
-  box-shadow: var(--vd-shadow-2);
+  border: 1px solid var(--od-border);
+  border-radius: var(--od-radius-l);
+  background: var(--od-surface-raised);
+  box-shadow: var(--od-shadow-2);
 }
 
 .shortcuts__header {
@@ -201,7 +201,7 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: var(--vd-ink);
+  color: var(--od-ink);
 }
 
 .shortcuts__groups {
@@ -216,7 +216,7 @@ onBeforeUnmount(() => {
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--vd-ink-soft);
+  color: var(--od-ink-soft);
 }
 
 .shortcuts__list {
@@ -237,7 +237,7 @@ onBeforeUnmount(() => {
 
 .shortcuts__label {
   font-size: 13px;
-  color: var(--vd-ink);
+  color: var(--od-ink);
 }
 
 .shortcuts__keys {
@@ -249,6 +249,6 @@ onBeforeUnmount(() => {
 
 .shortcuts__or {
   font-size: 11px;
-  color: var(--vd-ink-soft);
+  color: var(--od-ink-soft);
 }
 </style>

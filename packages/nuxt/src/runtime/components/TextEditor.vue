@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
-import type { TextContainer, VueDrawTextElement } from '@vuedraw/core'
+import type { TextContainer, OpenDrawTextElement } from '@opendraw/core'
 import {
   boundTextMaxWidth,
   containerTextOrigin,
@@ -10,9 +10,9 @@ import {
   sceneToScreen,
   screenToScene,
   themeColor,
-} from '@vuedraw/core'
+} from '@opendraw/core'
 
-import { useVueDraw } from '../composables/useVueDraw.js'
+import { useOpenDraw } from '../composables/useOpenDraw.js'
 
 /**
  * Wysiwyg text editor: a font-matched textarea floating exactly over the
@@ -27,12 +27,12 @@ import { useVueDraw } from '../composables/useVueDraw.js'
  * keystroke resets Chromium's IME/insertText caret, which reverses typed
  * text character by character.
  */
-const ctx = useVueDraw()
+const ctx = useOpenDraw()
 
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const committed = ref(false)
 
-const element = computed<VueDrawTextElement | null>(() => {
+const element = computed<OpenDrawTextElement | null>(() => {
   const id = ctx.editingId.value
   if (!id) {
     return null
@@ -175,7 +175,7 @@ function onKeydown(event: KeyboardEvent) {
     // the very next shortcut (another Escape, Delete…) still reaches the
     // editor instead of falling to <body> — Excalidraw refocuses its
     // container after text editing too.
-    const host = textareaRef.value?.closest<HTMLElement>('.vuedraw-canvas')
+    const host = textareaRef.value?.closest<HTMLElement>('.opendraw-canvas')
     commit()
     host?.focus({ preventScroll: true })
     return
@@ -206,7 +206,7 @@ function isWithinElement(event: PointerEvent): boolean {
   if (!el || !ta) {
     return false
   }
-  const host = ta.closest('.vuedraw-canvas')
+  const host = ta.closest('.opendraw-canvas')
   if (!(host instanceof HTMLElement)) {
     return false
   }
@@ -236,7 +236,7 @@ onMounted(() => {
     // Stable box for the whole session: from the element's screen position
     // to the canvas edges (floored near the edges). Mutating the focused
     // editable's box mid-typing resets Chromium's IME caret tracking.
-    const host = ta.closest('.vuedraw-canvas')
+    const host = ta.closest('.opendraw-canvas')
     const hostWidth = host instanceof HTMLElement ? host.clientWidth : 0
     const hostHeight = host instanceof HTMLElement ? host.clientHeight : 0
     const screenLeft = sceneToScreen({ x: el.x, y: el.y }, ctx.viewport.value).x
@@ -282,13 +282,13 @@ function onBlur() {
 <template>
   <div
     v-if="element && isTextElementActive"
-    class="vuedraw-text-editor"
+    class="opendraw-text-editor"
     :style="boxStyle"
     @pointerdown.stop
   >
     <textarea
       ref="textareaRef"
-      class="vuedraw-text-editor__input"
+      class="opendraw-text-editor__input"
       :style="fontStyle"
       rows="1"
       spellcheck="false"
@@ -301,13 +301,13 @@ function onBlur() {
 </template>
 
 <style scoped>
-.vuedraw-text-editor {
+.opendraw-text-editor {
   position: absolute;
   margin: 0;
   pointer-events: auto;
 }
 
-.vuedraw-text-editor__input {
+.opendraw-text-editor__input {
   display: block;
   /* Width/min-height come from the session-stable inline styles, not the
    * reactive parent — see the `sessionWidth` note in the script. */
@@ -321,7 +321,7 @@ function onBlur() {
   caret-color: currentcolor;
 }
 
-.vuedraw-text-editor__input::selection {
+.opendraw-text-editor__input::selection {
   background: rgba(105, 101, 219, 0.25);
 }
 </style>

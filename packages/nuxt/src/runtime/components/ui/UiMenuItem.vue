@@ -50,19 +50,19 @@ const emit = defineEmits<{ select: [] }>()
   min-height: 32px;
   padding: 0 10px 0 8px;
   border: none;
-  border-radius: var(--vd-radius-m);
+  border-radius: var(--od-radius-m);
   background: transparent;
-  color: var(--vd-ink);
+  color: var(--od-ink);
   font-size: 13px;
   text-align: left;
   cursor: pointer;
   transition:
-    background-color var(--vd-fast) ease-out,
-    transform var(--vd-fast) var(--vd-ease);
+    background-color var(--od-fast) ease-out,
+    transform var(--od-fast) var(--od-ease);
 }
 
 .ui-menu-item:hover {
-  background: var(--vd-hover);
+  background: var(--od-hover);
 }
 
 .ui-menu-item:active {
@@ -70,17 +70,17 @@ const emit = defineEmits<{ select: [] }>()
 }
 
 .ui-menu-item:focus-visible {
-  outline: 2px solid var(--vd-accent);
+  outline: 2px solid var(--od-accent);
   outline-offset: -2px;
   transition: none;
 }
 
 .ui-menu-item.is-danger {
-  color: var(--vd-danger);
+  color: var(--od-danger);
 }
 
 .ui-menu-item.is-danger:hover {
-  background: var(--vd-danger-soft);
+  background: var(--od-danger-soft);
 }
 
 .ui-menu-item:disabled {
@@ -91,7 +91,7 @@ const emit = defineEmits<{ select: [] }>()
 .ui-menu-item__icon {
   display: inline-flex;
   width: 16px;
-  color: var(--vd-ink-soft);
+  color: var(--od-ink-soft);
 }
 
 .ui-menu-item.is-danger .ui-menu-item__icon {

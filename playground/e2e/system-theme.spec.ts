@@ -14,7 +14,7 @@ test.describe('system dark color scheme', () => {
     await openEditor(page)
     await settleFrames(page)
 
-    await expect(page.locator('.vuedraw-root')).toHaveAttribute('data-theme', 'dark')
+    await expect(page.locator('.opendraw-root')).toHaveAttribute('data-theme', 'dark')
     expect(await pixelAt(page, 6, 6)).toEqual([18, 18, 18])
   })
 
@@ -23,13 +23,13 @@ test.describe('system dark color scheme', () => {
     // explicitly switches to light — that choice is persisted.
     await openEditor(page)
     await page.getByRole('button', { name: 'Light theme' }).click()
-    await expect(page.locator('.vuedraw-root')).toHaveAttribute('data-theme', 'light')
+    await expect(page.locator('.opendraw-root')).toHaveAttribute('data-theme', 'light')
 
     // The debounced save (300ms) must land before the reload reads it back.
     await page.waitForTimeout(600)
     await page.reload()
     await openEditor(page)
 
-    await expect(page.locator('.vuedraw-root')).toHaveAttribute('data-theme', 'light')
+    await expect(page.locator('.opendraw-root')).toHaveAttribute('data-theme', 'light')
   })
 })

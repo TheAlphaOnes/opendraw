@@ -8,7 +8,7 @@
     <div class="stage">
       <!-- The canvas only; all chrome below is this page's own UI,
            driven through the same context the canvas uses. -->
-      <VueDrawCanvas class="draw" />
+      <OpenDrawCanvas class="draw" />
 
       <div class="dock">
         <button
@@ -48,16 +48,16 @@
 </template>
 
 <script setup lang="ts">
-import type { ToolId } from '@vuedraw/core'
+import type { ToolId } from '@opendraw/core'
 
-const ctx = createVueDrawContext({
+const ctx = createOpenDrawContext({
   // The dark theme dark-filters strokes, so the canvas background must go
   // dark with it — a dark theme over the white default is invisible ink.
   appState: { theme: 'dark', viewBackgroundColor: '#121212' },
 })
-// Provide for <VueDrawCanvas> (a child); this page's own chrome talks to
+// Provide for <OpenDrawCanvas> (a child); this page's own chrome talks to
 // ctx directly.
-provideVueDraw(ctx)
+provideOpenDraw(ctx)
 
 const TOOLS: Array<{ id: ToolId; label: string }> = [
   { id: 'selection', label: 'select' },

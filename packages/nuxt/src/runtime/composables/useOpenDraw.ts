@@ -2,7 +2,7 @@ import { computed, inject, provide, shallowRef, type ComputedRef, type Injection
 
 import {
   DEFAULT_APP_STATE,
-  VueDrawDocument,
+  OpenDrawDocument,
   duplicateElements,
   fitViewportToBounds,
   isBoundText,
@@ -26,10 +26,10 @@ import {
   type ThemeName,
   type ToolId,
   type Viewport,
-  type VueDrawAppState,
-  type VueDrawElement,
-  type VueDrawFile,
-  type VueDrawState,
+  type OpenDrawAppState,
+  type OpenDrawElement,
+  type OpenDrawFile,
+  type OpenDrawState,
   layoutText,
   zoomViewport,
   DEFAULT_VIEWPORT,
@@ -37,9 +37,9 @@ import {
   MIN_ZOOM,
   screenToSceneLength,
   type Point,
-} from '@vuedraw/core'
+} from '@opendraw/core'
 
-import { isTextElement } from '@vuedraw/core'
+import { isTextElement } from '@opendraw/core'
 
 import { downloadText, downloadURL, pickFiles } from '../services/file.service.js'
 import {
@@ -50,29 +50,29 @@ import {
 } from '../services/image.service.js'
 
 /**
- * VueDrawContext — the reactive wrapper around a VueDrawDocument.
+ * OpenDrawContext — the reactive wrapper around a OpenDrawDocument.
  *
  * Every component in the editor (canvas, toolbar, panels, menus) consumes
  * this one context through provide/inject. It is also the public
- * extension point: embed <VueDrawCanvas ui="none" /> and build your own
- * chrome from useVueDraw().
+ * extension point: embed <OpenDrawCanvas ui="none" /> and build your own
+ * chrome from useOpenDraw().
  */
 
-export interface VueDrawChangeDetail {
-  elements: readonly VueDrawElement[]
-  appState: Readonly<VueDrawAppState>
+export interface OpenDrawChangeDetail {
+  elements: readonly OpenDrawElement[]
+  appState: Readonly<OpenDrawAppState>
 }
 
-/** The reactive editor context shared by all vuedraw components. */
-export interface VueDrawContext {
+/** The reactive editor context shared by all opendraw components. */
+export interface OpenDrawContext {
   /** The raw document — escape hatch for advanced use. */
-  doc: VueDrawDocument
+  doc: OpenDrawDocument
 
   /** Reactive mirror of the document state (shallow: element objects are immutable). */
-  state: ShallowRef<VueDrawState>
-  elements: ComputedRef<readonly VueDrawElement[]>
-  appState: ComputedRef<Readonly<VueDrawAppState>>
-  selectedElements: ComputedRef<readonly VueDrawElement[]>
+  state: ShallowRef<OpenDrawState>
+  elements: ComputedRef<readonly OpenDrawElement[]>
+  appState: ComputedRef<Readonly<OpenDrawAppState>>
+  selectedElements: ComputedRef<readonly OpenDrawElement[]>
 
   // tools & theme
   activeTool: ComputedRef<ToolId>
@@ -97,7 +97,7 @@ export interface VueDrawContext {
   isIdSelected: (id: string) => boolean
 
   // element actions
-  updateElement: (id: string, patch: ElementPatch | ((el: VueDrawElement) => ElementPatch)) => void
+  updateElement: (id: string, patch: ElementPatch | ((el: OpenDrawElement) => ElementPatch)) => void
   deleteSelection: () => void
   duplicateSelection: () => void
   reorderSelection: (action: ReorderAction) => void
@@ -157,9 +157,9 @@ export interface VueDrawContext {
   viewport: ComputedRef<{ scrollX: number; scrollY: number; zoom: number }>
 
   // files & export
-  serialize: () => VueDrawFile
+  serialize: () => OpenDrawFile
   toJSON: () => string
-  loadFile: (file: VueDrawFile) => void
+  loadFile: (file: OpenDrawFile) => void
   loadJSON: (text: string) => void
   exportPNG: (filename?: string) => void
   exportSVG: (filename?: string) => void
@@ -198,31 +198,31 @@ export interface ViewportSize {
   height: number
 }
 
-export interface CreateVueDrawOptions {
-  elements?: readonly VueDrawElement[]
-  appState?: Partial<VueDrawAppState>
+export interface CreateOpenDrawOptions {
+  elements?: readonly OpenDrawElement[]
+  appState?: Partial<OpenDrawAppState>
 }
 
-export const VUEDRAW_INJECTION_KEY: InjectionKey<VueDrawContext> = Symbol('vuedraw')
+export const OPENDRAW_INJECTION_KEY: InjectionKey<OpenDrawContext> = Symbol('opendraw')
 
 const ZOOM_STEP = 1.25
 
-export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDrawContext {
-  const doc = new VueDrawDocument({
+export function createOpenDrawContext(options: CreateOpenDrawOptions = {}): OpenDrawContext {
+  const doc = new OpenDrawDocument({
     elements: options.elements,
     appState: options.appState,
   })
 
   /** In-app clipboard: plain element copies; ids are regenerated on paste. */
-  let clipboard: VueDrawElement[] = []
+  let clipboard: OpenDrawElement[] = []
   /** Style remembered by copyStyles — editor intent, never document state. */
   const copiedStyle = shallowRef<StylePayload | null>(null)
 
-  function selectionWithLabels(): VueDrawElement[] {
+  function selectionWithLabels(): OpenDrawElement[] {
     return withBoundTexts(doc.getElements(), doc.getSelectedElements().map((el) => el.id))
   }
 
-  function fitTo(elementsToFit: readonly VueDrawElement[], fit: 'scale-down' | 'contain'): void {
+  function fitTo(elementsToFit: readonly OpenDrawElement[], fit: 'scale-down' | 'contain'): void {
     if (elementsToFit.length === 0) {
       return
     }
@@ -234,7 +234,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
     )
   }
 
-  const state = shallowRef<VueDrawState>(doc.getState())
+  const state = shallowRef<OpenDrawState>(doc.getState())
   const viewportSize = shallowRef<ViewportSize>({ width: 0, height: 0 })
   /** Tool lock is editor intent, never document state (not persisted). */
   const toolLocked = shallowRef(false)
@@ -265,7 +265,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
     }
   }
 
-  const context: VueDrawContext = {
+  const context: OpenDrawContext = {
     doc,
     state,
     elements,
@@ -435,7 +435,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
     toJSON: () => JSON.stringify(doc.serialize(), null, 2),
     loadFile: (file) => doc.loadFile(file),
     loadJSON: (text) => doc.loadFile(JSON.parse(text)),
-    exportPNG: (filename = 'vuedraw') => {
+    exportPNG: (filename = 'opendraw') => {
       const url = exportToDataURL(doc.getElements(), appState.value.viewBackgroundColor, {
         theme: appState.value.theme,
         // Composite decoded bitmaps; undecoded ones fall back to the placeholder.
@@ -443,7 +443,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
       })
       downloadURL(url, `${filename}.png`)
     },
-    exportSVG: (filename = 'vuedraw') => {
+    exportSVG: (filename = 'opendraw') => {
       if (typeof document === 'undefined') {
         return
       }
@@ -487,7 +487,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
       })().catch((error: unknown) => {
         // A read failure must not strand the open step or crash the editor.
         doc.cancelStep()
-        console.error('[vuedraw] failed to insert image', error)
+        console.error('[opendraw] failed to insert image', error)
       })
     },
     openImagePicker: () => {
@@ -498,7 +498,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
       })
     },
 
-    saveToFile: (filename = 'vuedraw') => {
+    saveToFile: (filename = 'opendraw') => {
       downloadText(context.toJSON(), `${filename}.json`, 'application/json')
     },
     openFile: async () => {
@@ -510,7 +510,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
         context.loadJSON(await file.text())
       } catch (error) {
         // A malformed file must not break the editor; the scene is untouched.
-        console.error('[vuedraw] failed to open file', error)
+        console.error('[opendraw] failed to open file', error)
       }
     },
     clearCanvas: () => {
@@ -533,26 +533,26 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
 }
 
 /** Injects the enclosing editor's context, creating one when standalone. */
-export function useVueDraw(options: CreateVueDrawOptions = {}): VueDrawContext {
-  const existing = inject(VUEDRAW_INJECTION_KEY, null)
+export function useOpenDraw(options: CreateOpenDrawOptions = {}): OpenDrawContext {
+  const existing = inject(OPENDRAW_INJECTION_KEY, null)
   if (existing && !options.elements && !options.appState) {
     return existing
   }
-  const context = existing ?? createVueDrawContext(options)
-  provide(VUEDRAW_INJECTION_KEY, context)
+  const context = existing ?? createOpenDrawContext(options)
+  provide(OPENDRAW_INJECTION_KEY, context)
   return context
 }
 
 /** Provides a context for child components (used by the shell). */
-export function provideVueDraw(context: VueDrawContext): void {
-  provide(VUEDRAW_INJECTION_KEY, context)
+export function provideOpenDraw(context: OpenDrawContext): void {
+  provide(OPENDRAW_INJECTION_KEY, context)
 }
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function touchesText(patch: ElementPatch, element: VueDrawElement): boolean {
+function touchesText(patch: ElementPatch, element: OpenDrawElement): boolean {
   const keys = Object.keys(patch)
   if (keys.length === 0) {
     return false
@@ -562,7 +562,7 @@ function touchesText(patch: ElementPatch, element: VueDrawElement): boolean {
   return relevant && isTextElement(element)
 }
 
-function withTextMetrics(patch: ElementPatch, element: VueDrawElement): ElementPatch {
+function withTextMetrics(patch: ElementPatch, element: OpenDrawElement): ElementPatch {
   if (!isTextElement(element)) {
     return patch
   }
@@ -576,7 +576,7 @@ function withTextMetrics(patch: ElementPatch, element: VueDrawElement): ElementP
 
 
 /** Offset that centers the clipboard content's bounds at the target point. */
-function centerOffsetFor(clipboard: readonly VueDrawElement[], at: Point): { x: number; y: number } {
+function centerOffsetFor(clipboard: readonly OpenDrawElement[], at: Point): { x: number; y: number } {
   const bounds = getCommonBounds(clipboard)
   const cx = (bounds.x1 + bounds.x2) / 2
   const cy = (bounds.y1 + bounds.y2) / 2

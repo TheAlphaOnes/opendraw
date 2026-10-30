@@ -7,7 +7,7 @@
  * where) belongs to `../interaction/handles.js`; this module only paints.
  */
 
-import type { VueDrawBindableShape } from '../elements/binding.js'
+import type { OpenDrawBindableShape } from '../elements/binding.js'
 import { isLinearElement } from '../elements/factories.js'
 import type { GroupSelectionChrome } from '../elements/groups.js'
 import { clamp } from '../geometry/points.js'
@@ -19,7 +19,7 @@ import {
   POINT_HANDLE_RADIUS,
   selectionFrameOf,
 } from '../interaction/handles.js'
-import type { Bounds, VueDrawAppState, VueDrawElement, VueDrawLinearElement } from '../types.js'
+import type { Bounds, OpenDrawAppState, OpenDrawElement, OpenDrawLinearElement } from '../types.js'
 import { applyViewportTransform } from '../viewport.js'
 import type { CanvasSize } from './renderScene.js'
 import { PROPORTIONAL_RADIUS, renderElementShape } from './renderScene.js'
@@ -27,21 +27,21 @@ import { UI } from './theme.js'
 
 export interface OverlayRenderInput {
   /** The committed selection. Empty when nothing is selected. */
-  selectedElements: readonly VueDrawElement[]
-  appState: Readonly<Pick<VueDrawAppState, 'theme' | 'viewport'>> & {
+  selectedElements: readonly OpenDrawElement[]
+  appState: Readonly<Pick<OpenDrawAppState, 'theme' | 'viewport'>> & {
     editingId: string | null
   }
   pointer: PointerKind
   /** Marquee (drag-select) rect in scene coords, or null. */
   marquee: Bounds | null
   /** Elements being created/dragged right now, drawn before the chrome. */
-  previewElements: readonly VueDrawElement[]
+  previewElements: readonly OpenDrawElement[]
   /**
    * Shapes the live line/arrow probes would dock onto right now — the tip
    * being dragged, the shape the drag started on, or the shape under an
    * idle hover. Empty when nothing probes.
    */
-  bindingCandidates: readonly VueDrawBindableShape[]
+  bindingCandidates: readonly OpenDrawBindableShape[]
   /**
    * Group-aware chrome (see `groupSelectionChrome`): per-element outlines
    * inside a multi-selection, dashed boxes for selected groups and the
@@ -280,7 +280,7 @@ function appendRoundRect(
  */
 function drawLinearPointHandles(
   ctx: CanvasRenderingContext2D,
-  element: VueDrawLinearElement,
+  element: OpenDrawLinearElement,
   color: string,
   zoom: number,
   dark: boolean,
@@ -361,7 +361,7 @@ function drawMarquee(
  */
 function drawBindingHighlight(
   ctx: CanvasRenderingContext2D,
-  shape: VueDrawBindableShape,
+  shape: OpenDrawBindableShape,
   color: string,
   zoom: number,
 ): void {

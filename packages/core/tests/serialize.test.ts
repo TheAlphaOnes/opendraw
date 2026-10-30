@@ -16,7 +16,7 @@ import {
   newRectangleElement,
   newTextElement,
 } from '../src/elements/factories.js'
-import type { VueDrawDiamondElement, VueDrawRectangleElement } from '../src/types.js'
+import type { OpenDrawDiamondElement, OpenDrawRectangleElement } from '../src/types.js'
 
 describe('coerceElement', () => {
   it('rejects non-elements', () => {
@@ -117,21 +117,28 @@ describe('file format', () => {
     ]
     const file = buildFile(elements, '#f8f9fa')
     const parsed = parseFromJSON(serializeToJSON(file))
-    expect(parsed.type).toBe('vuedraw')
+    expect(parsed.type).toBe('opendraw')
     expect(parsed.version).toBe(1)
     expect(parsed.appState.viewBackgroundColor).toBe('#f8f9fa')
     expect(parsed.elements).toEqual(elements)
   })
 
   it('throws for foreign payloads', () => {
-    expect(() => parseFile({ type: 'figma' })).toThrow(/not a vuedraw file/)
-    expect(() => parseFile('vuedraw')).toThrow()
+    expect(() => parseFile({ type: 'figma' })).toThrow(/not an opendraw file/)
+    expect(() => parseFile('opendraw')).toThrow()
+  })
+
+  it('reads files saved before the opendraw rename and writes the new type', () => {
+    const rect = newRectangleElement({ x: 0, y: 0, width: 5, height: 5 })
+    const file = parseFile({ type: 'vuedraw', version: 1, elements: [rect] })
+    expect(file.type).toBe('opendraw')
+    expect(file.elements).toHaveLength(1)
   })
 
   it('drops malformed elements instead of failing the whole file', () => {
     const good = newRectangleElement({ x: 0, y: 0, width: 5, height: 5 })
     const file = parseFile({
-      type: 'vuedraw',
+      type: 'opendraw',
       version: 1,
       elements: [good, { garbage: true }, null, { id: 'x', type: 'nope' }],
       appState: {},
@@ -140,7 +147,7 @@ describe('file format', () => {
   })
 
   it('survives a missing appState', () => {
-    const file = parseFile({ type: 'vuedraw', version: 1, elements: [] })
+    const file = parseFile({ type: 'opendraw', version: 1, elements: [] })
     expect(file.appState.viewBackgroundColor).toBe('#ffffff')
   })
 })
@@ -157,7 +164,7 @@ describe('corner roundness', () => {
       roundness: 'round',
     })
     expect(round).not.toBeNull()
-    expect((round as VueDrawRectangleElement).roundness).toBe('round')
+    expect((round as OpenDrawRectangleElement).roundness).toBe('round')
 
     const diamond = coerceElement({
       id: 'd1',
@@ -168,7 +175,7 @@ describe('corner roundness', () => {
       height: 10,
       roundness: 'round',
     })
-    expect((diamond as VueDrawDiamondElement).roundness).toBe('round')
+    expect((diamond as OpenDrawDiamondElement).roundness).toBe('round')
   })
 
   it('coerces unknown roundness values back to sharp', () => {
@@ -181,7 +188,7 @@ describe('corner roundness', () => {
       height: 10,
       roundness: 'wavy',
     })
-    expect((el as VueDrawRectangleElement).roundness).toBeNull()
+    expect((el as OpenDrawRectangleElement).roundness).toBeNull()
   })
 
   it('keeps roundness off the ellipse, which is round by nature', () => {

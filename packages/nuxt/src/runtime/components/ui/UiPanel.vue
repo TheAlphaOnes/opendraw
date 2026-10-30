@@ -26,12 +26,12 @@ defineProps<{
   max-height: calc(100% - 32px);
   overflow-y: auto;
   padding: 8px;
-  background: var(--vd-surface-float);
+  background: var(--od-surface-float);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  border: 1px solid var(--vd-border);
-  border-radius: var(--vd-radius-l);
-  box-shadow: var(--vd-shadow-1), var(--vd-shadow-2);
+  border: 1px solid var(--od-border);
+  border-radius: var(--od-radius-l);
+  box-shadow: var(--od-shadow-1), var(--od-shadow-2);
 }
 
 .ui-panel--left {
@@ -98,6 +98,6 @@ defineProps<{
   padding: 4px 6px 8px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--vd-ink-soft);
+  color: var(--od-ink-soft);
 }
 </style>

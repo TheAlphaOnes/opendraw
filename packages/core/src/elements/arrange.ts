@@ -9,7 +9,7 @@
  */
 
 import { getCommonBounds } from '../geometry/bounds.js'
-import type { Bounds, VueDrawElement } from '../types.js'
+import type { Bounds, OpenDrawElement } from '../types.js'
 import type { ElementPatch } from './mutate.js'
 import { normalizeAngle } from '../interaction/transform.js'
 import { selectedGroupIds } from './groups.js'
@@ -33,10 +33,10 @@ export interface ElementPatchEntry {
  * does something useful.
  */
 export function selectionUnits(
-  elements: readonly VueDrawElement[],
-  selected: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
+  selected: readonly OpenDrawElement[],
   editingGroupId: string | null,
-): VueDrawElement[][] {
+): OpenDrawElement[][] {
   const selectedIds: Record<string, true> = {}
   for (const el of selected) {
     selectedIds[el.id] = true
@@ -45,7 +45,7 @@ export function selectionUnits(
   const groupSet = new Set(groups)
   const single =
     groups.length === 1 && selected.every((el) => el.groupIds.includes(groups[0]!))
-  const buckets = new Map<string, VueDrawElement[]>()
+  const buckets = new Map<string, OpenDrawElement[]>()
   for (const el of selected) {
     const groupId = el.groupIds.find((id) => groupSet.has(id))
     let key = `${el.id}:element`
@@ -65,7 +65,7 @@ export function selectionUnits(
   return [...buckets.values()]
 }
 
-function translateUnit(unit: readonly VueDrawElement[], dx: number, dy: number): ElementPatchEntry[] {
+function translateUnit(unit: readonly OpenDrawElement[], dx: number, dy: number): ElementPatchEntry[] {
   if (dx === 0 && dy === 0) {
     return []
   }
@@ -78,7 +78,7 @@ function axisRange(bounds: Bounds, axis: 'x' | 'y'): [number, number] {
 
 /** Aligns every unit to the selection's common box. Needs two units. */
 export function alignUnits(
-  units: readonly VueDrawElement[][],
+  units: readonly OpenDrawElement[][],
   alignment: Alignment,
 ): ElementPatchEntry[] {
   if (units.length < 2) {
@@ -103,7 +103,7 @@ export function alignUnits(
  * instead, as Excalidraw does. Needs three units to do anything.
  */
 export function distributeUnits(
-  units: readonly VueDrawElement[][],
+  units: readonly OpenDrawElement[][],
   axis: 'x' | 'y',
 ): ElementPatchEntry[] {
   if (units.length < 3) {
@@ -118,7 +118,7 @@ export function distributeUnits(
     .sort((a, b) => a.mid - b.mid)
   const span = boxed.reduce((sum, box) => sum + box.extent, 0)
   const gap = (max - min - span) / (boxed.length - 1)
-  const move = (unit: readonly VueDrawElement[], delta: number): ElementPatchEntry[] =>
+  const move = (unit: readonly OpenDrawElement[], delta: number): ElementPatchEntry[] =>
     axis === 'x' ? translateUnit(unit, delta, 0) : translateUnit(unit, 0, delta)
 
   if (gap < 0) {
@@ -149,7 +149,7 @@ export function distributeUnits(
  * glyphs and pixels readable; only their placement mirrors.
  */
 export function flipElements(
-  selected: readonly VueDrawElement[],
+  selected: readonly OpenDrawElement[],
   axis: FlipAxis,
 ): ElementPatchEntry[] {
   if (selected.length === 0) {

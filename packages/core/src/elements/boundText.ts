@@ -14,21 +14,21 @@
 
 import { rotatePoint } from '../geometry/points.js'
 import { layoutText, wrapText } from '../geometry/text.js'
-import type { Point, VueDrawElement, VueDrawTextElement } from '../types.js'
+import type { Point, OpenDrawElement, OpenDrawTextElement } from '../types.js'
 import { isPointInsideElement } from './hitTest.js'
 import type { ElementPatch } from './mutate.js'
 
 /** Excalidraw's BOUND_TEXT_PADDING. */
 export const BOUND_TEXT_PADDING = 5
 
-export type TextContainer = Extract<VueDrawElement, { type: 'rectangle' | 'diamond' | 'ellipse' }>
+export type TextContainer = Extract<OpenDrawElement, { type: 'rectangle' | 'diamond' | 'ellipse' }>
 
 /** Shapes that can hold text. */
-export function isTextContainer(element: VueDrawElement): element is TextContainer {
+export function isTextContainer(element: OpenDrawElement): element is TextContainer {
   return element.type === 'rectangle' || element.type === 'diamond' || element.type === 'ellipse'
 }
 
-export function isBoundText(element: VueDrawElement): element is VueDrawTextElement & { containerId: string } {
+export function isBoundText(element: OpenDrawElement): element is OpenDrawTextElement & { containerId: string } {
   return element.type === 'text' && element.containerId !== null
 }
 
@@ -89,7 +89,7 @@ export function containerTextOrigin(container: TextContainer): Point {
  * getTextBindableContainerAtPosition).
  */
 export function textContainerAt(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   point: Point,
 ): TextContainer | null {
   for (let i = elements.length - 1; i >= 0; i--) {
@@ -103,11 +103,11 @@ export function textContainerAt(
 
 /** The text bound inside `containerId`, if any. */
 export function boundTextOf(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   containerId: string,
-): VueDrawTextElement | undefined {
+): OpenDrawTextElement | undefined {
   return elements.find(
-    (el): el is VueDrawTextElement => el.type === 'text' && el.containerId === containerId,
+    (el): el is OpenDrawTextElement => el.type === 'text' && el.containerId === containerId,
   )
 }
 
@@ -117,9 +117,9 @@ export function boundTextOf(
  * on its own.
  */
 export function selectableTarget(
-  element: VueDrawElement,
-  elements: readonly VueDrawElement[],
-): VueDrawElement {
+  element: OpenDrawElement,
+  elements: readonly OpenDrawElement[],
+): OpenDrawElement {
   if (!isBoundText(element)) {
     return element
   }
@@ -131,15 +131,15 @@ export function selectableTarget(
  * delete, duplicate, copy and z-order act on for a selection.
  */
 export function withBoundTexts(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   ids: Iterable<string>,
-): VueDrawElement[] {
+): OpenDrawElement[] {
   const wanted = new Set(ids)
   return elements.filter((el) => wanted.has(el.id) || (isBoundText(el) && wanted.has(el.containerId)))
 }
 
 export interface BoundTextLayout {
-  text: ElementPatch<VueDrawTextElement>
+  text: ElementPatch<OpenDrawTextElement>
   /** Present when the container must grow to fit the text. */
   container: ElementPatch<TextContainer> | null
 }
@@ -150,7 +150,7 @@ export interface BoundTextLayout {
  * text's center about the container's (Excalidraw's
  * redrawTextBoundingBox + computeBoundTextPosition).
  */
-export function layoutBoundText(text: VueDrawTextElement, container: TextContainer): BoundTextLayout {
+export function layoutBoundText(text: OpenDrawTextElement, container: TextContainer): BoundTextLayout {
   const wrapped = wrapText(text.originalText, text.fontFamily, text.fontSize, boundTextMaxWidth(container))
   const metrics = layoutText(wrapped, text.fontFamily, text.fontSize)
 
@@ -211,16 +211,16 @@ export function layoutBoundText(text: VueDrawTextElement, container: TextContain
  * their reference).
  */
 export function syncBoundTexts(
-  previous: readonly VueDrawElement[],
-  next: VueDrawElement[],
-  patch: <T extends VueDrawElement>(element: T, update: ElementPatch<T>) => T,
-): VueDrawElement[] {
+  previous: readonly OpenDrawElement[],
+  next: OpenDrawElement[],
+  patch: <T extends OpenDrawElement>(element: T, update: ElementPatch<T>) => T,
+): OpenDrawElement[] {
   if (!next.some(isBoundText)) {
     return next
   }
   const before = new Map(previous.map((el) => [el.id, el]))
   const index = new Map(next.map((el, i) => [el.id, i]))
-  let result: VueDrawElement[] | null = null
+  let result: OpenDrawElement[] | null = null
   for (let i = 0; i < next.length; i++) {
     const text = (result ?? next)[i]!
     if (!isBoundText(text)) {

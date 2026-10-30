@@ -18,7 +18,7 @@ import {
  * theme) back after a reload — without a spurious undo entry.
  */
 
-const STORAGE_KEY = 'vuedraw:scene'
+const STORAGE_KEY = 'opendraw:scene'
 
 test('restores a shape and its bound arrow across a page reload', async ({ page }) => {
   await openEditor(page)
@@ -67,7 +67,7 @@ test('restores a shape and its bound arrow across a page reload', async ({ page 
     .toBe(true)
 
   const stored = await page.evaluate((key) => JSON.parse(window.localStorage.getItem(key)!), STORAGE_KEY)
-  expect(stored.type).toBe('vuedraw-scene')
+  expect(stored.type).toBe('opendraw-scene')
   expect(stored.file.elements).toHaveLength(2)
 
   // Reload the page.
@@ -83,7 +83,7 @@ test('restores a shape and its bound arrow across a page reload', async ({ page 
   expect(tipOf(arrowAfter, 'end')).toEqual(tipOf(arrowBefore, 'end'))
 
   // The persisted theme is back too.
-  await expect(page.locator('.vuedraw-root')).toHaveAttribute('data-theme', 'dark')
+  await expect(page.locator('.opendraw-root')).toHaveAttribute('data-theme', 'dark')
 
   // The restore recorded no history: a freshly loaded page cannot undo
   // itself into an empty scene.

@@ -18,14 +18,14 @@ import {
   resolveContextMenu,
   type CanvasContextMenuRequest,
 } from '../canvas/viewportGestures.js'
-import { useVueDraw } from '../composables/useVueDraw.js'
+import { useOpenDraw } from '../composables/useOpenDraw.js'
 import TextEditor from './TextEditor.vue'
 
 /**
- * VueDrawCanvas — the headless editor core.
+ * OpenDrawCanvas — the headless editor core.
  *
  * Owns the two-canvas renderer (static scene + interactive chrome) and the
- * pointer state machine. No UI chrome lives here; <VueDraw> composes this
+ * pointer state machine. No UI chrome lives here; <OpenDraw> composes this
  * with the toolbar/panels. Pointing this component at the same provided
  * context is how headless consumers embed just the canvas.
  *
@@ -37,7 +37,7 @@ const emit = defineEmits<{
   (e: 'contextmenu', payload: CanvasContextMenuRequest): void
 }>()
 
-const ctx = useVueDraw()
+const ctx = useOpenDraw()
 const rt = createCanvasRuntime(ctx)
 const hostRef = rt.hostRef
 const { staticRef, overlayRef, setOverlayPainter } = useCanvasSurface(rt)
@@ -92,8 +92,8 @@ onBeforeUnmount(() => window.removeEventListener('paste', onPaste))
 <template>
   <div
     ref="hostRef"
-    class="vuedraw-canvas"
-    :class="{ 'vuedraw-canvas--panning': panning }"
+    class="opendraw-canvas"
+    :class="{ 'opendraw-canvas--panning': panning }"
     :style="{ cursor }"
     tabindex="0"
     @pointerdown="onPointerDown"
@@ -108,14 +108,14 @@ onBeforeUnmount(() => window.removeEventListener('paste', onPaste))
     @dragover.prevent
     @drop.prevent="onDrop"
   >
-    <canvas ref="staticRef" class="vuedraw-canvas__static" />
-    <canvas ref="overlayRef" class="vuedraw-canvas__overlay" />
+    <canvas ref="staticRef" class="opendraw-canvas__static" />
+    <canvas ref="overlayRef" class="opendraw-canvas__overlay" />
     <TextEditor v-if="editingActive" />
   </div>
 </template>
 
 <style scoped>
-.vuedraw-canvas {
+.opendraw-canvas {
   position: relative;
   width: 100%;
   height: 100%;
@@ -126,8 +126,8 @@ onBeforeUnmount(() => window.removeEventListener('paste', onPaste))
   -webkit-user-select: none;
 }
 
-.vuedraw-canvas__static,
-.vuedraw-canvas__overlay {
+.opendraw-canvas__static,
+.opendraw-canvas__overlay {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -135,7 +135,7 @@ onBeforeUnmount(() => window.removeEventListener('paste', onPaste))
   pointer-events: none;
 }
 
-.vuedraw-canvas--panning {
+.opendraw-canvas--panning {
   cursor: grabbing !important;
 }
 </style>

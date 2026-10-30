@@ -6,7 +6,7 @@
  * corner points.
  */
 
-import type { Bounds, Point, VueDrawElement } from '../types.js'
+import type { Bounds, Point, OpenDrawElement } from '../types.js'
 import { rotatePoint } from './points.js'
 
 export function boundsOfPoints(points: readonly Point[]): Bounds {
@@ -33,7 +33,7 @@ export function boundsOfXYWH(x: number, y: number, width: number, height: number
 }
 
 /** The four corners of an element in scene space, rotation applied. */
-export function elementCorners(element: VueDrawElement): [Point, Point, Point, Point] {
+export function elementCorners(element: OpenDrawElement): [Point, Point, Point, Point] {
   const { x, y, width, height, angle } = element
   if (angle === 0) {
     return [
@@ -54,7 +54,7 @@ export function elementCorners(element: VueDrawElement): [Point, Point, Point, P
 }
 
 /** Rotation-aware AABB of a single element (geometry, not visual stroke). */
-export function getElementBounds(element: VueDrawElement): Bounds {
+export function getElementBounds(element: OpenDrawElement): Bounds {
   if (element.type === 'line' || element.type === 'arrow') {
     const points = element.points.map((p) => ({
       x: element.x + p.x,
@@ -81,7 +81,7 @@ export function getElementBounds(element: VueDrawElement): Bounds {
 }
 
 /** Union AABB of many elements. Empty input yields an inverted empty box. */
-export function getCommonBounds(elements: readonly VueDrawElement[]): Bounds {
+export function getCommonBounds(elements: readonly OpenDrawElement[]): Bounds {
   let x1 = Number.POSITIVE_INFINITY
   let y1 = Number.POSITIVE_INFINITY
   let x2 = Number.NEGATIVE_INFINITY

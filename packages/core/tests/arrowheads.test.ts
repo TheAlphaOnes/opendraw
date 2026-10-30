@@ -3,11 +3,11 @@ import { describe, expect, it } from 'vitest'
 import { newLinearElement } from '../src/elements/factories.js'
 import { parseFile } from '../src/export/serialize.js'
 import { arrowheadPoints } from '../src/render/arrowheads.js'
-import { VueDrawDocument } from '../src/scene/document.js'
-import type { VueDrawLinearElement } from '../src/types.js'
+import { OpenDrawDocument } from '../src/scene/document.js'
+import type { OpenDrawLinearElement } from '../src/types.js'
 
 function arrow(points = [{ x: 0, y: 0 }, { x: 100, y: 0 }]) {
-  return newLinearElement('arrow', { x: 0, y: 0, points }) as VueDrawLinearElement
+  return newLinearElement('arrow', { x: 0, y: 0, points }) as OpenDrawLinearElement
 }
 
 describe('arrowheads — geometry', () => {
@@ -45,14 +45,14 @@ describe('arrowheads — model', () => {
   it('defaults arrows to an end arrow and lines to none', () => {
     const a = arrow()
     expect([a.startArrowhead, a.endArrowhead]).toEqual([null, 'arrow'])
-    const line = newLinearElement('line', { x: 0, y: 0 }) as VueDrawLinearElement
+    const line = newLinearElement('line', { x: 0, y: 0 }) as OpenDrawLinearElement
     expect([line.startArrowhead, line.endArrowhead]).toEqual([null, null])
   })
 
   it('reads older files: arrows without the field keep their end head', () => {
     const { startArrowhead: _s, endArrowhead: _e, ...legacy } = arrow()
-    const file = parseFile({ type: 'vuedraw', version: 1, elements: [legacy, { ...arrow(), endArrowhead: null, startArrowhead: 'dot' }] })
-    const [old, explicit] = file.elements as VueDrawLinearElement[]
+    const file = parseFile({ type: 'opendraw', version: 1, elements: [legacy, { ...arrow(), endArrowhead: null, startArrowhead: 'dot' }] })
+    const [old, explicit] = file.elements as OpenDrawLinearElement[]
     expect(old!.endArrowhead).toBe('arrow')
     expect(explicit!.endArrowhead).toBeNull()
     expect(explicit!.startArrowhead).toBe('circle')
@@ -60,13 +60,13 @@ describe('arrowheads — model', () => {
 
   it('changes the selected arrows, else the next arrow default', () => {
     const a = arrow()
-    const doc = new VueDrawDocument({ elements: [a] })
+    const doc = new OpenDrawDocument({ elements: [a] })
     doc.changeArrowhead('start', 'triangle')
     expect(doc.getAppState().arrowheads.start).toBe('triangle')
     doc.select(a.id)
     doc.changeArrowhead('end', 'bar')
-    expect((doc.getElement(a.id) as VueDrawLinearElement).endArrowhead).toBe('bar')
+    expect((doc.getElement(a.id) as OpenDrawLinearElement).endArrowhead).toBe('bar')
     doc.undo()
-    expect((doc.getElement(a.id) as VueDrawLinearElement).endArrowhead).toBe('arrow')
+    expect((doc.getElement(a.id) as OpenDrawLinearElement).endArrowhead).toBe('arrow')
   })
 })

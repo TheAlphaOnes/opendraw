@@ -1,7 +1,7 @@
-# vuedraw
+# opendraw
 
 an excalidraw-style hand-drawn canvas for the nuxt 4 ecosystem: a pnpm
-monorepo publishing `@vuedraw/core` (framework-free engine) and `vuedraw`
+monorepo publishing `@opendraw/core` (framework-free engine) and `opendraw`
 (the nuxt module consumers install). the reference excalidraw codebase
 lives in `.context/excalidraw/` — mine it for behavior contracts before
 inventing anything; this repo's job is the nuxt-native version of the
@@ -11,14 +11,14 @@ patterns proven there, not a port.
 
 | path              | name             | role                                                                    |
 | ----------------- | ---------------- | ----------------------------------------------------------------------- |
-| `packages/core`   | `@vuedraw/core`  | the engine: element model, geometry, scene store, hit testing, transforms, rough.js renderer, export. zero vue/nuxt imports — runs in node (tests) and the browser alike. |
-| `packages/nuxt`   | `vuedraw`        | the module: `<VueDraw>` shell + `<VueDrawCanvas>` headless core + `useVueDraw()` composable + the central ui kit. registers components and auto-imports. |
+| `packages/core`   | `@opendraw/core`  | the engine: element model, geometry, scene store, hit testing, transforms, rough.js renderer, export. zero vue/nuxt imports — runs in node (tests) and the browser alike. |
+| `packages/nuxt`   | `opendraw`        | the module: `<OpenDraw>` shell + `<OpenDrawCanvas>` headless core + `useOpenDraw()` composable + the central ui kit. registers components and auto-imports. |
 | `playground/`     | —                | nuxt 4 app for manual verification: `/` full editor, `/headless` canvas-only with custom chrome. |
 | `.context/excalidraw/` | —           | the reference codebase. excalidraw parity is the behavior contract: when anything is ambiguous, read this and match it. |
 
 ## behavioral contract
 
-vuedraw is an excalidraw clone for the nuxt ecosystem. that is the product:
+opendraw is an excalidraw clone for the nuxt ecosystem. that is the product:
 same look, same feel, same interactions. `.context/excalidraw/` is the
 source of truth for behavior — selection semantics, arrow binding, history
 granularity (one undo = one gesture, never a tool switch), transforms, text
@@ -30,7 +30,7 @@ does it and cite the file when you deviate.
 ```sh
 pnpm -r test          # core vitest suite (111 tests)
 pnpm build            # core + nuxt package builds
-pnpm --filter vuedraw exec vue-tsc --noEmit   # module typecheck gate
+pnpm --filter opendraw exec vue-tsc --noEmit   # module typecheck gate
 pnpm dev                                      # playground at :3000
 ```
 
@@ -41,7 +41,7 @@ bin name is `nuxt-module-build`, not `nuxt-module-builder`.
 
 these are load-bearing; changing one is a redesign, not a refactor.
 
-- **one write funnel.** `VueDrawDocument.mutate()` is the only path that
+- **one write funnel.** `OpenDrawDocument.mutate()` is the only path that
   touches elements/appstate. every mutation replaces `state.value`
   (copy-on-write) and bumps `rev`. reactive derivations must read through
   `ctx.state` / `ctx.elements` / other context computeds — never plain doc
@@ -62,7 +62,7 @@ these are load-bearing; changing one is a redesign, not a refactor.
   the theme switch swaps the default (`#ffffff` <-> `#121212`) and leaves
   customized backgrounds alone.
 - **text editing is a session.** `<TextEditor>` mounts per session
-  (`v-if="editingActive"` on the component in `VueDrawCanvas`), seeds the
+  (`v-if="editingActive"` on the component in `OpenDrawCanvas`), seeds the
   textarea once from state, then the browser owns the editing state. the
   textarea keeps a session-stable box (width/height fixed at open):
   resizing a focused editable mid-typing resets chromium's ime/inserttext
@@ -77,11 +77,11 @@ these are load-bearing; changing one is a redesign, not a refactor.
 
 ## module surface
 
-- `<VueDraw ui="full|minimal|none" theme="light|dark">` — the shell.
+- `<OpenDraw ui="full|minimal|none" theme="light|dark">` — the shell.
   emits `change({ elements })` and `select(ids)`.
-- `<VueDrawCanvas>` — headless core for custom chrome.
-- `useVueDraw()`, `createVueDrawContext()`, `provideVueDraw()` — the
-  context api. `createVueDrawContext({ elements, appState })` is how the
+- `<OpenDrawCanvas>` — headless core for custom chrome.
+- `useOpenDraw()`, `createOpenDrawContext()`, `provideOpenDraw()` — the
+  context api. `createOpenDrawContext({ elements, appState })` is how the
   playground's `/headless` page drives the same context its own toolbar
   talks to.
 - all ui chrome renders from the central kit (`components/ui/`) and all

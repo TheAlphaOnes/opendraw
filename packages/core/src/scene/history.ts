@@ -11,11 +11,11 @@
  * are never recorded at all — the redo stack survives them trivially.
  */
 
-import type { VueDrawAppState, VueDrawElement } from '../types.js'
+import type { OpenDrawAppState, OpenDrawElement } from '../types.js'
 
 export interface HistorySnapshot {
-  elements: readonly VueDrawElement[]
-  appState: Readonly<VueDrawAppState>
+  elements: readonly OpenDrawElement[]
+  appState: Readonly<OpenDrawAppState>
 }
 
 export interface HistoryEntry {

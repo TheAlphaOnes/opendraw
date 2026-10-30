@@ -1,5 +1,5 @@
 {
-  "name": "vuedraw-monorepo",
+  "name": "opendraw-monorepo",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.15.0",
@@ -7,13 +7,13 @@
     "node": ">=20.19.0"
   },
   "scripts": {
-    "build": "pnpm --filter @vuedraw/core build && pnpm --filter vuedraw build",
-    "dev:prepare": "pnpm --filter @vuedraw/core build && pnpm --filter vuedraw dev:prepare",
-    "dev": "pnpm dev:prepare && pnpm --filter vuedraw-playground dev",
-    "build:playground": "pnpm --filter vuedraw-playground build",
+    "build": "pnpm --filter @opendraw/core build && pnpm --filter @opendraw/nuxt build",
+    "dev:prepare": "pnpm --filter @opendraw/core build && pnpm --filter @opendraw/nuxt dev:prepare",
+    "dev": "pnpm dev:prepare && pnpm --filter opendraw-playground dev",
+    "build:playground": "pnpm --filter opendraw-playground build",
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
-    "e2e": "pnpm --filter vuedraw-playground e2e"
+    "e2e": "pnpm --filter opendraw-playground e2e"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

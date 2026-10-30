@@ -53,8 +53,8 @@ function select(color: string): void {
   border-radius: 6px;
   cursor: pointer;
   /* Hairline keeps near-white and near-black chips visible on any surface. */
-  box-shadow: inset 0 0 0 1px var(--vd-border);
-  transition: transform var(--vd-fast) var(--vd-ease);
+  box-shadow: inset 0 0 0 1px var(--od-border);
+  transition: transform var(--od-fast) var(--od-ease);
 }
 
 .ui-swatch:hover {
@@ -66,18 +66,18 @@ function select(color: string): void {
 }
 
 .ui-swatch:focus-visible {
-  outline: 2px solid var(--vd-accent);
+  outline: 2px solid var(--od-accent);
   outline-offset: 2px;
 }
 
 .ui-swatch.is-active {
-  outline: 2px solid var(--vd-accent);
+  outline: 2px solid var(--od-accent);
   outline-offset: 2px;
 }
 
 /* CSS checkerboard for the "no background" swatch. */
 .ui-swatch.is-transparent {
-  background-color: var(--vd-surface-raised);
+  background-color: var(--od-surface-raised);
   background-image:
     linear-gradient(
       45deg,

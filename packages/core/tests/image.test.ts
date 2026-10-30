@@ -17,7 +17,7 @@ import {
 import { hitTestElement } from '../src/elements/hitTest.js'
 import { buildFile, coerceElement, parseFile } from '../src/export/serialize.js'
 import { exportToSvg } from '../src/export/svg.js'
-import type { VueDrawFrameElement, VueDrawImageElement } from '../src/types.js'
+import type { OpenDrawFrameElement, OpenDrawImageElement } from '../src/types.js'
 
 const PNG_DATA_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
 
@@ -44,7 +44,7 @@ describe('image serialization', () => {
   it('round-trips through the file format', () => {
     const image = newImageElement({ x: 5, y: 6, width: 40, height: 30, dataUrl: PNG_DATA_URL })
     const file = parseFile(JSON.parse(JSON.stringify(buildFile([image], '#ffffff'))))
-    const restored = file.elements[0] as VueDrawImageElement | undefined
+    const restored = file.elements[0] as OpenDrawImageElement | undefined
     expect(restored).toBeDefined()
     expect(restored?.type).toBe('image')
     expect(restored?.dataUrl).toBe(PNG_DATA_URL)
@@ -61,7 +61,7 @@ describe('image serialization', () => {
       width: 10,
       height: 10,
       dataUrl: 'https://example.com/not-embeddable.png',
-    }) as VueDrawImageElement | null
+    }) as OpenDrawImageElement | null
     expect(coerced).not.toBeNull()
     // An empty dataUrl renders the placeholder — never a broken canvas.
     expect(coerced?.dataUrl).toBe('')
@@ -78,11 +78,11 @@ describe('frame serialization', () => {
     const frame = newFrameElement({ x: 0, y: 0, width: 100, height: 80, name: 'Diagram' })
     expect(isFrameElement(frame)).toBe(true)
     const file = parseFile(JSON.parse(JSON.stringify(buildFile([frame], '#ffffff'))))
-    const restored = file.elements[0] as VueDrawFrameElement | undefined
+    const restored = file.elements[0] as OpenDrawFrameElement | undefined
     expect(restored?.name).toBe('Diagram')
 
     const unnamed = coerceElement({ id: 'f', type: 'frame', x: 0, y: 0, width: 1, height: 1 })
-    expect((unnamed as VueDrawFrameElement | null)?.name).toBe('Frame')
+    expect((unnamed as OpenDrawFrameElement | null)?.name).toBe('Frame')
   })
 })
 

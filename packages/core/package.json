@@ -1,13 +1,13 @@
 {
-  "name": "@vuedraw/core",
+  "name": "@opendraw/core",
   "version": "0.1.0",
-  "description": "Framework-agnostic canvas engine behind vuedraw — element model, scene store, history, geometry and hand-drawn rendering.",
+  "description": "Framework-agnostic canvas engine behind opendraw — element model, scene store, history, geometry and hand-drawn rendering.",
   "type": "module",
   "license": "MIT",
   "author": "Vishnu",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vishnu/vuedraw",
+    "url": "https://github.com/vishnu/opendraw",
     "directory": "packages/core"
   },
   "sideEffects": false,

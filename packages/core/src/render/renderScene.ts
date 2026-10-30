@@ -24,15 +24,15 @@ import type {
   Point,
   Size,
   Viewport,
-  VueDrawAppState,
-  VueDrawArrowElement,
-  VueDrawElement,
-  VueDrawFrameElement,
-  VueDrawFreedrawElement,
-  VueDrawImageElement,
-  VueDrawLineElement,
-  VueDrawLinearElement,
-  VueDrawTextElement,
+  OpenDrawAppState,
+  OpenDrawArrowElement,
+  OpenDrawElement,
+  OpenDrawFrameElement,
+  OpenDrawFreedrawElement,
+  OpenDrawImageElement,
+  OpenDrawLineElement,
+  OpenDrawLinearElement,
+  OpenDrawTextElement,
 } from '../types.js'
 import { applyViewportTransform, screenToScene } from '../viewport.js'
 import { arrowheadDrawables } from './arrowheads.js'
@@ -57,9 +57,9 @@ export interface CanvasSize {
 
 export interface SceneRenderInput {
   /** Ordered back-to-front. */
-  elements: readonly VueDrawElement[]
+  elements: readonly OpenDrawElement[]
   appState: Readonly<
-    Pick<VueDrawAppState, 'theme' | 'viewBackgroundColor' | 'viewport' | 'gridSize' | 'editingId'>
+    Pick<OpenDrawAppState, 'theme' | 'viewBackgroundColor' | 'viewport' | 'gridSize' | 'editingId'>
   >
   canvasSize: CanvasSize
   /** devicePixelRatio — fold into the transform so callers stay CSS-px. */
@@ -77,7 +77,7 @@ export interface SceneRenderInput {
  * (nuxt) layer on top of a decoded-bitmap cache so panning and zooming never
  * re-decode.
  */
-export type SceneImageResolver = (element: VueDrawImageElement) => CanvasImageSource | null
+export type SceneImageResolver = (element: OpenDrawImageElement) => CanvasImageSource | null
 
 // ---------------------------------------------------------------------------
 // Stroke dash arrays — shared with tests
@@ -95,15 +95,15 @@ export function getDashArrayDotted(strokeWidth: number): number[] {
 // Roughness scaling — small shapes look cleaner with reduced jitter
 // ---------------------------------------------------------------------------
 
-type BoxElement = Extract<VueDrawElement, { type: 'rectangle' | 'diamond' | 'ellipse' }>
+type BoxElement = Extract<OpenDrawElement, { type: 'rectangle' | 'diamond' | 'ellipse' }>
 
-function isBoxLike(element: VueDrawElement): element is BoxElement {
+function isBoxLike(element: OpenDrawElement): element is BoxElement {
   return element.type === 'rectangle' || element.type === 'diamond' || element.type === 'ellipse'
 }
 
 function isLinearType(
-  element: VueDrawElement,
-): element is VueDrawLineElement | VueDrawArrowElement {
+  element: OpenDrawElement,
+): element is OpenDrawLineElement | OpenDrawArrowElement {
   return element.type === 'line' || element.type === 'arrow'
 }
 
@@ -111,7 +111,7 @@ function isLinearType(
  * The extent roughness is scaled against. For stroke-based elements the
  * geometry lives in `points`, not `width`/`height`, so measure from there.
  */
-function elementExtent(element: VueDrawElement): Size {
+function elementExtent(element: OpenDrawElement): Size {
   if (!isLinearType(element) && element.type !== 'freedraw') {
     return { width: element.width, height: element.height }
   }
@@ -142,7 +142,7 @@ function elementExtent(element: VueDrawElement): Size {
  * ones, where full roughness turns into visual noise. Modeled on
  * Excalidraw's heuristic.
  */
-export function adjustRoughness(element: VueDrawElement): number {
+export function adjustRoughness(element: OpenDrawElement): number {
   const { width, height } = elementExtent(element)
   const minSize = Math.min(width, height)
   const maxSize = Math.max(width, height)
@@ -179,9 +179,9 @@ interface CachedShape {
 const DEFAULT_BACKGROUND = '#ffffff'
 
 /** Elements are immutable, so reference identity is a valid cache key. */
-const shapeCache = new WeakMap<VueDrawElement, CachedShape>()
+const shapeCache = new WeakMap<OpenDrawElement, CachedShape>()
 
-function buildRoughOptions(element: VueDrawElement, dark: boolean): Options {
+function buildRoughOptions(element: OpenDrawElement, dark: boolean): Options {
   const strokeWidth = element.strokeWidth
   return {
     seed: element.seed,
@@ -316,7 +316,7 @@ function isClosedLoop(points: readonly Point[]): boolean {
 }
 
 function buildLinearShape(
-  element: VueDrawLineElement | VueDrawArrowElement,
+  element: OpenDrawLineElement | OpenDrawArrowElement,
   dark: boolean,
   background: string,
 ): Drawable[] {
@@ -342,7 +342,7 @@ function buildLinearShape(
   return drawables
 }
 
-function buildShape(element: VueDrawElement, dark: boolean, background: string): readonly Drawable[] {
+function buildShape(element: OpenDrawElement, dark: boolean, background: string): readonly Drawable[] {
   if (isBoxLike(element)) {
     return buildBoxShape(element, dark)
   }
@@ -353,7 +353,7 @@ function buildShape(element: VueDrawElement, dark: boolean, background: string):
   return []
 }
 
-function getShape(element: VueDrawElement, dark: boolean, background: string): readonly Drawable[] {
+function getShape(element: OpenDrawElement, dark: boolean, background: string): readonly Drawable[] {
   const cached = shapeCache.get(element)
   if (cached && cached.dark === dark && cached.background === background) {
     return cached.drawables
@@ -369,7 +369,7 @@ function getShape(element: VueDrawElement, dark: boolean, background: string): r
  * faithful to the canvas instead of a re-generated approximation.
  */
 export function getElementDrawables(
-  element: VueDrawElement,
+  element: OpenDrawElement,
   dark: boolean,
   background: string = DEFAULT_BACKGROUND,
 ): readonly Drawable[] {
@@ -383,10 +383,10 @@ export function getElementDrawables(
 /** Stroke size relative to `strokeWidth`, tuned by Excalidraw visually. */
 const FREEDRAW_SIZE_FACTOR = 4.25
 
-const freedrawPathCache = new WeakMap<VueDrawFreedrawElement, Path2D>()
+const freedrawPathCache = new WeakMap<OpenDrawFreedrawElement, Path2D>()
 
 /** The perfect-freehand outline of a freedraw stroke, in local space. */
-export function getFreedrawOutline(element: VueDrawFreedrawElement): number[][] {
+export function getFreedrawOutline(element: OpenDrawFreedrawElement): number[][] {
   return getStroke(element.points, {
     simulatePressure: element.simulatePressure,
     size: element.strokeWidth * FREEDRAW_SIZE_FACTOR,
@@ -427,7 +427,7 @@ export function outlineCommands(outline: readonly (readonly number[])[]): readon
   return commands
 }
 
-function getFreedrawPath(element: VueDrawFreedrawElement): Path2D {
+function getFreedrawPath(element: OpenDrawFreedrawElement): Path2D {
   const cached = freedrawPathCache.get(element)
   if (cached) {
     return cached
@@ -458,7 +458,7 @@ function outlineToPath(outline: readonly (readonly number[])[]): Path2D {
 
 function drawFreedraw(
   ctx: CanvasRenderingContext2D,
-  element: VueDrawFreedrawElement,
+  element: OpenDrawFreedrawElement,
   dark: boolean,
 ): void {
   if (element.points.length === 0) {
@@ -472,7 +472,7 @@ function drawFreedraw(
 // Text
 // ---------------------------------------------------------------------------
 
-function drawText(ctx: CanvasRenderingContext2D, element: VueDrawTextElement, dark: boolean): void {
+function drawText(ctx: CanvasRenderingContext2D, element: OpenDrawTextElement, dark: boolean): void {
   ctx.font = fontCss(element.fontFamily, element.fontSize)
   ctx.fillStyle = themeColor(element.strokeColor, dark)
   ctx.textAlign = element.textAlign
@@ -502,7 +502,7 @@ function drawText(ctx: CanvasRenderingContext2D, element: VueDrawTextElement, da
 function drawElement(
   ctx: CanvasRenderingContext2D,
   rc: ReturnType<typeof rough.canvas>,
-  element: VueDrawElement,
+  element: OpenDrawElement,
   dark: boolean,
   resolveImage: SceneImageResolver | undefined,
   background: string,
@@ -565,7 +565,7 @@ const IMAGE_PLACEHOLDER_DARK = { fill: '#2a2a2a', stroke: '#525252' } as const
  */
 function drawImageElement(
   ctx: CanvasRenderingContext2D,
-  element: VueDrawImageElement,
+  element: OpenDrawImageElement,
   dark: boolean,
   resolveImage?: SceneImageResolver,
 ): void {
@@ -583,7 +583,7 @@ function drawImageElement(
 
 function drawImagePlaceholder(
   ctx: CanvasRenderingContext2D,
-  element: VueDrawImageElement,
+  element: OpenDrawImageElement,
   dark: boolean,
 ): void {
   const ink = dark ? IMAGE_PLACEHOLDER_DARK : IMAGE_PLACEHOLDER
@@ -615,7 +615,7 @@ const FRAME_INK = { light: '#a0a0a0', dark: '#5c5c5c' } as const
 const FRAME_NAME_INK = { light: '#8a8a8a', dark: '#777777' } as const
 
 /** Frames: dashed box + name above the top-left corner (Excalidraw parity). */
-function drawFrame(ctx: CanvasRenderingContext2D, element: VueDrawFrameElement, dark: boolean): void {
+function drawFrame(ctx: CanvasRenderingContext2D, element: OpenDrawFrameElement, dark: boolean): void {
   ctx.strokeStyle = dark ? FRAME_INK.dark : FRAME_INK.light
   ctx.lineWidth = 1
   ctx.setLineDash([8, 6])
@@ -648,9 +648,9 @@ function visibleSceneRect(canvasSize: CanvasSize, viewport: Viewport) {
  * would double every glyph under the caret.
  */
 export function renderableElements(
-  elements: readonly VueDrawElement[],
+  elements: readonly OpenDrawElement[],
   editingId: string | null,
-): readonly VueDrawElement[] {
+): readonly OpenDrawElement[] {
   return editingId === null ? elements : elements.filter((el) => el.id !== editingId)
 }
 
@@ -720,7 +720,7 @@ export function renderScene(ctx: CanvasRenderingContext2D, input: SceneRenderInp
  */
 export function renderElementShape(
   ctx: CanvasRenderingContext2D,
-  element: VueDrawElement,
+  element: OpenDrawElement,
   dark: boolean,
   resolveImage?: SceneImageResolver,
   background: string = DEFAULT_BACKGROUND,
@@ -736,7 +736,7 @@ export function renderElementShape(
  */
 export function exportElementShape(
   ctx: CanvasRenderingContext2D,
-  element: VueDrawElement,
+  element: OpenDrawElement,
   dark: boolean,
   resolveImage?: SceneImageResolver,
   background: string = DEFAULT_BACKGROUND,

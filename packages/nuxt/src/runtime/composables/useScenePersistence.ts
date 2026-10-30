@@ -1,9 +1,10 @@
 import { onMounted, onScopeDispose, watch } from 'vue'
 
-import type { VueDrawContext } from './useVueDraw.js'
+import type { OpenDrawContext } from './useOpenDraw.js'
 
 import {
   DEFAULT_SCENE_STORAGE_KEY,
+  LEGACY_SCENE_STORAGE_KEY,
   buildPersistedScene,
   parsePersistedScene,
 } from '../persistence/persistedScene.js'
@@ -25,7 +26,7 @@ import { resolveThemeDefault, type ThemeDefault } from '../persistence/systemThe
  */
 
 export interface ScenePersistenceOptions {
-  /** localStorage key; defaults to `vuedraw:scene`. */
+  /** localStorage key; defaults to `opendraw:scene`. */
   storageKey?: string
   /** Save debounce window in ms; defaults to 300. */
   debounceMs?: number
@@ -40,7 +41,7 @@ export interface ScenePersistenceOptions {
 const DEFAULT_DEBOUNCE_MS = 300
 
 export function useScenePersistence(
-  ctx: VueDrawContext,
+  ctx: OpenDrawContext,
   options: ScenePersistenceOptions = {},
 ): void {
   if (typeof window === 'undefined') {
@@ -59,7 +60,7 @@ export function useScenePersistence(
     } catch (error) {
       // Persistence is a best-effort side channel (quota exceeded, private
       // mode): the editor itself must keep working, but never silently.
-      console.error(`[vuedraw] failed to persist the scene to "${storageKey}"`, error)
+      console.error(`[opendraw] failed to persist the scene to "${storageKey}"`, error)
     }
   }
 
@@ -104,8 +105,13 @@ export function useScenePersistence(
     let raw: string | null
     try {
       raw = window.localStorage.getItem(storageKey)
+      // The default key migrates a scene saved before the opendraw rename;
+      // the next save writes it under the new key.
+      if (raw === null && storageKey === DEFAULT_SCENE_STORAGE_KEY) {
+        raw = window.localStorage.getItem(LEGACY_SCENE_STORAGE_KEY)
+      }
     } catch (error) {
-      console.error(`[vuedraw] scene storage is not readable (${storageKey})`, error)
+      console.error(`[opendraw] scene storage is not readable (${storageKey})`, error)
       applyThemeDefault()
       return
     }
@@ -119,7 +125,7 @@ export function useScenePersistence(
     } catch (error) {
       // Expected degradation on a corrupted payload, not a failed save:
       // warn and keep the fresh scene.
-      console.warn(`[vuedraw] ignoring a corrupted persisted scene (${storageKey})`, error)
+      console.warn(`[opendraw] ignoring a corrupted persisted scene (${storageKey})`, error)
       applyThemeDefault()
       return
     }

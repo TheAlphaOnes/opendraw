@@ -1,5 +1,5 @@
-import type { Point } from '@vuedraw/core'
-import type { TextContainer, VueDrawElement } from '@vuedraw/core'
+import type { Point } from '@opendraw/core'
+import type { TextContainer, OpenDrawElement } from '@opendraw/core'
 import {
   boundTextOf,
   findElementAt,
@@ -9,7 +9,7 @@ import {
   outermostGroupId,
   selectableTarget,
   textContainerAt,
-} from '@vuedraw/core'
+} from '@opendraw/core'
 
 import { finishLinearDraft } from './linearDraft.js'
 import type { CanvasRuntime } from './runtime.js'
@@ -71,7 +71,7 @@ export function editContainerText(rt: CanvasRuntime, container: TextContainer): 
  * Starts text editing on whatever `target` is: a text element re-opens,
  * a container edits its label. Returns false for anything else.
  */
-export function editTextOf(rt: CanvasRuntime, target: VueDrawElement): boolean {
+export function editTextOf(rt: CanvasRuntime, target: OpenDrawElement): boolean {
   if (target.type === 'text') {
     editTextElement(rt, target.id)
     return true

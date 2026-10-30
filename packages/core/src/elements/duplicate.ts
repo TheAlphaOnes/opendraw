@@ -9,7 +9,7 @@
  *   — bound text copied with its container binds to the copy.
  */
 
-import type { Point, VueDrawBinding, VueDrawElement } from '../types.js'
+import type { Point, OpenDrawBinding, OpenDrawElement } from '../types.js'
 import { duplicateElement, isLinearElement } from './factories.js'
 import { remapGroupIdsForCopies } from './groups.js'
 
@@ -21,9 +21,9 @@ export interface DuplicateOptions {
 }
 
 export function duplicateElements(
-  originals: readonly VueDrawElement[],
+  originals: readonly OpenDrawElement[],
   options: DuplicateOptions = {},
-): VueDrawElement[] {
+): OpenDrawElement[] {
   const offset = options.offset ?? { x: 0, y: 0 }
   const idMap = new Map<string, string>()
   const copies = originals.map((el) => {
@@ -31,11 +31,11 @@ export function duplicateElements(
     idMap.set(el.id, copy.id)
     return copy
   })
-  const remapBinding = (binding: VueDrawBinding | null): VueDrawBinding | null => {
+  const remapBinding = (binding: OpenDrawBinding | null): OpenDrawBinding | null => {
     const target = binding ? idMap.get(binding.elementId) : undefined
     return target ? { elementId: target } : null
   }
-  const rebound = copies.map((copy): VueDrawElement => {
+  const rebound = copies.map((copy): OpenDrawElement => {
     if (isLinearElement(copy)) {
       return { ...copy, startBinding: remapBinding(copy.startBinding), endBinding: remapBinding(copy.endBinding) }
     }

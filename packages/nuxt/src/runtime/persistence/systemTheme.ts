@@ -8,9 +8,9 @@
  * editor should start with".
  */
 
-import type { ThemeName } from '@vuedraw/core'
+import type { ThemeName } from '@opendraw/core'
 
-/** A theme default as accepted on the `<VueDraw>` component. */
+/** A theme default as accepted on the `<OpenDraw>` component. */
 export type ThemeDefault = ThemeName | 'system'
 
 /** The media query Excalidraw consults for the system color scheme. */

@@ -86,7 +86,7 @@ function onInput(event: Event): void {
   width: 100%;
   height: 4px;
   border-radius: 2px;
-  background: var(--vd-border);
+  background: var(--od-border);
   overflow: hidden;
 }
 
@@ -94,8 +94,8 @@ function onInput(event: Event): void {
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: inherit;
-  background: var(--vd-accent);
-  transition: width var(--vd-fast) var(--vd-ease);
+  background: var(--od-accent);
+  transition: width var(--od-fast) var(--od-ease);
 }
 
 .ui-slider__input {
@@ -126,23 +126,23 @@ function onInput(event: Event): void {
   width: 14px;
   height: 14px;
   margin-top: 0;
-  border: 2px solid var(--vd-surface-raised);
+  border: 2px solid var(--od-surface-raised);
   border-radius: 50%;
-  background: var(--vd-accent);
-  box-shadow: var(--vd-shadow-1);
+  background: var(--od-accent);
+  box-shadow: var(--od-shadow-1);
 }
 
 .ui-slider__input::-moz-range-thumb {
   width: 10px;
   height: 10px;
-  border: 2px solid var(--vd-surface-raised);
+  border: 2px solid var(--od-surface-raised);
   border-radius: 50%;
-  background: var(--vd-accent);
-  box-shadow: var(--vd-shadow-1);
+  background: var(--od-accent);
+  box-shadow: var(--od-shadow-1);
 }
 
 .ui-slider__input:focus-visible {
-  outline: 2px solid var(--vd-accent);
+  outline: 2px solid var(--od-accent);
   outline-offset: 4px;
 }
 
@@ -150,7 +150,7 @@ function onInput(event: Event): void {
   min-width: 34px;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
-  color: var(--vd-ink-soft);
+  color: var(--od-ink-soft);
   text-align: right;
 }
 </style>

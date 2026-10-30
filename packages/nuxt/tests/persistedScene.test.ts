@@ -5,9 +5,9 @@ import {
   newLinearElement,
   newRectangleElement,
   newTextElement,
-  type VueDrawArrowElement,
-  type VueDrawRectangleElement,
-} from '@vuedraw/core'
+  type OpenDrawArrowElement,
+  type OpenDrawRectangleElement,
+} from '@opendraw/core'
 
 import {
   DEFAULT_SCENE_STORAGE_KEY,
@@ -17,8 +17,8 @@ import {
 } from '../src/runtime/persistence/persistedScene.js'
 
 function sceneFixture() {
-  const rect: VueDrawRectangleElement = newRectangleElement({ x: 10, y: 20, width: 120, height: 80 })
-  const arrow: VueDrawArrowElement = newLinearElement('arrow', { x: 0, y: 0 })
+  const rect: OpenDrawRectangleElement = newRectangleElement({ x: 10, y: 20, width: 120, height: 80 })
+  const arrow: OpenDrawArrowElement = newLinearElement('arrow', { x: 0, y: 0 })
   arrow.startBinding = null
   arrow.endBinding = { elementId: rect.id }
   const text = newTextElement({ x: 5, y: 5, text: 'hello' })
@@ -37,7 +37,7 @@ describe('buildPersistedScene', () => {
     })
 
     expect(scene.type).toBe(PERSISTED_SCENE_TYPE)
-    expect(scene.file.type).toBe('vuedraw')
+    expect(scene.file.type).toBe('opendraw')
     expect(scene.file.elements).toHaveLength(3)
     expect(scene.file.appState.viewBackgroundColor).toBe('#123456')
     expect(scene.appState).toEqual({
@@ -71,17 +71,28 @@ describe('parsePersistedScene', () => {
   })
 
   it('uses the stable default storage key', () => {
-    expect(DEFAULT_SCENE_STORAGE_KEY).toBe('vuedraw:scene')
+    expect(DEFAULT_SCENE_STORAGE_KEY).toBe('opendraw:scene')
+  })
+
+  it('still reads a scene saved before the opendraw rename', () => {
+    const { rect } = sceneFixture()
+    const scene = buildPersistedScene([rect], { ...DEFAULT_APP_STATE })
+    const legacy = JSON.parse(JSON.stringify(scene))
+    legacy.type = 'vuedraw-scene'
+    legacy.file.type = 'vuedraw'
+    const parsed = parsePersistedScene(legacy)
+    expect(parsed?.file.elements.map((el) => el.id)).toEqual([rect.id])
+    expect(parsed?.file.type).toBe('opendraw')
   })
 
   it('rejects foreign payloads without throwing', () => {
     expect(parsePersistedScene(null)).toBeNull()
-    expect(parsePersistedScene('vuedraw')).toBeNull()
+    expect(parsePersistedScene('opendraw')).toBeNull()
     expect(parsePersistedScene({ type: 'excalidraw', version: 1 })).toBeNull()
     expect(parsePersistedScene({ type: PERSISTED_SCENE_TYPE, version: 99 })).toBeNull()
   })
 
-  it('degrades to null when the inner file is not a vuedraw file', () => {
+  it('degrades to null when the inner file is not a opendraw file', () => {
     expect(
       parsePersistedScene({ type: PERSISTED_SCENE_TYPE, version: 1, file: { type: 'nope' } }),
     ).toBeNull()
@@ -112,7 +123,7 @@ describe('parsePersistedScene', () => {
     const parsed = parsePersistedScene({
       type: PERSISTED_SCENE_TYPE,
       version: 1,
-      file: { type: 'vuedraw', elements: [] },
+      file: { type: 'opendraw', elements: [] },
       appState: {
         theme: 'sepia',
         viewport: { scrollX: 'x', scrollY: Number.NaN, zoom: 9999 },

@@ -1,8 +1,8 @@
-import { allInSameGroup } from '@vuedraw/core'
+import { allInSameGroup } from '@opendraw/core'
 
-import type { VueDrawContext } from '../composables/useVueDraw.js'
+import type { OpenDrawContext } from '../composables/useOpenDraw.js'
 import { keyIs, noMod, plainMod } from './keys.js'
-import type { VueDrawAction } from './types.js'
+import type { OpenDrawAction } from './types.js'
 
 /**
  * Every editor command, keyed by id, with Excalidraw's shortcut map
@@ -12,15 +12,15 @@ import type { VueDrawAction } from './types.js'
  * Shift+1 types "!") test `event.code`, the physical key.
  */
 
-const hasSelection = (ctx: VueDrawContext): boolean => ctx.selectedElements.value.length > 0
-const hasUnlockedSelection = (ctx: VueDrawContext): boolean =>
+const hasSelection = (ctx: OpenDrawContext): boolean => ctx.selectedElements.value.length > 0
+const hasUnlockedSelection = (ctx: OpenDrawContext): boolean =>
   ctx.selectedElements.value.some((el) => !el.locked)
-const hasSelectedText = (ctx: VueDrawContext): boolean =>
+const hasSelectedText = (ctx: OpenDrawContext): boolean =>
   ctx.selectedElements.value.some((el) => el.type === 'text')
 /** Align needs two units to align against each other. */
-const canAlign = (ctx: VueDrawContext): boolean => ctx.selectedElements.value.length > 1
+const canAlign = (ctx: OpenDrawContext): boolean => ctx.selectedElements.value.length > 1
 /** Distribute needs three units for a gap to equalize. */
-const canDistribute = (ctx: VueDrawContext): boolean => ctx.selectedElements.value.length > 2
+const canDistribute = (ctx: OpenDrawContext): boolean => ctx.selectedElements.value.length > 2
 
 /** Ctrl or ⌘, either one, with Alt — and the physical key. */
 const modAlt = (e: KeyboardEvent, code: string): boolean =>
@@ -32,7 +32,7 @@ const altOnly = (e: KeyboardEvent, code: string): boolean =>
 const modShift = (e: KeyboardEvent): boolean => plainMod(e) && e.shiftKey
 
 /** The canvas center, in host-local screen px — where keyboard zoom anchors. */
-function canvasCenter(ctx: VueDrawContext): { x: number; y: number } {
+function canvasCenter(ctx: OpenDrawContext): { x: number; y: number } {
   const { width, height } = ctx.viewportSize.value
   return { x: width / 2, y: height / 2 }
 }
@@ -388,21 +388,21 @@ export const ACTIONS = {
     },
     danger: true,
   },
-} satisfies Record<string, VueDrawAction>
+} satisfies Record<string, OpenDrawAction>
 
 export type ActionId = keyof typeof ACTIONS
 
-export function actionById(id: ActionId): VueDrawAction {
+export function actionById(id: ActionId): OpenDrawAction {
   return ACTIONS[id]
 }
 
-export function isActionEnabled(ctx: VueDrawContext, id: ActionId): boolean {
-  const action: VueDrawAction = ACTIONS[id]
+export function isActionEnabled(ctx: OpenDrawContext, id: ActionId): boolean {
+  const action: OpenDrawAction = ACTIONS[id]
   return action.enabled ? action.enabled(ctx) : true
 }
 
 /** Runs an action when it applies; returns whether it ran. */
-export function runAction(ctx: VueDrawContext, id: ActionId): boolean {
+export function runAction(ctx: OpenDrawContext, id: ActionId): boolean {
   if (!isActionEnabled(ctx, id)) {
     return false
   }
@@ -416,9 +416,9 @@ export function runAction(ctx: VueDrawContext, id: ActionId): boolean {
  * not apply right now, so Mod+D never falls through to the browser's
  * bookmark dialog.
  */
-export function dispatchActionKey(ctx: VueDrawContext, event: KeyboardEvent): boolean {
+export function dispatchActionKey(ctx: OpenDrawContext, event: KeyboardEvent): boolean {
   for (const id of Object.keys(ACTIONS) as ActionId[]) {
-    const action: VueDrawAction = ACTIONS[id]
+    const action: OpenDrawAction = ACTIONS[id]
     if (action.keyTest?.(event)) {
       event.preventDefault()
       runAction(ctx, id)

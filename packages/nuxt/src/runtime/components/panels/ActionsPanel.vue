@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import type { ActionId } from '../../actions/registry.js'
-import { useVueDraw } from '../../composables/useVueDraw.js'
+import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import UiPanel from '../ui/UiPanel.vue'
 import ActionButton from './ActionButton.vue'
 
@@ -11,7 +11,7 @@ import ActionButton from './ActionButton.vue'
  * commands. Selection-specific commands (layers, align, element actions)
  * live in the properties island, as in Excalidraw.
  */
-const ctx = useVueDraw()
+const ctx = useOpenDraw()
 
 const isDark = computed(() => ctx.theme.value === 'dark')
 
@@ -78,6 +78,6 @@ function presentation(id: ActionId): { active?: boolean; icon?: 'sun' | 'moon'; 
 .actions-panel__group + .actions-panel__group {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid var(--vd-border);
+  border-top: 1px solid var(--od-border);
 }
 </style>
