@@ -14,7 +14,23 @@
  */
 
 import { duplicateElement, isTextElement } from '../elements/factories.js'
-import { orphanBindingPatches } from '../elements/binding.js'
+import { bindingFollowPatches, orphanBindingPatches } from '../elements/binding.js'
+import {
+  type Alignment,
+  alignUnits,
+  distributeUnits,
+  type ElementPatchEntry,
+  type FlipAxis,
+  flipElements,
+  selectionUnits,
+} from '../elements/arrange.js'
+import {
+  elementsInGroup,
+  expandIdsToGroups,
+  groupElements,
+  remapGroupIdsForCopies,
+  ungroupElements,
+} from '../elements/groups.js'
 import type { ElementPatch } from '../elements/mutate.js'
 import { forcePatchElement, patchElement } from '../elements/mutate.js'
 import { DEFAULT_ELEMENT_STYLE, DEFAULT_TEXT_STYLE } from '../elements/defaults.js'
@@ -46,6 +62,7 @@ export const DEFAULT_APP_STATE: VueDrawAppState = {
   viewport: { scrollX: 0, scrollY: 0, zoom: 1 },
   selectedIds: {},
   editingId: null,
+  editingGroupId: null,
   gridSize: null,
   style: { ...DEFAULT_ELEMENT_STYLE },
   textStyle: { ...DEFAULT_TEXT_STYLE },
@@ -217,6 +234,7 @@ export class VueDrawDocument {
     this.appState = {
       ...this.appState,
       selectedIds: restored.selectedIds,
+      editingGroupId: restored.editingGroupId,
       viewBackgroundColor: restored.viewBackgroundColor,
       gridSize: restored.gridSize,
     }
@@ -383,6 +401,11 @@ export class VueDrawDocument {
       }
       this.commitAppState({ ...this.appState, selectedIds: nextSelected })
     }
+    // A group with fewer than two members left is no group to edit.
+    const editing = this.appState.editingGroupId
+    if (editing && elementsInGroup(this.elements, editing).length < 2) {
+      this.commitAppState({ ...this.appState, editingGroupId: null })
+    }
     if (topLevel) {
       this.endStep()
     }
@@ -398,12 +421,72 @@ export class VueDrawDocument {
       return
     }
     this.beginStep()
-    const clones = selected.map((el) =>
-      duplicateElement(el, { x: el.x + offset.x, y: el.y + offset.y }),
+    const clones = remapGroupIdsForCopies(
+      selected.map((el) => duplicateElement(el, { x: el.x + offset.x, y: el.y + offset.y })),
+      this.appState.editingGroupId,
     )
     this.addElements(clones)
     this.select(clones.map((el) => el.id))
     this.endStep()
+  }
+
+  // -------------------------------------------------------------------------
+  // Arrange
+  // -------------------------------------------------------------------------
+
+  /** Aligns the selection's units (groups move as blocks) to its box. */
+  alignSelection(alignment: Alignment): void {
+    this.applyArrange(alignUnits(this.selectionUnits(), alignment))
+  }
+
+  /** Equalizes the gaps between the selection's units along an axis. */
+  distributeSelection(axis: 'x' | 'y'): void {
+    this.applyArrange(distributeUnits(this.selectionUnits(), axis))
+  }
+
+  /** Mirrors the selection across its center (Shift+H / Shift+V). */
+  flipSelection(axis: FlipAxis): void {
+    const selected = this.getSelectedElements().filter((el) => !el.locked)
+    this.applyArrange(flipElements(selected, axis))
+  }
+
+  private selectionUnits(): VueDrawElement[][] {
+    const selected = this.getSelectedElements().filter((el) => !el.locked)
+    return selectionUnits(this.elements, selected, this.appState.editingGroupId)
+  }
+
+  /**
+   * Applies geometry patches as ONE undo step, then re-docks every line or
+   * arrow bound to a moved element — so undo restores both together.
+   */
+  private applyArrange(entries: readonly ElementPatchEntry[]): void {
+    if (entries.length === 0) {
+      return
+    }
+    const byId = new Map(entries.map((entry) => [entry.id, entry.patch]))
+    const topLevel = this.openStep === null
+    if (topLevel) {
+      this.beginStep()
+    }
+    this.mutate((current) => {
+      let changed = false
+      const next = current.map((el) => {
+        const patch = byId.get(el.id)
+        if (!patch) {
+          return el
+        }
+        const patched = patchElement(el, patch)
+        changed ||= patched !== el
+        return patched
+      })
+      return changed ? next : null
+    })
+    for (const [id, patch] of bindingFollowPatches(new Set(byId.keys()), this.elements)) {
+      this.updateElement<VueDrawLinearElement>(id, patch)
+    }
+    if (topLevel) {
+      this.endStep()
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -487,8 +570,77 @@ export class VueDrawDocument {
     this.commitAppState({ ...this.appState, selectedIds: next })
   }
 
+  /**
+   * Group-aware selection — what a click or marquee does: every id pulls in
+   * the rest of its outermost visible group. In toggle mode a group that is
+   * wholly selected leaves as a unit; otherwise it joins as a unit.
+   */
+  selectGrouped(ids: readonly string[], mode: 'replace' | 'toggle' = 'replace'): void {
+    const expanded = expandIdsToGroups(this.elements, ids, this.appState.editingGroupId)
+    if (mode === 'replace') {
+      this.select(expanded)
+      return
+    }
+    const selected = this.appState.selectedIds
+    const allSelected = expanded.every((id) => selected[id])
+    const next = { ...selected }
+    for (const id of expanded) {
+      if (allSelected) {
+        delete next[id]
+      } else {
+        next[id] = true
+      }
+    }
+    this.select(Object.keys(next))
+  }
+
+  /** Enters (or with null, leaves) a group for member-level editing. */
+  setEditingGroup(groupId: string | null): void {
+    if (groupId === this.appState.editingGroupId) {
+      return
+    }
+    this.commitAppState({ ...this.appState, editingGroupId: groupId })
+  }
+
+  /**
+   * Selects every unlocked element and leaves any edited group —
+   * Excalidraw's actionSelectAll.
+   */
   selectAll(): void {
-    this.select(this.elements.map((el) => el.id))
+    this.setEditingGroup(null)
+    this.select(this.elements.filter((el) => !el.locked).map((el) => el.id))
+  }
+
+  // -------------------------------------------------------------------------
+  // Groups
+  // -------------------------------------------------------------------------
+
+  /** Groups the selection (two or more elements) into one new group. */
+  groupSelection(): void {
+    const ids = new Set(this.getSelectedElements().map((el) => el.id))
+    const result = groupElements(
+      this.elements,
+      ids,
+      this.appState.editingGroupId,
+      (el, groupIds) => patchElement(el, { groupIds }),
+    )
+    if (!result) {
+      return
+    }
+    this.mutate(() => result.elements)
+  }
+
+  /** Dissolves every group selected as a unit. */
+  ungroupSelection(): void {
+    const next = ungroupElements(
+      this.elements,
+      this.appState.selectedIds,
+      this.appState.editingGroupId,
+      (el, groupIds) => patchElement(el, { groupIds }),
+    )
+    if (next) {
+      this.mutate(() => next)
+    }
   }
 
   /** Style of new elements — set when nothing is selected. */
@@ -602,6 +754,7 @@ export class VueDrawDocument {
       ...this.appState,
       selectedIds: {},
       editingId: null,
+      editingGroupId: null,
       viewBackgroundColor: file.appState?.viewBackgroundColor ?? this.appState.viewBackgroundColor,
     }
     this.history.clear()

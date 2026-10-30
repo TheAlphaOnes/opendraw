@@ -95,6 +95,9 @@ export function coerceElement(input: unknown): VueDrawElement | null {
     version: Math.max(1, num(input.version, 1)),
     versionNonce: str(input.versionNonce, ''),
     locked: input.locked === true,
+    groupIds: Array.isArray(input.groupIds)
+      ? input.groupIds.filter((id): id is string => typeof id === 'string')
+      : [],
   }
   if (type === 'line' || type === 'arrow') {
     return {

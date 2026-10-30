@@ -92,6 +92,11 @@ export interface VueDrawElementBase {
   /** Regenerated whenever a mutation is applied (last writer wins marker). */
   versionNonce: string
   locked: boolean
+  /**
+   * Groups this element belongs to, innermost first (Excalidraw's
+   * `groupIds`). A group exists while two or more elements share an id.
+   */
+  groupIds: readonly string[]
 }
 
 /** Elements whose geometry is a polyline in local element space. */
@@ -248,6 +253,11 @@ export interface VueDrawAppState {
   selectedIds: Readonly<Record<string, true>>
   /** The element currently being text-edited, if any. */
   editingId: string | null
+  /**
+   * The group the user double-clicked into: inside it, clicks select the
+   * next group level (or single members) instead of the whole group.
+   */
+  editingGroupId: string | null
   /** Scene grid size in px, or null when disabled. */
   gridSize: number | null
   /** Style applied to newly created elements. */

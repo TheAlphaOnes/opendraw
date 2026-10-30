@@ -24,6 +24,8 @@ export * from './elements/factories.js'
 export * from './elements/mutate.js'
 export * from './elements/hitTest.js'
 export * from './elements/binding.js'
+export * from './elements/groups.js'
+export * from './elements/arrange.js'
 
 export * from './viewport.js'
 

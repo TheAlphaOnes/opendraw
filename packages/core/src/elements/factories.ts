@@ -59,6 +59,7 @@ export interface NewElementOptions {
   seed?: number
   version?: number
   locked?: boolean
+  groupIds?: readonly string[]
   /** Corner treatment — consumed by the rectangle and diamond factories. */
   roundness?: Roundness | null
 }
@@ -118,6 +119,7 @@ function baseElement<T extends VueDrawElementType>(
     version: opts.version ?? 1,
     versionNonce: newNonce(),
     locked: opts.locked ?? false,
+    groupIds: opts.groupIds ?? [],
   }
 }
 
