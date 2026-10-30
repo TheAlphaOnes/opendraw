@@ -1,0 +1,44 @@
+{
+  "name": "@opendraw/svelte",
+  "version": "0.1.0",
+  "description": "Svelte 5 adapter for opendraw: <OpenDraw>, <OpenDrawCanvas> and editor state runes over the framework-free @opendraw/editor.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Vishnu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheAlphaOnes/opendraw",
+    "directory": "packages/svelte"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "svelte": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "svelte": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
+  },
+  "dependencies": {
+    "@lucide/svelte": "^1.65.0",
+    "@opendraw/core": "workspace:*",
+    "@opendraw/editor": "workspace:*"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "svelte": "^5.57.3",
+    "svelte-check": "^4.7.7"
+  }
+}
