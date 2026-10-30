@@ -96,6 +96,7 @@ defineProps<{
     bottom: calc(var(--od-gutter) * 2 + var(--od-button-lg) + 8px);
     width: auto;
     max-height: 42%;
+    padding: 8px;
   }
 }
 

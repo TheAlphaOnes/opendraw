@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import {
   BACKGROUND_PALETTE,
@@ -30,6 +30,7 @@ import UiPanel from '../ui/UiPanel.vue'
 import UiSegmented, { type UiSegmentedOption } from '../ui/UiSegmented.vue'
 import UiSlider from '../ui/UiSlider.vue'
 import UiColorPicker from '../ui/UiColorPicker.vue'
+import UiIcon from '../ui/UiIcon.vue'
 
 /**
  * The properties island — Excalidraw's left-hand shape-properties panel.
@@ -39,6 +40,13 @@ import UiColorPicker from '../ui/UiColorPicker.vue'
  * nothing is selected (the document decides which).
  */
 const ctx = useOpenDraw()
+
+/**
+ * Phones: the panel collapses to a "Properties" bar above the toolbar so
+ * the canvas stays visible; a tap expands the sheet. Desktop never shows
+ * the bar and always shows the panel.
+ */
+const expanded = ref(false)
 
 /** Labels inside the selected shapes — styled through the text section. */
 const labels = computed(() =>
@@ -146,7 +154,25 @@ const alignOptions: UiSegmentedOption[] = [
 
 <template>
   <UiPanel v-if="targets.visible" position="properties">
-    <div class="style-panel" role="region" aria-label="Element properties">
+    <button
+      type="button"
+      class="style-panel__toggle"
+      :aria-expanded="expanded"
+      aria-controls="opendraw-style-panel"
+      @click="expanded = !expanded"
+    >
+      <span class="style-panel__swatch" :style="{ background: style.strokeColor }" aria-hidden="true" />
+      <span class="style-panel__swatch style-panel__swatch--fill" :style="{ background: style.backgroundColor }" aria-hidden="true" />
+      <span class="style-panel__toggle-label">Properties</span>
+      <UiIcon name="chevronDown" :size="16" class="style-panel__chevron" />
+    </button>
+    <div
+      id="opendraw-style-panel"
+      class="style-panel"
+      :class="{ 'is-collapsed': !expanded }"
+      role="region"
+      aria-label="Element properties"
+    >
       <StyleSection v-if="targets.stroke" :label="targets.notes ? 'Text color' : 'Stroke'">
         <UiColorPicker
           kind="stroke"
@@ -265,5 +291,70 @@ const alignOptions: UiSegmentedOption[] = [
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.style-panel__toggle {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .style-panel__toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    height: 32px;
+    padding: 0 4px;
+    border: none;
+    border-radius: var(--od-radius-m);
+    background: transparent;
+    color: var(--od-ink);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .style-panel__toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--od-accent);
+  }
+
+  .style-panel__toggle-label {
+    flex: 1;
+    text-align: left;
+  }
+
+  .style-panel__swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px var(--od-divider);
+  }
+
+  .style-panel__chevron {
+    color: var(--od-ink-soft);
+    transform: rotate(180deg);
+    transition: transform 220ms var(--od-ease);
+  }
+
+  .style-panel__toggle[aria-expanded='true'] .style-panel__chevron {
+    transform: none;
+  }
+
+  .style-panel {
+    margin-top: 8px;
+    animation: style-panel-open 240ms var(--od-ease) both;
+  }
+
+  .style-panel.is-collapsed {
+    display: none;
+  }
+}
+
+@keyframes style-panel-open {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
 }
 </style>
