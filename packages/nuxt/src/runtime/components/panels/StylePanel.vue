@@ -20,9 +20,9 @@ import {
   type TextAlign,
   type TextStyle,
   type OpenDrawTextElement,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
-import { ARROW_TYPE_OPTIONS } from '@opendraw/editor'
+import { ARROW_TYPE_OPTIONS } from '@opendrawjs/editor'
 
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import { panelTargets, type PanelTargets } from './panelTargets.js'

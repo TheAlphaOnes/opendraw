@@ -13,7 +13,7 @@
  * its placeholder until the decode lands.
  */
 
-import { newImageElement, type Point, type OpenDrawElement, type OpenDrawImageElement } from '@opendraw/core'
+import { newImageElement, type Point, type OpenDrawElement, type OpenDrawImageElement } from '@opendrawjs/core'
 
 /** Decoded bitmaps keyed by data URL — shared across editor instances. */
 const bitmapCache = new Map<string, HTMLImageElement>()

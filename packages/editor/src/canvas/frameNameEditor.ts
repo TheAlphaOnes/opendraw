@@ -1,5 +1,5 @@
-import type { OpenDrawFrameElement } from '@opendraw/core'
-import { FRAME_NAME_STYLE, frameTitle, isFrameElement, sceneToScreen } from '@opendraw/core'
+import type { OpenDrawFrameElement } from '@opendrawjs/core'
+import { FRAME_NAME_STYLE, frameTitle, isFrameElement, sceneToScreen } from '@opendrawjs/core'
 
 import type { CanvasRuntime } from './runtime.js'
 

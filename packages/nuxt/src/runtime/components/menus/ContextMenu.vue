@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 
-import { actionById, isActionEnabled, runAction, type ActionId } from '@opendraw/editor'
+import { actionById, isActionEnabled, runAction, type ActionId } from '@opendrawjs/editor'
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import UiMenuItem from '../ui/UiMenuItem.vue'
 

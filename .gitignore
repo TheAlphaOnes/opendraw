@@ -33,3 +33,6 @@ AGENTS.md
 
 # nuxt generate links playground/dist to .output/public
 playground/dist
+
+# svelte-package build cache
+.svelte-kit/

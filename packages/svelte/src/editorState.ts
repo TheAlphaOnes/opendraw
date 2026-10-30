@@ -1,6 +1,6 @@
 import { createSubscriber } from 'svelte/reactivity'
 
-import type { EditorController } from '@opendraw/editor'
+import type { EditorController } from '@opendrawjs/editor'
 
 /**
  * Svelte bindings for the framework-free editor. The controller owns all

@@ -24,9 +24,9 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
-import type { IconName } from '@opendraw/editor'
+import type { IconName } from '@opendrawjs/editor'
 
-/** The editor's semantic icon names, mapped to Lucide glyphs (as in @opendraw/nuxt). */
+/** The editor's semantic icon names, mapped to Lucide glyphs (as in @opendrawjs/nuxt). */
 const ICONS: Partial<Record<IconName, LucideIcon>> = {
   selection: MousePointer2,
   hand: Hand,

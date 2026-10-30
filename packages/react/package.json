@@ -1,7 +1,18 @@
 {
-  "name": "@opendraw/react",
+  "name": "@opendrawjs/react",
   "version": "0.1.0",
-  "description": "React adapter for opendraw: <OpenDraw>, <OpenDrawCanvas> and hooks over the framework-free @opendraw/editor.",
+  "description": "React adapter for opendraw: <OpenDraw>, <OpenDrawCanvas> and hooks over the framework-free @opendrawjs/editor.",
+  "keywords": [
+    "opendraw",
+    "excalidraw",
+    "whiteboard",
+    "diagram",
+    "drawing",
+    "canvas",
+    "hand-drawn",
+    "sketch",
+    "react"
+  ],
   "type": "module",
   "license": "MIT",
   "author": "Vishnu",
@@ -9,6 +20,10 @@
     "type": "git",
     "url": "https://github.com/TheAlphaOnes/opendraw",
     "directory": "packages/react"
+  },
+  "homepage": "https://github.com/TheAlphaOnes/opendraw#readme",
+  "bugs": {
+    "url": "https://github.com/TheAlphaOnes/opendraw/issues"
   },
   "sideEffects": [
     "*.css"
@@ -20,19 +35,22 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./styles.css": "./styles.css",
     "./package.json": "./package.json"
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "styles.css"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "prepack": "pnpm run build",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@opendraw/core": "workspace:*",
-    "@opendraw/editor": "workspace:*",
+    "@opendrawjs/core": "workspace:*",
+    "@opendrawjs/editor": "workspace:*",
     "lucide-react": "^1.65.0"
   },
   "peerDependencies": {
@@ -44,5 +62,8 @@
     "@types/react-dom": "^19.3.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

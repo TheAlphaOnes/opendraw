@@ -10,9 +10,9 @@ export default defineConfig({
   plugins: [svelte()],
   resolve: {
     alias: [
-      { find: /^@opendraw\/core$/, replacement: src('core/src/index.ts') },
-      { find: /^@opendraw\/editor$/, replacement: src('editor/src/index.ts') },
-      { find: /^@opendraw\/svelte$/, replacement: src('svelte/src/index.ts') },
+      { find: /^@opendrawjs\/core$/, replacement: src('core/src/index.ts') },
+      { find: /^@opendrawjs\/editor$/, replacement: src('editor/src/index.ts') },
+      { find: /^@opendrawjs\/svelte$/, replacement: src('svelte/src/index.ts') },
     ],
   },
   server: { port: 5182, strictPort: true },

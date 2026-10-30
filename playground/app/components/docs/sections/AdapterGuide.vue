@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** Building an adapter for another framework on @opendraw/editor. */
+/** Building an adapter for another framework on @opendrawjs/editor. */
 const MARKUP = `<div class="board" data-opendraw-root>
   <div class="board__host" tabindex="0">
     <canvas class="board__static"></canvas>
@@ -27,7 +27,7 @@ const CSS = `.board__host {
   pointer-events: none; /* the host receives every pointer event */
 }`
 
-const VANILLA = `import { TOOLS, createEditor, mountCanvas, toolLabel } from '@opendraw/editor'
+const VANILLA = `import { TOOLS, createEditor, mountCanvas, toolLabel } from '@opendrawjs/editor'
 
 const root = document.querySelector('.board')
 const editor = createEditor()
@@ -57,7 +57,7 @@ editor.subscribe((ed) => {
 // session.dispose()`
 
 const REACT = `import { useEffect, useRef, useSyncExternalStore } from 'react'
-import { createEditor, mountCanvas, type EditorController } from '@opendraw/editor'
+import { createEditor, mountCanvas, type EditorController } from '@opendrawjs/editor'
 
 /** Mirror the controller into React: re-render on every change. */
 export function useEditorState<T>(editor: EditorController, read: (e: EditorController) => T): T {
@@ -102,7 +102,7 @@ export function Board({ editor }: { editor: EditorController }) {
   <section id="adapters" class="doc-section">
     <h2>Build an adapter for your framework</h2>
     <p>
-      The Vue, React and Svelte packages are thin layers over <code>@opendraw/editor</code> — read
+      The Vue, React and Svelte packages are thin layers over <code>@opendrawjs/editor</code> — read
       <code>packages/react</code> or <code>packages/svelte</code> for complete references — and you can write the same
       layer for Solid, Angular, Lit or plain JavaScript. The editor does all the work — gestures, keyboard, text
       editing, rendering, persistence. An adapter only has to do three things:

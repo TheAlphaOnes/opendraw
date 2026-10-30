@@ -1,5 +1,5 @@
-import type { ElementPatch, OpenDrawLinearElement, Point } from '@opendraw/core'
-import { isLinearElement, localPointOf, pointsPatch, scenePointOf } from '@opendraw/core'
+import type { ElementPatch, OpenDrawLinearElement, Point } from '@opendrawjs/core'
+import { isLinearElement, localPointOf, pointsPatch, scenePointOf } from '@opendrawjs/core'
 
 import type { CanvasRuntime } from './runtime.js'
 import { dragTipTo, type TipModifiers } from './tipBinding.js'

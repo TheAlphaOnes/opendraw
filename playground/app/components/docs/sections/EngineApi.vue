@@ -1,12 +1,12 @@
 <script setup lang="ts">
-/** @opendraw/core and @opendraw/editor reference. */
+/** @opendrawjs/core and @opendrawjs/editor reference. */
 const CORE = `import {
   OpenDrawDocument,
   newRectangleElement,
   exportToSvg,
   parseFile,
   serializeToJSON,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 const doc = new OpenDrawDocument()
 doc.addElement(newRectangleElement({ x: 0, y: 0, width: 160, height: 90 }))
@@ -20,7 +20,7 @@ const svg = exportToSvg(doc.getElements(), '#ffffff', { padding: 16 })
 const json = serializeToJSON(doc.serialize())
 const restored = parseFile(JSON.parse(json))`
 
-const EDITOR = `import { createEditor, mountCanvas, runAction } from '@opendraw/editor'
+const EDITOR = `import { createEditor, mountCanvas, runAction } from '@opendrawjs/editor'
 
 const editor = createEditor({ appState: { theme: 'light' } })
 
@@ -37,7 +37,7 @@ runAction(editor, 'undo')
 // later
 session.dispose()`
 
-const PERSIST = `import { attachScenePersistence } from '@opendraw/editor'
+const PERSIST = `import { attachScenePersistence } from '@opendrawjs/editor'
 
 const persistence = attachScenePersistence(editor, { storageKey: 'my-board' })
 persistence.restore()  // load the saved scene, if any
@@ -47,7 +47,7 @@ persistence.dispose()  // flushes the last save`
 
 <template>
   <section id="core" class="doc-section">
-    <h2>@opendraw/core</h2>
+    <h2>@opendrawjs/core</h2>
     <p>
       The engine has no framework or DOM requirement. <code>OpenDrawDocument</code> holds the elements, the app state
       and history; every change goes through it, so undo, redo and change events always agree. Elements are plain,
@@ -64,7 +64,7 @@ persistence.dispose()  // flushes the last save`
   </section>
 
   <section id="editor" class="doc-section">
-    <h2>@opendraw/editor</h2>
+    <h2>@opendrawjs/editor</h2>
     <p>
       The whole interactive editor without a UI framework: <code>createEditor()</code> returns a controller (state
       getters plus commands), and <code>mountCanvas()</code> wires every gesture, shortcut, the text editor and

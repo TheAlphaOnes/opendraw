@@ -1,4 +1,4 @@
-import type { ToolId } from '@opendraw/core'
+import type { ToolId } from '@opendrawjs/core'
 
 import type { IconName } from './icons.js'
 

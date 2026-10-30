@@ -22,7 +22,7 @@ useHead({ title: 'opendraw — hand-drawn diagrams for Vue & Nuxt' })
 
 const config = defineOpenDrawConfig({
   files: true,
-  command: { text: 'npm install @opendraw/nuxt', short: 'npm i @opendraw/nuxt' },
+  command: { text: 'npm install @opendrawjs/nuxt', short: 'npm i @opendrawjs/nuxt' },
   links: [{ label: 'Docs', icon: 'docs', to: '/docs' }],
   menuLinks: [
     { label: 'Documentation', href: '/docs', icon: 'docs' },

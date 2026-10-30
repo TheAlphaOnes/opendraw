@@ -5,7 +5,7 @@ import type {
   SelectionFrame,
   OpenDrawElement,
   OpenDrawLinearElement,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 import {
   getHandleLayout,
   hasBoundingBox,
@@ -14,7 +14,7 @@ import {
   selectionFrameOf,
   sideHandleAt,
   withFrameChildren,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import type { CanvasRuntime } from './runtime.js'
 

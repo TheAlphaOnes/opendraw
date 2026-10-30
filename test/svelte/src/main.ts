@@ -1,6 +1,6 @@
 import { mount } from 'svelte'
 
-import '@opendraw/editor/styles.css'
+import '@opendrawjs/svelte/styles.css'
 import './app.css'
 import App from './App.svelte'
 

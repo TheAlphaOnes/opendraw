@@ -8,7 +8,7 @@
  * editor should start with".
  */
 
-import type { ThemeName } from '@opendraw/core'
+import type { ThemeName } from '@opendrawjs/core'
 
 /** A theme default as accepted on the `<OpenDraw>` component. */
 export type ThemeDefault = ThemeName | 'system'

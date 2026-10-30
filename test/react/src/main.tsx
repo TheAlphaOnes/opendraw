@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
-import '@opendraw/editor/styles.css'
+import '@opendrawjs/react/styles.css'
 import './app.css'
 import { App } from './App'
 

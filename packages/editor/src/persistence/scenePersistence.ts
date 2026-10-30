@@ -1,4 +1,4 @@
-import { DEFAULT_APP_STATE, buildFile } from '@opendraw/core'
+import { DEFAULT_APP_STATE, buildFile } from '@opendrawjs/core'
 
 import { THEME_BACKGROUNDS, type EditorController } from '../controller.js'
 import {

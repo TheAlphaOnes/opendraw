@@ -1,6 +1,6 @@
 import { shallowRef, type Ref } from 'vue'
 
-import { appleKeyDisplay, formatKeys } from '@opendraw/editor'
+import { appleKeyDisplay, formatKeys } from '@opendrawjs/editor'
 
 /**
  * Shortcut hints in Vue: a ref mirroring the editor's display platform, so

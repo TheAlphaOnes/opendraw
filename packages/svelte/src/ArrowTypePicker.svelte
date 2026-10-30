@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ARROW_TYPE_OPTIONS, type EditorController } from '@opendraw/editor'
+  import { ARROW_TYPE_OPTIONS, type EditorController } from '@opendrawjs/editor'
 
   import { editorState } from './editorState.js'
 

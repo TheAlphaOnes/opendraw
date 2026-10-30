@@ -6,9 +6,9 @@
     "moduleResolution": "Bundler",
     "types": ["vite/client"],
     "paths": {
-      "@opendraw/core": ["../../packages/core/src/index.ts"],
-      "@opendraw/editor": ["../../packages/editor/src/index.ts"],
-      "@opendraw/nuxt/vue": ["../../packages/nuxt/src/runtime/vue.ts"]
+      "@opendrawjs/core": ["../../packages/core/src/index.ts"],
+      "@opendrawjs/editor": ["../../packages/editor/src/index.ts"],
+      "@opendrawjs/nuxt/vue": ["../../packages/nuxt/src/runtime/vue.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts"]

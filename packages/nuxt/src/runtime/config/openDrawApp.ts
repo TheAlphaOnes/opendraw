@@ -1,5 +1,5 @@
-import type { OpenDrawElement } from '@opendraw/core'
-import type { EditorController, ThemeDefault } from '@opendraw/editor'
+import type { OpenDrawElement } from '@opendrawjs/core'
+import type { EditorController, ThemeDefault } from '@opendrawjs/editor'
 
 import type { IconName } from '../constants/icons.js'
 import type { OpenDrawChangeDetail } from '../composables/useOpenDraw.js'

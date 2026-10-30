@@ -1,6 +1,6 @@
 import { onMounted, onScopeDispose } from 'vue'
 
-import { attachScenePersistence, type ScenePersistence, type ScenePersistenceOptions } from '@opendraw/editor'
+import { attachScenePersistence, type ScenePersistence, type ScenePersistenceOptions } from '@opendrawjs/editor'
 
 import type { OpenDrawContext } from './useOpenDraw.js'
 

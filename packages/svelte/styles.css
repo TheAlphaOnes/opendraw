@@ -1,0 +1,2 @@
+/* The editor chrome styles, re-exported so apps import them from the adapter they installed. */
+@import '@opendrawjs/editor/styles.css';

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 
-import type { OpenDrawElement } from '@opendraw/core'
+import type { OpenDrawElement } from '@opendrawjs/core'
 
 import {
   createOpenDrawContext,
@@ -15,7 +15,7 @@ import {
   type CanvasContextMenuRequest,
   type EditorController,
   type ThemeDefault,
-} from '@opendraw/editor'
+} from '@opendrawjs/editor'
 import OpenDrawCanvas from './OpenDrawCanvas.vue'
 import ToolDock from './toolbar/ToolDock.vue'
 import StylePanel from './panels/StylePanel.vue'

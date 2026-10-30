@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test'
 /**
  * The adapter contract: Vue, React and Svelte must render the same editor
  * — toolbar, drawing, shortcuts, text, history, zoom, theme and autosave —
- * on top of @opendraw/editor. Vue ships the full Excalidraw-style UI and
+ * on top of @opendrawjs/editor. Vue ships the full Excalidraw-style UI and
  * React/Svelte a lighter one, so selectors target what both share: roles,
  * accessible names and the editor root.
  */

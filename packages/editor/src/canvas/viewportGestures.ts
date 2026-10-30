@@ -5,7 +5,7 @@ import {
   screenToScene,
   selectableTarget,
   selectionFrameOf,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import { imageFilesOf } from '../services/image.service.js'
 import type { CanvasRuntime } from './runtime.js'

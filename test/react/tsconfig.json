@@ -8,9 +8,9 @@
     "allowImportingTsExtensions": true,
     "types": ["vite/client"],
     "paths": {
-      "@opendraw/core": ["../../packages/core/src/index.ts"],
-      "@opendraw/editor": ["../../packages/editor/src/index.ts"],
-      "@opendraw/react": ["../../packages/react/src/index.ts"]
+      "@opendrawjs/core": ["../../packages/core/src/index.ts"],
+      "@opendrawjs/editor": ["../../packages/editor/src/index.ts"],
+      "@opendrawjs/react": ["../../packages/react/src/index.ts"]
     }
   },
   "include": ["src", "vite.config.ts"]

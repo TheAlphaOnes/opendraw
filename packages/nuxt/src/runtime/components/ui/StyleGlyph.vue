@@ -23,7 +23,7 @@ export type StyleGlyphName =
 <script setup lang="ts">
 import { computed, useId } from 'vue'
 
-import { ARROW_TYPE_OPTIONS } from '@opendraw/editor'
+import { ARROW_TYPE_OPTIONS } from '@opendrawjs/editor'
 
 /**
  * StyleGlyph — a drawing of a style value (a hatched square, a dashed line,

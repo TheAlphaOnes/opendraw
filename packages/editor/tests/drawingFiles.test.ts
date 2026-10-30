@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { DEFAULT_APP_STATE, newRectangleElement } from '@opendraw/core'
+import { DEFAULT_APP_STATE, newRectangleElement } from '@opendrawjs/core'
 
 import {
   DEFAULT_FILE_INDEX_KEY,

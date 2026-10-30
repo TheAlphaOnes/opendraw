@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 
-import type { DrawingFile } from '@opendraw/editor'
+import type { DrawingFile } from '@opendrawjs/editor'
 
 import { formatEditedAgo } from '../../utils/relativeTime.js'
 import UiDropdown from '../ui/UiDropdown.vue'

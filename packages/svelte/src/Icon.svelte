@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Component } from 'svelte'
-  import type { IconName } from '@opendraw/editor'
+  import type { IconName } from '@opendrawjs/editor'
   import {
     Circle,
     Diamond,
@@ -26,7 +26,7 @@
     ZoomOut,
   } from '@lucide/svelte'
 
-  /** The editor's semantic icon names, mapped to Lucide glyphs (as in @opendraw/nuxt). */
+  /** The editor's semantic icon names, mapped to Lucide glyphs (as in @opendrawjs/nuxt). */
   const ICONS: Partial<Record<IconName, Component<Record<string, unknown>>>> = {
     selection: MousePointer2,
     hand: Hand,

@@ -1,6 +1,6 @@
 import { useEffect, useRef, type CSSProperties } from 'react'
 
-import { mountCanvas, type CanvasContextMenuRequest, type EditorController } from '@opendraw/editor'
+import { mountCanvas, type CanvasContextMenuRequest, type EditorController } from '@opendrawjs/editor'
 
 export interface OpenDrawCanvasProps {
   editor: EditorController
@@ -13,7 +13,7 @@ export interface OpenDrawCanvasProps {
 /**
  * The canvas on its own: a focusable host with the scene and overlay
  * canvases, mounted onto the editor — every gesture, shortcut, the text
- * editor and rendering come from @opendraw/editor. No chrome.
+ * editor and rendering come from @opendrawjs/editor. No chrome.
  */
 export function OpenDrawCanvas({ editor, onContextMenu, className, style }: OpenDrawCanvasProps) {
   const host = useRef<HTMLDivElement>(null)

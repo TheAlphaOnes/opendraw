@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { newRectangleElement } from '@opendraw/core'
+import { newRectangleElement } from '@opendrawjs/core'
 
 import { Cell } from '../src/cell.js'
 import { createEditor } from '../src/controller.js'

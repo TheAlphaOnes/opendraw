@@ -8,12 +8,12 @@ import {
   type DrawingFilesOptions,
   type DrawingFilesSnapshot,
   type ThumbnailScene,
-} from '@opendraw/editor'
+} from '@opendrawjs/editor'
 
 export type { DrawingFile }
 
 /**
- * The drawing-files library (@opendraw/editor's createDrawingFiles) as Vue
+ * The drawing-files library (@opendrawjs/editor's createDrawingFiles) as Vue
  * state, for <OpenDrawApp>'s files sidebar.
  *
  * Hydration: the server has no storage, so the list and names stay empty

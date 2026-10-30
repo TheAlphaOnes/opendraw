@@ -4,7 +4,7 @@
     "noEmit": true,
     "types": ["vitest/globals"],
     "paths": {
-      "@opendraw/core": ["../core/src/index.ts"]
+      "@opendrawjs/core": ["../core/src/index.ts"]
     }
   },
   "include": ["src", "tests"]

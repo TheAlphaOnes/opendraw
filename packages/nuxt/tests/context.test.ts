@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { computed } from 'vue'
 
-import { newRectangleElement } from '@opendraw/core'
-import { createEditor } from '@opendraw/editor'
+import { newRectangleElement } from '@opendrawjs/core'
+import { createEditor } from '@opendrawjs/editor'
 
 import { createOpenDrawContext } from '../src/runtime/composables/useOpenDraw.js'
 

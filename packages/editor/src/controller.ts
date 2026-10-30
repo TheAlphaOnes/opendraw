@@ -33,7 +33,7 @@ import {
   type ThemeName,
   type ToolId,
   type Viewport,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import { downloadText, downloadURL, pickFiles } from './services/file.service.js'
 import {

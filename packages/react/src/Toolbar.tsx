@@ -1,4 +1,4 @@
-import { TOOLS, toolKeyHint, toolLabel, type EditorController, type ToolDefinition } from '@opendraw/editor'
+import { TOOLS, toolKeyHint, toolLabel, type EditorController, type ToolDefinition } from '@opendrawjs/editor'
 
 import { Icon } from './icons.js'
 import { useEditorState } from './useOpenDrawEditor.js'

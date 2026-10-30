@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import type { Arrowhead, OpenDrawLinearElement } from '@opendraw/core'
+import type { Arrowhead, OpenDrawLinearElement } from '@opendrawjs/core'
 
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import UiPopoverSelect, { type UiPopoverOption } from '../ui/UiPopoverSelect.vue'

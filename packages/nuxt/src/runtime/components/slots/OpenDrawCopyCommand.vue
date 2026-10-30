@@ -5,7 +5,7 @@ import UiIcon from '../ui/UiIcon.vue'
 
 /**
  * OpenDrawCopyCommand — a copyable command pill for <OpenDraw>'s slots,
- * e.g. `<OpenDrawCopyCommand command="npm install @opendraw/nuxt" />` in
+ * e.g. `<OpenDrawCopyCommand command="npm install @opendrawjs/nuxt" />` in
  * the top-right slot.
  *
  * A light sweeps its border and a soft accent halo breathes behind it

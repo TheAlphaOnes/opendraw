@@ -26,7 +26,7 @@ importers:
 
   packages/editor:
     dependencies:
-      '@opendraw/core':
+      '@opendrawjs/core':
         specifier: workspace:*
         version: link:../core
 
@@ -35,10 +35,10 @@ importers:
       '@nuxt/kit':
         specifier: ^4.0.0
         version: 4.6.2(@nuxt/schema@4.6.2)(confbox@0.3.1)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(rolldown@1.2.14)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.14)(rollup@4.64.7)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)))
-      '@opendraw/core':
+      '@opendrawjs/core':
         specifier: workspace:*
         version: link:../core
-      '@opendraw/editor':
+      '@opendrawjs/editor':
         specifier: workspace:*
         version: link:../editor
       lucide-vue-next:
@@ -63,10 +63,10 @@ importers:
 
   packages/react:
     dependencies:
-      '@opendraw/core':
+      '@opendrawjs/core':
         specifier: workspace:*
         version: link:../core
-      '@opendraw/editor':
+      '@opendrawjs/editor':
         specifier: workspace:*
         version: link:../editor
       lucide-react:
@@ -91,29 +91,35 @@ importers:
       '@lucide/svelte':
         specifier: ^1.65.0
         version: 1.65.0(svelte@5.57.3)
-      '@opendraw/core':
+      '@opendrawjs/core':
         specifier: workspace:*
         version: link:../core
-      '@opendraw/editor':
+      '@opendrawjs/editor':
         specifier: workspace:*
         version: link:../editor
     devDependencies:
+      '@sveltejs/package':
+        specifier: ^2.5.8
+        version: 2.5.8(svelte@5.57.3)(typescript@5.9.3)
       svelte:
         specifier: ^5.57.3
         version: 5.57.3
       svelte-check:
         specifier: ^4.7.7
         version: 4.7.7(picomatch@4.0.7)(svelte@5.57.3)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   playground:
     dependencies:
-      '@opendraw/core':
+      '@opendrawjs/core':
         specifier: workspace:*
         version: link:../packages/core
-      '@opendraw/editor':
+      '@opendrawjs/editor':
         specifier: workspace:*
         version: link:../packages/editor
-      '@opendraw/nuxt':
+      '@opendrawjs/nuxt':
         specifier: workspace:*
         version: link:../packages/nuxt
       nuxt:
@@ -159,13 +165,13 @@ importers:
 
   test/react:
     dependencies:
-      '@opendraw/core':
+      '@opendrawjs/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@opendraw/editor':
+      '@opendrawjs/editor':
         specifier: workspace:*
         version: link:../../packages/editor
-      '@opendraw/react':
+      '@opendrawjs/react':
         specifier: workspace:*
         version: link:../../packages/react
       react:
@@ -193,13 +199,13 @@ importers:
 
   test/svelte:
     dependencies:
-      '@opendraw/core':
+      '@opendrawjs/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@opendraw/editor':
+      '@opendrawjs/editor':
         specifier: workspace:*
         version: link:../../packages/editor
-      '@opendraw/svelte':
+      '@opendrawjs/svelte':
         specifier: workspace:*
         version: link:../../packages/svelte
     devDependencies:
@@ -221,13 +227,13 @@ importers:
 
   test/vue:
     dependencies:
-      '@opendraw/core':
+      '@opendrawjs/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@opendraw/editor':
+      '@opendrawjs/editor':
         specifier: workspace:*
         version: link:../../packages/editor
-      '@opendraw/nuxt':
+      '@opendrawjs/nuxt':
         specifier: workspace:*
         version: link:../../packages/nuxt
       vue:
@@ -1282,6 +1288,13 @@ packages:
     resolution: {integrity: sha512-VT3qmUb8pRV2QrZjd8iAmtg8lf4W0TIjZbvXtz5MKei/q96teWZgGJyyidJzOjzZzvdq616eSRVeMYIQChUTAQ==}
     engines: {node: '>= 18.0.0'}
 
+  '@sveltejs/package@2.5.8':
+    resolution: {integrity: sha512-zeBbsXYvHiBu56v4gJaGQoEHzg96w0E1j3dOMX8vo56s6vI5eQ57ZEZhudjwjnegnVitRRu5MrmhO0eNvaonIw==}
+    engines: {node: ^16.14 || >=18}
+    hasBin: true
+    peerDependencies:
+      svelte: ^3.44.0 || ^4.0.0 || ^5.0.0-next.1
+
   '@sveltejs/vite-plugin-svelte@7.3.1':
     resolution: {integrity: sha512-ZPsLN8B1e/En+Ak5s4V7srFDT532oS0qieLsQwu63NGKsS+iAjoO2Js1BochlHlglcU+Pt7WAO3C5Ee+4f6gVA==}
     engines: {node: ^20.19 || ^22.12 || >=24}
@@ -1949,6 +1962,9 @@ packages:
     peerDependenciesMeta:
       supports-color:
         optional: true
+
+  dedent-js@1.0.1:
+    resolution: {integrity: sha512-OUepMozQULMLUmhxS95Vudo0jb0UchLimi3+pQ2plj61Fcy8axbP9hbiD4Sz6DPqn6XG3kfmziVfQ1rSys5AJQ==}
 
   deepmerge@4.3.1:
     resolution: {integrity: sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==}
@@ -3415,6 +3431,12 @@ packages:
     peerDependencies:
       svelte: ^4.0.0 || ^5.0.0-next.0
       typescript: ^5.0.0 || ^6.0.0
+
+  svelte2tsx@0.7.62:
+    resolution: {integrity: sha512-ZXfsmL0jzAs01ho0w5z5LSIC2WgSdpTF0QCwaXLq7oHgho4P9fTgHlLp1pKAx6/xtVYRSW5nGH5ZRpEHZCqliA==}
+    peerDependencies:
+      svelte: ^3.55 || ^4.0.0-next.0 || ^4.0 || ^5.0.0-next.0
+      typescript: ^4.9.4 || ^5.0.0 || ^6.0.0
 
   svelte@5.57.3:
     resolution: {integrity: sha512-5mAftM3SoDV9X0zdF386F9p2pv8iKOwi/KfBS1XnBAkVCKFzVOLHUoa8iGWAt4buoicLmyWVRpuuD5wplXOQsg==}
@@ -5177,6 +5199,17 @@ snapshots:
 
   '@sveltejs/load-config@0.2.3': {}
 
+  '@sveltejs/package@2.5.8(svelte@5.57.3)(typescript@5.9.3)':
+    dependencies:
+      chokidar: 5.0.0
+      kleur: 4.1.5
+      sade: 1.8.1
+      semver: 7.8.5
+      svelte: 5.57.3
+      svelte2tsx: 0.7.62(svelte@5.57.3)(typescript@5.9.3)
+    transitivePeerDependencies:
+      - typescript
+
   '@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.3)(vite@8.3.5(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2))':
     dependencies:
       deepmerge: 4.3.1
@@ -5881,6 +5914,8 @@ snapshots:
   debug@4.4.3:
     dependencies:
       ms: 2.1.3
+
+  dedent-js@1.0.1: {}
 
   deepmerge@4.3.1: {}
 
@@ -7529,6 +7564,13 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - picomatch
+
+  svelte2tsx@0.7.62(svelte@5.57.3)(typescript@5.9.3):
+    dependencies:
+      dedent-js: 1.0.1
+      scule: 1.3.0
+      svelte: 5.57.3
+      typescript: 5.9.3
 
   svelte@5.57.3:
     dependencies:

@@ -1,11 +1,11 @@
-import type { ElementPatch, OpenDrawLinearElement, Point } from '@opendraw/core'
+import type { ElementPatch, OpenDrawLinearElement, Point } from '@opendrawjs/core'
 import {
   boundTipsPatch,
   isLinearElement,
   localPointOf,
   pointsPatch,
   resolveTipBinding,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import type { CanvasRuntime } from './runtime.js'
 

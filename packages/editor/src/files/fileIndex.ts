@@ -9,7 +9,7 @@
  * entries are dropped rather than trusted.
  */
 
-import type { OpenDrawElement } from '@opendraw/core'
+import type { OpenDrawElement } from '@opendrawjs/core'
 
 export const FILE_INDEX_TYPE = 'opendraw-files'
 export const FILE_INDEX_VERSION = 1

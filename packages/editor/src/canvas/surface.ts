@@ -1,4 +1,4 @@
-import { groupSelectionChrome, renderOverlay, renderScene } from '@opendraw/core'
+import { groupSelectionChrome, renderOverlay, renderScene } from '@opendrawjs/core'
 
 import { imageDataUrlsOf, imageResolver, requestImageDecode } from '../services/image.service.js'
 import type { CanvasRuntime } from './runtime.js'

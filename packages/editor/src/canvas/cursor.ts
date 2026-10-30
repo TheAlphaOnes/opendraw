@@ -10,7 +10,7 @@ import {
   pointInSelectionFrame,
   resizeCursorFor,
   selectionFrameOf,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import { elementAtPointer } from './frameGestures.js'
 import type { CanvasRuntime } from './runtime.js'

@@ -16,7 +16,7 @@ import {
   normalizeInputColor,
   paletteColorAt,
   themeColor,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import UiIcon from './UiIcon.vue'
 

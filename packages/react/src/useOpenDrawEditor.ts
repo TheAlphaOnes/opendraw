@@ -7,7 +7,7 @@ import {
   type CreateEditorOptions,
   type EditorController,
   type ThemeDefault,
-} from '@opendraw/editor'
+} from '@opendrawjs/editor'
 
 /**
  * React bindings for the framework-free editor. The controller owns all

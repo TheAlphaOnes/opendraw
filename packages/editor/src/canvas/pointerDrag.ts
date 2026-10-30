@@ -1,4 +1,4 @@
-import type { Bounds, Point, OpenDrawElement } from '@opendraw/core'
+import type { Bounds, Point, OpenDrawElement } from '@opendrawjs/core'
 import {
   bindableShapeAt,
   bindingFollowPatches,
@@ -17,7 +17,7 @@ import {
   resizeMultipleElements,
   resizeSingleElement,
   rotateElements,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import { trackDraftPointer } from './linearDraft.js'
 import { updateDragFrameHighlight, updateHoverFrameHighlight, updateResizingFrameHighlight } from './frameGestures.js'

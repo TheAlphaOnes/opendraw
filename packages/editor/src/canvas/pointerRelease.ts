@@ -1,4 +1,4 @@
-import type { OpenDrawStickyNoteElement, Point } from '@opendraw/core'
+import type { OpenDrawStickyNoteElement, Point } from '@opendrawjs/core'
 import {
   isFreedrawElement,
   isLinearElement,
@@ -6,7 +6,7 @@ import {
   rebindAfterDrag,
   stickyNoteCreationRect,
   stickyNoteMinSize,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import { clearFrameHighlights, dropFrameAt } from './frameGestures.js'
 import { editContainerText } from './textEntry.js'

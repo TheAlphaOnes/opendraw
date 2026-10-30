@@ -7,7 +7,7 @@ import {
   newTextElement,
   type OpenDrawArrowElement,
   type OpenDrawRectangleElement,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import {
   DEFAULT_SCENE_STORAGE_KEY,

@@ -1,4 +1,4 @@
-import { allInSameGroup } from '@opendraw/core'
+import { allInSameGroup } from '@opendrawjs/core'
 
 import type { EditorController } from '../controller.js'
 import { keyIs, noMod, plainMod } from './keys.js'

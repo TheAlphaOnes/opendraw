@@ -1,10 +1,10 @@
 /**
  * opendraw — the shared stylesheet for framework adapters built on
- * @opendraw/editor (React, Svelte, plain JS). It styles the canvas surface
+ * @opendrawjs/editor (React, Svelte, plain JS). It styles the canvas surface
  * mountCanvas() expects and a compact Excalidraw-style chrome: opaque
  * islands, 8px radii, the island shadow and opendraw's orange accent.
  *
- *   import '@opendraw/editor/styles.css'
+ *   import '@opendrawjs/editor/styles.css'
  *
  * Theme with data-theme="dark" on the .opendraw root.
  */

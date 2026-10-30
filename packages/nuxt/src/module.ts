@@ -10,7 +10,7 @@ import type { NuxtModule } from '@nuxt/schema'
  *
  * ```ts
  * export default defineNuxtConfig({
- *   modules: ['@opendraw/nuxt'],
+ *   modules: ['@opendrawjs/nuxt'],
  * })
  * ```
  *
@@ -27,7 +27,7 @@ export interface ModuleOptions {
 
 const opendrawModule: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
   meta: {
-    name: '@opendraw/nuxt',
+    name: '@opendrawjs/nuxt',
     configKey: 'opendraw',
   },
   defaults: {},

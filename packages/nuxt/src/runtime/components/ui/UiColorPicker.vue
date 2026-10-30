@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
-import { COLOR_OUTLINE_CONTRAST_THRESHOLD, isColorDark, themeColor } from '@opendraw/core'
+import { COLOR_OUTLINE_CONTRAST_THRESHOLD, isColorDark, themeColor } from '@opendrawjs/core'
 
 import UiColorPickerContent from './UiColorPickerContent.vue'
 

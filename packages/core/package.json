@@ -1,7 +1,19 @@
 {
-  "name": "@opendraw/core",
+  "name": "@opendrawjs/core",
   "version": "0.1.0",
-  "description": "Framework-agnostic canvas engine behind opendraw — element model, scene store, history, geometry and hand-drawn rendering.",
+  "description": "Framework-agnostic canvas engine behind opendraw \u2014 element model, scene store, history, geometry and hand-drawn rendering.",
+  "keywords": [
+    "opendraw",
+    "excalidraw",
+    "whiteboard",
+    "diagram",
+    "drawing",
+    "canvas",
+    "hand-drawn",
+    "sketch",
+    "roughjs",
+    "engine"
+  ],
   "type": "module",
   "license": "MIT",
   "author": "Vishnu",
@@ -9,6 +21,10 @@
     "type": "git",
     "url": "https://github.com/TheAlphaOnes/opendraw",
     "directory": "packages/core"
+  },
+  "homepage": "https://github.com/TheAlphaOnes/opendraw#readme",
+  "bugs": {
+    "url": "https://github.com/TheAlphaOnes/opendraw/issues"
   },
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -20,9 +36,13 @@
     },
     "./package.json": "./package.json"
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "prepack": "pnpm run build",
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json"
@@ -30,5 +50,8 @@
   "dependencies": {
     "perfect-freehand": "^1.2.3",
     "roughjs": "^4.6.6"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

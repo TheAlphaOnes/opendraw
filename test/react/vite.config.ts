@@ -10,9 +10,9 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: [
-      { find: /^@opendraw\/core$/, replacement: src('core/src/index.ts') },
-      { find: /^@opendraw\/editor$/, replacement: src('editor/src/index.ts') },
-      { find: /^@opendraw\/react$/, replacement: src('react/src/index.ts') },
+      { find: /^@opendrawjs\/core$/, replacement: src('core/src/index.ts') },
+      { find: /^@opendrawjs\/editor$/, replacement: src('editor/src/index.ts') },
+      { find: /^@opendrawjs\/react$/, replacement: src('react/src/index.ts') },
     ],
   },
   server: { port: 5181, strictPort: true },

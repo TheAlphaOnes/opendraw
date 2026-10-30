@@ -6,9 +6,9 @@
     "moduleResolution": "Bundler",
     "types": ["vite/client"],
     "paths": {
-      "@opendraw/core": ["../../packages/core/src/index.ts"],
-      "@opendraw/editor": ["../../packages/editor/src/index.ts"],
-      "@opendraw/svelte": ["../../packages/svelte/src/index.ts"]
+      "@opendrawjs/core": ["../../packages/core/src/index.ts"],
+      "@opendrawjs/editor": ["../../packages/editor/src/index.ts"],
+      "@opendrawjs/svelte": ["../../packages/svelte/src/index.ts"]
     }
   },
   "include": ["src", "vite.config.ts"]

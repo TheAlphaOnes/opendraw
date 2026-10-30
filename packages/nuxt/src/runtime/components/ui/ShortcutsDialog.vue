@@ -9,7 +9,7 @@
  */
 import { onBeforeUnmount, onMounted } from 'vue'
 
-import { TOOLS, actionById, isTypingTarget, type ActionId } from '@opendraw/editor'
+import { TOOLS, actionById, isTypingTarget, type ActionId } from '@opendrawjs/editor'
 import { useHelpDialog } from '../../composables/useHelpDialog.js'
 import UiIconButton from './UiIconButton.vue'
 import UiKbd from './UiKbd.vue'

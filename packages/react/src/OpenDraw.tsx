@@ -1,7 +1,7 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react'
 
-import type { OpenDrawElement, OpenDrawState } from '@opendraw/core'
-import type { EditorController, ThemeDefault } from '@opendraw/editor'
+import type { OpenDrawElement, OpenDrawState } from '@opendrawjs/core'
+import type { EditorController, ThemeDefault } from '@opendrawjs/editor'
 
 import { ArrowTypePicker } from './ArrowTypePicker.js'
 import { Footer } from './Footer.js'
@@ -31,7 +31,7 @@ export interface OpenDrawProps {
 /**
  * The editor, ready to drop on a page — the canvas with an Excalidraw-style
  * toolbar, zoom and history islands and a theme toggle. Import the styles
- * once: `import '@opendraw/editor/styles.css'`.
+ * once: `import '@opendrawjs/react/styles.css'`.
  */
 export function OpenDraw(props: OpenDrawProps) {
   const owned = useOpenDrawEditor({ elements: props.initialElements })

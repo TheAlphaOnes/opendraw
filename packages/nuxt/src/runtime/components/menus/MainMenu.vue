@@ -16,7 +16,7 @@ export interface MainMenuLink {
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { actionById, isActionEnabled, runAction, type ActionId } from '@opendraw/editor'
+import { actionById, isActionEnabled, runAction, type ActionId } from '@opendrawjs/editor'
 
 import { useHelpDialog } from '../../composables/useHelpDialog.js'
 import { useOpenDraw } from '../../composables/useOpenDraw.js'

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import type { EditorController } from '@opendraw/editor'
+import type { EditorController } from '@opendrawjs/editor'
 
 import type { OpenDrawAppCommand, OpenDrawAppConfig, OpenDrawAppShare } from '../config/openDrawApp.js'
 import type { OpenDrawChangeDetail } from '../composables/useOpenDraw.js'
@@ -20,7 +20,7 @@ import OpenDrawShareButton from './slots/OpenDrawShareButton.vue'
  *
  *   <OpenDrawApp :config="defineOpenDrawConfig({
  *     links: [{ label: 'Docs', icon: 'docs', to: '/docs' }],
- *     command: { text: 'npm install @opendraw/nuxt', short: 'npm i @opendraw/nuxt' },
+ *     command: { text: 'npm install @opendrawjs/nuxt', short: 'npm i @opendrawjs/nuxt' },
  *   })" />
  *
  * The `top-right` and `footer` slots still take anything extra. With

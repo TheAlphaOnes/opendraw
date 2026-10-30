@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
-import type { OpenDrawState } from '@opendraw/core'
-import { OpenDraw } from '@opendraw/react'
+import type { OpenDrawState } from '@opendrawjs/core'
+import { OpenDraw } from '@opendrawjs/react'
 
 declare global {
   interface Window {

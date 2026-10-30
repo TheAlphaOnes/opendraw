@@ -9,10 +9,10 @@ test.describe('<OpenDrawApp>', () => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
     await page.setViewportSize({ width: 1440, height: 860 })
     await openEditor(page)
-    const copy = page.getByRole('button', { name: 'Copy: npm install @opendraw/nuxt' })
+    const copy = page.getByRole('button', { name: 'Copy: npm install @opendrawjs/nuxt' })
     await copy.click()
     await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible()
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('npm install @opendraw/nuxt')
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('npm install @opendrawjs/nuxt')
   })
 
   test('lines every top-row control up on one 40px bar', async ({ page }) => {
@@ -42,9 +42,9 @@ test.describe('<OpenDrawApp>', () => {
   test('on phones a labelled Install button reveals the command', async ({ page }) => {
     await page.setViewportSize({ width: 400, height: 700 })
     await openEditor(page)
-    await page.getByRole('button', { name: 'Install: npm install @opendraw/nuxt' }).click()
+    await page.getByRole('button', { name: 'Install: npm install @opendrawjs/nuxt' }).click()
     const card = page.getByRole('dialog', { name: 'Install' })
-    await expect(card).toContainText('npm install @opendraw/nuxt')
+    await expect(card).toContainText('npm install @opendrawjs/nuxt')
     await expect(card.getByRole('button', { name: 'Copy command' })).toBeVisible()
     await page.keyboard.press('Escape')
     await expect(card).toBeHidden()

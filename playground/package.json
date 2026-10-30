@@ -11,9 +11,9 @@
     "generate": "nuxt generate"
   },
   "dependencies": {
-    "@opendraw/core": "workspace:*",
-    "@opendraw/editor": "workspace:*",
-    "@opendraw/nuxt": "workspace:*",
+    "@opendrawjs/core": "workspace:*",
+    "@opendrawjs/editor": "workspace:*",
+    "@opendrawjs/nuxt": "workspace:*",
     "nuxt": "^4.6.2",
     "vue": "^3.5.44",
     "vue-router": "^4.5.0"

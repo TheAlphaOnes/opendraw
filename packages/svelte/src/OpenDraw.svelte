@@ -1,13 +1,13 @@
 <script lang="ts">
   import { untrack, type Snippet } from 'svelte'
-  import type { OpenDrawElement, OpenDrawState } from '@opendraw/core'
+  import type { OpenDrawElement, OpenDrawState } from '@opendrawjs/core'
   import {
     attachScenePersistence,
     createEditor,
     resolveThemeDefault,
     type EditorController,
     type ThemeDefault,
-  } from '@opendraw/editor'
+  } from '@opendrawjs/editor'
 
   import ArrowTypePicker from './ArrowTypePicker.svelte'
   import Footer from './Footer.svelte'
@@ -18,7 +18,7 @@
   /**
    * The editor, ready to drop on a page — the canvas with an
    * Excalidraw-style toolbar, zoom and history islands and a theme toggle.
-   * Import the styles once: `import '@opendraw/editor/styles.css'`.
+   * Import the styles once: `import '@opendrawjs/svelte/styles.css'`.
    */
   interface Props {
     /** Bring your own controller (to drive it from outside); one is created otherwise. */

@@ -1,7 +1,19 @@
 {
-  "name": "@opendraw/editor",
+  "name": "@opendrawjs/editor",
   "version": "0.1.0",
-  "description": "Framework-free opendraw editor: the canvas session (pointer, keyboard, rendering, text editing), the action registry and editor state. Framework adapters (@opendraw/nuxt, \u2026) are thin layers over it.",
+  "description": "Framework-free opendraw editor: the canvas session (pointer, keyboard, rendering, text editing), the action registry and editor state. Framework adapters (@opendrawjs/nuxt, \u2026) are thin layers over it.",
+  "keywords": [
+    "opendraw",
+    "excalidraw",
+    "whiteboard",
+    "diagram",
+    "drawing",
+    "canvas",
+    "hand-drawn",
+    "sketch",
+    "editor",
+    "framework-agnostic"
+  ],
   "type": "module",
   "license": "MIT",
   "author": "Vishnu",
@@ -9,6 +21,10 @@
     "type": "git",
     "url": "https://github.com/TheAlphaOnes/opendraw",
     "directory": "packages/editor"
+  },
+  "homepage": "https://github.com/TheAlphaOnes/opendraw#readme",
+  "bugs": {
+    "url": "https://github.com/TheAlphaOnes/opendraw/issues"
   },
   "sideEffects": [
     "*.css"
@@ -30,11 +46,15 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "prepack": "pnpm run build",
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@opendraw/core": "workspace:*"
+    "@opendrawjs/core": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

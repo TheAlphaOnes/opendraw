@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { OpenDraw, type OpenDrawChangeDetail } from '@opendraw/nuxt/vue'
+import { OpenDraw, type OpenDrawChangeDetail } from '@opendrawjs/nuxt/vue'
 
 /** The Vue test app: the full editor in a plain Vue 3 app, no Nuxt. */
 function onChange(detail: OpenDrawChangeDetail): void {

@@ -1,6 +1,6 @@
 /**
- * @opendraw/react — the React adapter. A thin layer over the
- * framework-free @opendraw/editor: the controller owns every behavior,
+ * @opendrawjs/react — the React adapter. A thin layer over the
+ * framework-free @opendrawjs/editor: the controller owns every behavior,
  * these components render the surface and mirror its state.
  */
 export { OpenDraw, type OpenDrawProps } from './OpenDraw.js'
@@ -14,4 +14,4 @@ export {
   useScenePersistence,
   type ScenePersistenceProps,
 } from './useOpenDrawEditor.js'
-export { createEditor, type EditorController } from '@opendraw/editor'
+export { createEditor, type EditorController } from '@opendrawjs/editor'

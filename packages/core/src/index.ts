@@ -1,5 +1,5 @@
 /**
- * @opendraw/core — public API.
+ * @opendrawjs/core — public API.
  *
  * Layers, in dependency order:
  *   types          — the element model & app state contracts

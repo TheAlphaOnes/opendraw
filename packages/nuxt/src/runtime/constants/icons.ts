@@ -91,9 +91,9 @@ import {
   Terminal,
 } from 'lucide-vue-next'
 
-/** Semantic icon names — defined by @opendraw/editor, glyphs chosen here. */
-export type { IconName } from '@opendraw/editor'
-import type { IconName } from '@opendraw/editor'
+/** Semantic icon names — defined by @opendrawjs/editor, glyphs chosen here. */
+export type { IconName } from '@opendrawjs/editor'
+import type { IconName } from '@opendrawjs/editor'
 
 export const iconRegistry: Record<IconName, Component> = {
   // tools

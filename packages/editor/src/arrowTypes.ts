@@ -1,4 +1,4 @@
-import type { ArrowType } from '@opendraw/core'
+import type { ArrowType } from '@opendrawjs/core'
 
 /**
  * Excalidraw's "Arrow type" options with their icons (components/icons.tsx:

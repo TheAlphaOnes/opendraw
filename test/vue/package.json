@@ -7,9 +7,9 @@
     "typecheck": "vue-tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@opendraw/core": "workspace:*",
-    "@opendraw/editor": "workspace:*",
-    "@opendraw/nuxt": "workspace:*",
+    "@opendrawjs/core": "workspace:*",
+    "@opendrawjs/editor": "workspace:*",
+    "@opendrawjs/nuxt": "workspace:*",
     "vue": "^3.5.44"
   },
   "devDependencies": {

@@ -6,8 +6,8 @@ import type {
   OpenDrawBindableShape,
   OpenDrawElement,
   OpenDrawFrameElement,
-} from '@opendraw/core'
-import { screenToScene } from '@opendraw/core'
+} from '@opendrawjs/core'
+import { screenToScene } from '@opendrawjs/core'
 
 import { Cell } from '../cell.js'
 import type { EditorController } from '../controller.js'

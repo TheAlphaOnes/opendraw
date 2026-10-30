@@ -7,8 +7,8 @@
     "noEmit": true,
     "types": [],
     "paths": {
-      "@opendraw/core": ["../core/src/index.ts"],
-      "@opendraw/editor": ["../editor/src/index.ts"]
+      "@opendrawjs/core": ["../core/src/index.ts"],
+      "@opendrawjs/editor": ["../editor/src/index.ts"]
     }
   },
   "include": ["src"]

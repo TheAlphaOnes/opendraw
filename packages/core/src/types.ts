@@ -1,5 +1,5 @@
 /**
- * @opendraw/core — public type surface.
+ * @opendrawjs/core — public type surface.
  *
  * The element model follows Excalidraw's proven shape (x/y anchored to the
  * un-rotated top-left, `angle` rotating around the center, style props on

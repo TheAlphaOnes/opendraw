@@ -1,5 +1,5 @@
-import type { Point, OpenDrawElement } from '@opendraw/core'
-import { elementsInGroup, moveElements, parentEditingGroupId } from '@opendraw/core'
+import type { Point, OpenDrawElement } from '@opendrawjs/core'
+import { elementsInGroup, moveElements, parentEditingGroupId } from '@opendrawjs/core'
 
 import { dispatchActionKey } from '../actions/registry.js'
 import { isTypingTarget } from '../actions/keys.js'

@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ToolId } from '@opendraw/core'
+import type { ToolId } from '@opendrawjs/core'
 
 const ctx = createOpenDrawContext({
   // The dark theme dark-filters strokes, so the canvas background must go

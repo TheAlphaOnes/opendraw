@@ -1,4 +1,4 @@
-import type { EditorController } from '@opendraw/editor'
+import type { EditorController } from '@opendrawjs/editor'
 
 import { Icon } from './icons.js'
 import { useEditorState } from './useOpenDrawEditor.js'

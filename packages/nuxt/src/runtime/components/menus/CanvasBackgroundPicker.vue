@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { CANVAS_BACKGROUND } from '@opendraw/core'
+import { CANVAS_BACKGROUND } from '@opendrawjs/core'
 
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
 

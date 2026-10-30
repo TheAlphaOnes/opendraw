@@ -7,9 +7,9 @@
     "typecheck": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
   },
   "dependencies": {
-    "@opendraw/core": "workspace:*",
-    "@opendraw/editor": "workspace:*",
-    "@opendraw/svelte": "workspace:*"
+    "@opendrawjs/core": "workspace:*",
+    "@opendrawjs/editor": "workspace:*",
+    "@opendrawjs/svelte": "workspace:*"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.1",

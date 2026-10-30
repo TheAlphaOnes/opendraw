@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { EditorController } from '@opendraw/editor'
+  import type { EditorController } from '@opendrawjs/editor'
 
   import Icon from './Icon.svelte'
   import { editorState } from './editorState.js'

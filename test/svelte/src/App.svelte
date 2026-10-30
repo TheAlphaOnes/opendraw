@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { OpenDrawState } from '@opendraw/core'
-  import { OpenDraw } from '@opendraw/svelte'
+  import type { OpenDrawState } from '@opendrawjs/core'
+  import { OpenDraw } from '@opendrawjs/svelte'
 
   /** The Svelte test app: the full editor filling the page. */
   function onchange(state: OpenDrawState): void {

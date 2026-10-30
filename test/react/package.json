@@ -7,9 +7,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@opendraw/core": "workspace:*",
-    "@opendraw/editor": "workspace:*",
-    "@opendraw/react": "workspace:*",
+    "@opendrawjs/core": "workspace:*",
+    "@opendrawjs/editor": "workspace:*",
+    "@opendrawjs/react": "workspace:*",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

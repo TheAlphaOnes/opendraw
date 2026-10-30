@@ -1,5 +1,5 @@
-import type { Point } from '@opendraw/core'
-import { applyViewportTransform } from '@opendraw/core'
+import type { Point } from '@opendrawjs/core'
+import { applyViewportTransform } from '@opendrawjs/core'
 
 import type { SizeMappingDetails } from './laserOutline.js'
 import { LaserStroke, svgPathFromOutline } from './laserOutline.js'

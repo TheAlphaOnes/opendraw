@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { mountCanvas, type CanvasContextMenuRequest, type EditorController } from '@opendraw/editor'
+  import { mountCanvas, type CanvasContextMenuRequest, type EditorController } from '@opendrawjs/editor'
 
   /**
    * The canvas on its own: a focusable host with the scene and overlay
    * canvases, mounted onto the editor — every gesture, shortcut, the text
-   * editor and rendering come from @opendraw/editor. No chrome.
+   * editor and rendering come from @opendrawjs/editor. No chrome.
    */
   interface Props {
     editor: EditorController

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { TOOLS, toolKeyHint, toolLabel, type ToolDefinition } from '@opendraw/editor'
+import { TOOLS, toolKeyHint, toolLabel, type ToolDefinition } from '@opendrawjs/editor'
 
 import { useMediaQuery } from '../../composables/useMediaQuery.js'
 import { useOpenDraw } from '../../composables/useOpenDraw.js'

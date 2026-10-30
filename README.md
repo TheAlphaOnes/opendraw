@@ -62,13 +62,13 @@ Excalidraw set the bar for how a whiteboard should feel. opendraw brings that fe
 ## Quick start
 
 ```bash
-npm install @opendraw/nuxt
+npm install @opendrawjs/nuxt
 ```
 
 ```ts
 // nuxt.config.ts
 export default defineNuxtConfig({
-  modules: ['@opendraw/nuxt'],
+  modules: ['@opendrawjs/nuxt'],
 })
 ```
 
@@ -103,7 +103,7 @@ const config = defineOpenDrawConfig({
 </template>
 ```
 
-`files: true` turns the editor into a small drawings app. A Drawings button beside the main menu, or the menu itself on phones, opens a sidebar to create, open, rename, duplicate, delete and search drawings. Each drawing autosaves on its own and keeps a preview, and the open drawing comes back after a reload. A scene saved before `files` was turned on becomes the first drawing. The store is framework-free (`createDrawingFiles()` in `@opendraw/editor`), and `useDrawingFiles()` mirrors it in Vue.
+`files: true` turns the editor into a small drawings app. A Drawings button beside the main menu, or the menu itself on phones, opens a sidebar to create, open, rename, duplicate, delete and search drawings. Each drawing autosaves on its own and keeps a preview, and the open drawing comes back after a reload. A scene saved before `files` was turned on becomes the first drawing. The store is framework-free (`createDrawingFiles()` in `@opendrawjs/editor`), and `useDrawingFiles()` mirrors it in Vue.
 
 The pieces also come separately for `<OpenDraw>`'s slots: `<OpenDrawButton>`, `<OpenDrawCopyCommand>` and `<OpenDrawShareButton>`.
 
@@ -112,7 +112,7 @@ The pieces also come separately for `<OpenDraw>`'s slots: `<OpenDrawButton>`, `<
 **Plain Vue 3 (Vite, no Nuxt)?** Import the same components directly:
 
 ```ts
-import { OpenDraw, OpenDrawApp, useOpenDraw } from '@opendraw/nuxt/vue'
+import { OpenDraw, OpenDrawApp, useOpenDraw } from '@opendrawjs/nuxt/vue'
 ```
 
 ## Usage
@@ -142,7 +142,7 @@ import { OpenDraw, OpenDrawApp, useOpenDraw } from '@opendraw/nuxt/vue'
 
 ```vue
 <script setup lang="ts">
-import type { OpenDrawElement } from '@opendraw/core'
+import type { OpenDrawElement } from '@opendrawjs/core'
 
 function save({ elements }: { elements: readonly OpenDrawElement[] }) {
   // persist the scene anywhere you like
@@ -206,13 +206,13 @@ The canvas keeps every gesture, shortcut and the text editor — you only draw t
 The same editor ships as React and Svelte 5 components: a ready-made `<OpenDraw>` (canvas, toolbar, zoom, history, theme and autosave) and a bare `<OpenDrawCanvas>` for your own UI. All three — Vue, React and Svelte — are covered by one shared end-to-end suite.
 
 ```bash
-npm install @opendraw/react    # or: npm install @opendraw/svelte
+npm install @opendrawjs/react    # or: npm install @opendrawjs/svelte
 ```
 
 ```tsx
 // React
-import '@opendraw/editor/styles.css'
-import { OpenDraw } from '@opendraw/react'
+import '@opendrawjs/react/styles.css'
+import { OpenDraw } from '@opendrawjs/react'
 
 export function Board() {
   return (
@@ -226,8 +226,8 @@ export function Board() {
 ```svelte
 <!-- Svelte 5 -->
 <script lang="ts">
-  import '@opendraw/editor/styles.css'
-  import { OpenDraw } from '@opendraw/svelte'
+  import '@opendrawjs/svelte/styles.css'
+  import { OpenDraw } from '@opendrawjs/svelte'
 </script>
 
 <div style="height: 100vh">
@@ -246,14 +246,14 @@ export function Board() {
 
 | Package | |
 | --- | --- |
-| [`@opendraw/nuxt`](packages/nuxt) | The Vue/Nuxt adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `useOpenDraw()` and the full Excalidraw-style UI. |
-| [`@opendraw/react`](packages/react) | The React adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `useOpenDrawEditor()`, `useEditorState()`. |
-| [`@opendraw/svelte`](packages/svelte) | The Svelte 5 adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `editorState()`. |
-| [`@opendraw/editor`](packages/editor) | The framework-free editor: `createEditor()`, `mountCanvas()`, tools, the action registry, persistence, and the shared `styles.css`. |
-| [`@opendraw/core`](packages/core) | The engine: element model, document &amp; history, geometry, hit testing, rough.js rendering, PNG/SVG/JSON export. |
+| [`@opendrawjs/nuxt`](packages/nuxt) | The Vue/Nuxt adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `useOpenDraw()` and the full Excalidraw-style UI. |
+| [`@opendrawjs/react`](packages/react) | The React adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `useOpenDrawEditor()`, `useEditorState()`. |
+| [`@opendrawjs/svelte`](packages/svelte) | The Svelte 5 adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `editorState()`. |
+| [`@opendrawjs/editor`](packages/editor) | The framework-free editor: `createEditor()`, `mountCanvas()`, tools, the action registry, persistence, and the shared `styles.css`. |
+| [`@opendrawjs/core`](packages/core) | The engine: element model, document &amp; history, geometry, hit testing, rough.js rendering, PNG/SVG/JSON export. |
 
 ```ts
-import { OpenDrawDocument, newRectangleElement, exportToSvg } from '@opendraw/core'
+import { OpenDrawDocument, newRectangleElement, exportToSvg } from '@opendrawjs/core'
 
 const doc = new OpenDrawDocument()
 doc.addElement(newRectangleElement({ x: 0, y: 0, width: 160, height: 90 }))
@@ -262,10 +262,10 @@ const svg = exportToSvg(doc.getElements(), '#ffffff')
 
 ## Build your own adapter
 
-Vue, React and Svelte are thin layers over `@opendraw/editor`, and the same layer can be written for Solid, Angular, Lit or plain JavaScript — `packages/react` and `packages/svelte` are complete references in a few hundred lines each:
+Vue, React and Svelte are thin layers over `@opendrawjs/editor`, and the same layer can be written for Solid, Angular, Lit or plain JavaScript — `packages/react` and `packages/svelte` are complete references in a few hundred lines each:
 
 ```ts
-import { createEditor, mountCanvas } from '@opendraw/editor'
+import { createEditor, mountCanvas } from '@opendrawjs/editor'
 
 const editor = createEditor()
 const session = mountCanvas(editor, { host, staticCanvas, overlayCanvas })
@@ -308,14 +308,14 @@ pnpm build:site   # the demo + docs as a static site (playground/.output/public)
 
 ```
 packages/
-  core/     @opendraw/core    engine — no framework, no DOM requirement
-  editor/   @opendraw/editor  interactive editor — no UI framework
-  nuxt/     @opendraw/nuxt    Vue/Nuxt adapter and UI
-  react/    @opendraw/react   React adapter
-  svelte/   @opendraw/svelte  Svelte 5 adapter
+  core/     @opendrawjs/core    engine — no framework, no DOM requirement
+  editor/   @opendrawjs/editor  interactive editor — no UI framework
+  nuxt/     @opendrawjs/nuxt    Vue/Nuxt adapter and UI
+  react/    @opendrawjs/react   React adapter
+  svelte/   @opendrawjs/svelte  Svelte 5 adapter
 playground/                   Nuxt demo app, docs page and its e2e specs
 test/
-  vue/      plain Vue 3 test app (Vite, @opendraw/nuxt/vue)
+  vue/      plain Vue 3 test app (Vite, @opendrawjs/nuxt/vue)
   react/    React test app (Vite)
   svelte/   Svelte test app (Vite)
   e2e/      one Playwright suite run against all three apps

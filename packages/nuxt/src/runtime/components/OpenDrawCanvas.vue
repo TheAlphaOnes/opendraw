@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
-import { mountCanvas, type CanvasContextMenuRequest, type CanvasSession } from '@opendraw/editor'
+import { mountCanvas, type CanvasContextMenuRequest, type CanvasSession } from '@opendrawjs/editor'
 
 import { useOpenDraw } from '../composables/useOpenDraw.js'
 
@@ -10,7 +10,7 @@ import { useOpenDraw } from '../composables/useOpenDraw.js'
  *
  * Renders the host and its two stacked canvases (static scene + interactive
  * chrome) and mounts the framework-free editor onto them: every gesture,
- * shortcut, render and the text editor live in @opendraw/editor. No UI
+ * shortcut, render and the text editor live in @opendrawjs/editor. No UI
  * chrome lives here; <OpenDraw> composes this with the toolbar/panels.
  */
 

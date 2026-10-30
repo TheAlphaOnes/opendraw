@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /** The React and Svelte adapters. */
-const INSTALL = `npm install @opendraw/react
+const INSTALL = `npm install @opendrawjs/react
 # or
-npm install @opendraw/svelte`
+npm install @opendrawjs/svelte`
 
-const REACT = `import '@opendraw/editor/styles.css'
-import { OpenDraw } from '@opendraw/react'
+const REACT = `import '@opendrawjs/editor/styles.css'
+import { OpenDraw } from '@opendrawjs/react'
 
 export function Board() {
   return (
@@ -15,7 +15,7 @@ export function Board() {
   )
 }`
 
-const REACT_HEADLESS = `import { OpenDrawCanvas, useEditorState, useOpenDrawEditor } from '@opendraw/react'
+const REACT_HEADLESS = `import { OpenDrawCanvas, useEditorState, useOpenDrawEditor } from '@opendrawjs/react'
 
 export function MyBoard() {
   const editor = useOpenDrawEditor()
@@ -32,8 +32,8 @@ export function MyBoard() {
 }`
 
 const SVELTE = `<script lang="ts">
-  import '@opendraw/editor/styles.css'
-  import { OpenDraw } from '@opendraw/svelte'
+  import '@opendrawjs/editor/styles.css'
+  import { OpenDraw } from '@opendrawjs/svelte'
 <\/script>
 
 <div style="height: 100vh">
@@ -41,7 +41,7 @@ const SVELTE = `<script lang="ts">
 </div>`
 
 const SVELTE_HEADLESS = `<script lang="ts">
-  import { OpenDrawCanvas, createEditor, editorState } from '@opendraw/svelte'
+  import { OpenDrawCanvas, createEditor, editorState } from '@opendrawjs/svelte'
 
   const editor = createEditor()
   const tool = editorState(editor, (e) => e.activeTool)
@@ -59,7 +59,7 @@ const SVELTE_HEADLESS = `<script lang="ts">
   <section id="react-svelte" class="doc-section">
     <h2>React &amp; Svelte</h2>
     <p>
-      The editor also ships as React and Svelte 5 components, over the same <code>@opendraw/editor</code>. Each offers
+      The editor also ships as React and Svelte 5 components, over the same <code>@opendrawjs/editor</code>. Each offers
       a ready-made <code>&lt;OpenDraw&gt;</code> — canvas, toolbar with key hints, zoom and history islands, theme toggle
       and autosave — and a bare <code>&lt;OpenDrawCanvas&gt;</code> for your own UI. One Playwright suite runs against
       both, so they behave identically.

@@ -1,4 +1,4 @@
-import type { OpenDrawElement, OpenDrawFrameElement, Point } from '@opendraw/core'
+import type { OpenDrawElement, OpenDrawFrameElement, Point } from '@opendrawjs/core'
 import {
   commonFrameId,
   elementsInResizingFrame,
@@ -7,7 +7,7 @@ import {
   hitThreshold,
   isFrameElement,
   topLayerFrameAt,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import type { CanvasRuntime } from './runtime.js'
 

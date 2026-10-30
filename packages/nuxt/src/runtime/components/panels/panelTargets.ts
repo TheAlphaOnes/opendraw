@@ -1,4 +1,4 @@
-import type { ElementType, ToolId, OpenDrawElement } from '@opendraw/core'
+import type { ElementType, ToolId, OpenDrawElement } from '@opendrawjs/core'
 
 /**
  * Which property sections the properties island shows — Excalidraw's

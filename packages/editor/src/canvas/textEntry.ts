@@ -1,5 +1,5 @@
-import type { Point } from '@opendraw/core'
-import type { TextContainer, OpenDrawElement } from '@opendraw/core'
+import type { Point } from '@opendrawjs/core'
+import type { TextContainer, OpenDrawElement } from '@opendrawjs/core'
 import {
   boundTextOf,
   findElementAt,
@@ -11,7 +11,7 @@ import {
   outermostGroupId,
   selectableTarget,
   textContainerAt,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import { frameForNewElement } from './frameGestures.js'
 import { editFrameName } from './frameNameEditor.js'

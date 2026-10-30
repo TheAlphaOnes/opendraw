@@ -1,5 +1,5 @@
 /**
- * @opendraw/editor — the framework-free opendraw editor.
+ * @opendrawjs/editor — the framework-free opendraw editor.
  *
  *   controller   — EditorController: document + editor state + commands
  *   canvas       — mountCanvas: gestures, keyboard, rendering, text editing
@@ -9,7 +9,7 @@
  *   files        — several named drawings in one browser (index, previews)
  *   services     — file and image plumbing
  *
- * Framework adapters (@opendraw/nuxt, …) mirror the controller into their
+ * Framework adapters (@opendrawjs/nuxt, …) mirror the controller into their
  * own reactivity and render chrome around a mounted canvas.
  */
 

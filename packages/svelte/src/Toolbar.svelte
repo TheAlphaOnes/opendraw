@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { TOOLS, toolKeyHint, toolLabel, type EditorController, type ToolDefinition } from '@opendraw/editor'
+  import { TOOLS, toolKeyHint, toolLabel, type EditorController, type ToolDefinition } from '@opendrawjs/editor'
 
   import Icon from './Icon.svelte'
   import { editorState } from './editorState.js'

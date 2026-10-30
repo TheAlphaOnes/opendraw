@@ -15,7 +15,7 @@ import {
   inflateBounds,
   type ThemeName,
   type OpenDrawElement,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import { imageResolver } from '../services/image.service.js'
 

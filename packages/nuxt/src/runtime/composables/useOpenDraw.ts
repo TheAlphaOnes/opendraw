@@ -22,13 +22,13 @@ import {
   type ThemeName,
   type ToolId,
   type Viewport,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 import {
   EditorController,
   createEditor,
   type CreateEditorOptions,
   type ViewportSize,
-} from '@opendraw/editor'
+} from '@opendrawjs/editor'
 
 /**
  * OpenDrawContext — the Vue face of the framework-free EditorController.

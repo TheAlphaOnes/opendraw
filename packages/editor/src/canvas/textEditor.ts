@@ -1,4 +1,4 @@
-import type { OpenDrawTextElement, TextContainer } from '@opendraw/core'
+import type { OpenDrawTextElement, TextContainer } from '@opendrawjs/core'
 import {
   FONT_STACKS,
   boundTextMaxWidth,
@@ -8,7 +8,7 @@ import {
   sceneToScreen,
   screenToScene,
   themeColor,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import type { EditorController } from '../controller.js'
 

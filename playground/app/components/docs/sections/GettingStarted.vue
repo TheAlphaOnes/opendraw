@@ -1,11 +1,11 @@
 <script setup lang="ts">
 /** Introduction, installation and the first canvas. */
-const INSTALL = `npm install @opendraw/nuxt
+const INSTALL = `npm install @opendrawjs/nuxt
 # or
-pnpm add @opendraw/nuxt`
+pnpm add @opendrawjs/nuxt`
 
 const CONFIG = `export default defineNuxtConfig({
-  modules: ['@opendraw/nuxt'],
+  modules: ['@opendrawjs/nuxt'],
 })`
 
 const PAGE = `<template>
@@ -24,10 +24,10 @@ const PAGE = `<template>
     </p>
     <p>opendraw ships as five packages:</p>
     <ul>
-      <li><code>@opendraw/core</code> — the engine: element model, document &amp; history, geometry, hit testing, rendering and export. No framework code.</li>
-      <li><code>@opendraw/editor</code> — the framework-free editor: tools, gestures, keyboard, the action registry, persistence. Mounts onto any DOM.</li>
-      <li><code>@opendraw/nuxt</code> — the Vue/Nuxt adapter: <code>&lt;OpenDraw&gt;</code>, <code>&lt;OpenDrawCanvas&gt;</code>, <code>useOpenDraw()</code> and the full Excalidraw-style UI.</li>
-      <li><code>@opendraw/react</code> and <code>@opendraw/svelte</code> — the React and Svelte 5 adapters.</li>
+      <li><code>@opendrawjs/core</code> — the engine: element model, document &amp; history, geometry, hit testing, rendering and export. No framework code.</li>
+      <li><code>@opendrawjs/editor</code> — the framework-free editor: tools, gestures, keyboard, the action registry, persistence. Mounts onto any DOM.</li>
+      <li><code>@opendrawjs/nuxt</code> — the Vue/Nuxt adapter: <code>&lt;OpenDraw&gt;</code>, <code>&lt;OpenDrawCanvas&gt;</code>, <code>useOpenDraw()</code> and the full Excalidraw-style UI.</li>
+      <li><code>@opendrawjs/react</code> and <code>@opendrawjs/svelte</code> — the React and Svelte 5 adapters.</li>
     </ul>
   </section>
 

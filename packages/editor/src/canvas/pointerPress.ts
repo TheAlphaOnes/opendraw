@@ -1,4 +1,4 @@
-import type { Point, OpenDrawElement } from '@opendraw/core'
+import type { Point, OpenDrawElement } from '@opendrawjs/core'
 import {
   elementsUnderEraser,
   findElementAt,
@@ -22,7 +22,7 @@ import {
   selectableTarget,
   selectionFrameOf,
   startRotationAngle,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 import { appendDraftPoint, finishLinearDraft } from './linearDraft.js'
 import { setModifiers, type CanvasRuntime } from './runtime.js'

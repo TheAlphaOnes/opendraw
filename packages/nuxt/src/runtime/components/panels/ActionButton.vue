@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { actionById, isActionEnabled, runAction, type ActionId } from '@opendraw/editor'
+import { actionById, isActionEnabled, runAction, type ActionId } from '@opendrawjs/editor'
 
 import { useKeyDisplay } from '../../composables/useKeyDisplay.js'
 import { useOpenDraw } from '../../composables/useOpenDraw.js'

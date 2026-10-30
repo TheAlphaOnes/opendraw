@@ -21,7 +21,7 @@ const SLOTS = [
 ] as const
 
 const EXAMPLE = `<script setup lang="ts">
-import type { OpenDrawElement } from '@opendraw/core'
+import type { OpenDrawElement } from '@opendrawjs/core'
 
 function save({ elements }: { elements: readonly OpenDrawElement[] }) {
   console.log('scene now has', elements.length, 'elements')

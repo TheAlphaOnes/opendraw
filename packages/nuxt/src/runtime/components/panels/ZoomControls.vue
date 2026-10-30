@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import type { Point } from '@opendraw/core'
+import type { Point } from '@opendrawjs/core'
 import { useKeyDisplay } from '../../composables/useKeyDisplay.js'
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import ActionButton from './ActionButton.vue'

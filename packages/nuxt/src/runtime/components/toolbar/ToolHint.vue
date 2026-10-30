@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { isTextContainer } from '@opendraw/core'
+import { isTextContainer } from '@opendrawjs/core'
 
 import { useKeyDisplay } from '../../composables/useKeyDisplay.js'
 import { useOpenDraw } from '../../composables/useOpenDraw.js'

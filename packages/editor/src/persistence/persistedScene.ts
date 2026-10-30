@@ -18,7 +18,7 @@ import {
   type OpenDrawAppState,
   type OpenDrawElement,
   type OpenDrawFile,
-} from '@opendraw/core'
+} from '@opendrawjs/core'
 
 /** Discriminant + version of the localStorage envelope. */
 export const PERSISTED_SCENE_TYPE = 'opendraw-scene'

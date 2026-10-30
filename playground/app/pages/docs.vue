@@ -33,8 +33,8 @@ const NAV: DocsNavGroup[] = [
   {
     title: 'Packages',
     items: [
-      { id: 'core', label: '@opendraw/core' },
-      { id: 'editor', label: '@opendraw/editor' },
+      { id: 'core', label: '@opendrawjs/core' },
+      { id: 'editor', label: '@opendrawjs/editor' },
     ],
   },
   {
