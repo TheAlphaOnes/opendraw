@@ -41,7 +41,7 @@ const DARK_INVERT_PERCENT = 93
 const DARK_HUE_ROTATE_DEGREES = 180
 
 /** Parsed color; channels 0-255, alpha 0-1. */
-interface Rgba {
+export interface Rgba {
   r: number
   g: number
   b: number
@@ -83,7 +83,8 @@ export function themeColor(color: string, dark: boolean): string {
 // Parsing
 // ---------------------------------------------------------------------------
 
-function parseColor(input: string): Rgba | null {
+/** Parses `#hex` (3, 4, 6, 8 digits) and `rgb()`/`rgba()` colors; null otherwise. */
+export function parseColor(input: string): Rgba | null {
   const color = input.trim().toLowerCase()
   if (color.startsWith('#')) {
     return parseHex(color.slice(1))

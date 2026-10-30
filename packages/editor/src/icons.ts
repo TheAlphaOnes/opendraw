@@ -86,3 +86,4 @@ export type IconName =
   | 'chevronDown'
   | 'arrowSharp'
   | 'arrowRound'
+  | 'eyeDropper'

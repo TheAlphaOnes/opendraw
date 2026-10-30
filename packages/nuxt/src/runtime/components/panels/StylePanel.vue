@@ -7,6 +7,7 @@ import {
   STROKE_PALETTE,
   STROKE_WIDTHS,
   TRANSPARENT,
+  mostUsedCustomColors,
   withBoundTexts,
   type ElementStyle,
   type FillStyle,
@@ -27,7 +28,7 @@ import StyleSection from './StyleSection.vue'
 import UiPanel from '../ui/UiPanel.vue'
 import UiSegmented, { type UiSegmentedOption } from '../ui/UiSegmented.vue'
 import UiSlider from '../ui/UiSlider.vue'
-import UiSwatchRow from '../ui/UiSwatchRow.vue'
+import UiColorPicker from '../ui/UiColorPicker.vue'
 
 /**
  * The properties island — Excalidraw's left-hand shape-properties panel.
@@ -81,6 +82,11 @@ const arrowType = computed(() => {
   const el = ctx.selectedElements.value.find((e) => e.type === 'arrow')
   return el && el.type === 'arrow' ? (el.roundness === 'round' ? 'round' : 'sharp') : ctx.appState.value.arrowType
 })
+
+const dark = computed(() => ctx.theme.value === 'dark')
+// The picker's "most used custom colors": canvas colors outside the palette.
+const customStrokeColors = computed(() => mostUsedCustomColors(ctx.elements.value, 'strokeColor'))
+const customBackgroundColors = computed(() => mostUsedCustomColors(ctx.elements.value, 'backgroundColor'))
 
 // Excalidraw shows fill patterns only once there is a background to fill.
 const showFill = computed(() => targets.value.background && style.value.backgroundColor !== TRANSPARENT)
@@ -136,18 +142,24 @@ const alignOptions: UiSegmentedOption[] = [
   <UiPanel v-if="targets.visible" position="properties">
     <div class="style-panel" role="region" aria-label="Element properties">
       <StyleSection v-if="targets.stroke" label="Stroke">
-        <UiSwatchRow
-          :colors="STROKE_PALETTE"
+        <UiColorPicker
+          kind="stroke"
+          label="Stroke"
+          :top-picks="STROKE_PALETTE"
           :model-value="style.strokeColor"
-          ariaLabel="Stroke color"
+          :custom-colors="customStrokeColors"
+          :dark="dark"
           @update:model-value="ctx.changeStyle({ strokeColor: $event })"
         />
       </StyleSection>
       <StyleSection v-if="targets.background" label="Background">
-        <UiSwatchRow
-          :colors="BACKGROUND_PALETTE"
+        <UiColorPicker
+          kind="background"
+          label="Background"
+          :top-picks="BACKGROUND_PALETTE"
           :model-value="style.backgroundColor"
-          ariaLabel="Background color"
+          :custom-colors="customBackgroundColors"
+          :dark="dark"
           @update:model-value="ctx.changeStyle({ backgroundColor: $event })"
         />
       </StyleSection>

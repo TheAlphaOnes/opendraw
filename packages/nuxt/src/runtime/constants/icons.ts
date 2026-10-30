@@ -60,6 +60,7 @@ import {
   Pen,
   Pencil,
   PenLine,
+  Pipette,
   Radius,
   RectangleHorizontal,
   Redo2,
@@ -173,4 +174,5 @@ export const iconRegistry: Record<IconName, Component> = {
   chevronDown: ChevronDown,
   arrowSharp: MoveUpRight,
   arrowRound: Spline,
+  eyeDropper: Pipette,
 }

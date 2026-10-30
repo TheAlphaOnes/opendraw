@@ -20,6 +20,7 @@ export * from './geometry/bounds.js'
 export * from './geometry/text.js'
 
 export * from './elements/defaults.js'
+export * from './elements/colors.js'
 export * from './elements/factories.js'
 export * from './elements/mutate.js'
 export * from './elements/hitTest.js'
