@@ -39,6 +39,7 @@ export type ElementType =
   | 'text'
   | 'image'
   | 'frame'
+  | 'stickynote'
 
 export type FillStyle = 'hachure' | 'cross-hatch' | 'solid'
 
@@ -191,6 +192,12 @@ export interface OpenDrawTextElement extends OpenDrawElementBase {
   textAlign: TextAlign
   verticalAlign: VerticalAlign
   lineHeight: number
+  /**
+   * A sticky note label's font ceiling — the size the user picked; the
+   * note fits `fontSize` at or below it (Excalidraw's baseFontSize). Absent
+   * for every other text.
+   */
+  baseFontSize?: number | null
 }
 
 export interface OpenDrawRectangleElement extends OpenDrawElementBase {
@@ -231,6 +238,21 @@ export interface OpenDrawFrameElement extends OpenDrawElementBase {
   name: string
 }
 
+/**
+ * A sticky note (Excalidraw's stickynote): a paper-colored container whose
+ * label shrinks to fit, growing the note past `baseHeight` only when the
+ * text overflows at the smallest size. Shows its creation date in a footer.
+ */
+export interface OpenDrawStickyNoteElement extends OpenDrawElementBase {
+  type: 'stickynote'
+  /** 'round' softens the paper's corners. */
+  roundness?: Roundness | null
+  /** The height the user gave the note; content may grow it beyond. */
+  baseHeight: number
+  /** Creation time (epoch ms) for the date footer; null when unknown. */
+  created: number | null
+}
+
 export type OpenDrawElement =
   | OpenDrawRectangleElement
   | OpenDrawDiamondElement
@@ -241,6 +263,7 @@ export type OpenDrawElement =
   | OpenDrawTextElement
   | OpenDrawImageElement
   | OpenDrawFrameElement
+  | OpenDrawStickyNoteElement
 
 export type ElementOf<T extends ElementType> = Extract<OpenDrawElement, { type: T }>
 
@@ -291,6 +314,7 @@ export type ToolId =
   | 'line'
   | 'freedraw'
   | 'text'
+  | 'stickynote'
   | 'image'
   | 'eraser'
   | 'frame'
@@ -329,6 +353,11 @@ export interface OpenDrawAppState {
   arrowheads: { start: Arrowhead | null; end: Arrowhead | null }
   /** Shape of newly drawn arrows: curved through their points, or sharp. */
   arrowType: 'round' | 'sharp'
+  /**
+   * Ink and paper of newly placed sticky notes — their own color domain
+   * (Excalidraw's currentItemStickynoteStrokeColor / BackgroundColor).
+   */
+  stickyNoteStyle: { strokeColor: string; backgroundColor: string }
 }
 
 // ---------------------------------------------------------------------------

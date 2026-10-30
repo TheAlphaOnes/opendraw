@@ -87,3 +87,4 @@ export type IconName =
   | 'arrowSharp'
   | 'arrowRound'
   | 'eyeDropper'
+  | 'stickyNoteTool'

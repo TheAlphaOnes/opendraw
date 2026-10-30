@@ -17,15 +17,26 @@ import { layoutText, wrapText } from '../geometry/text.js'
 import type { Point, OpenDrawElement, OpenDrawTextElement } from '../types.js'
 import { isPointInsideElement } from './hitTest.js'
 import type { ElementPatch } from './mutate.js'
+import {
+  layoutStickyNoteText,
+  STICKY_NOTE_BODY_INSET_Y,
+  STICKY_NOTE_MIN_SIZE,
+  STICKY_NOTE_PADDING,
+} from './stickyNote.js'
 
 /** Excalidraw's BOUND_TEXT_PADDING. */
 export const BOUND_TEXT_PADDING = 5
 
-export type TextContainer = Extract<OpenDrawElement, { type: 'rectangle' | 'diamond' | 'ellipse' }>
+export type TextContainer = Extract<OpenDrawElement, { type: 'rectangle' | 'diamond' | 'ellipse' | 'stickynote' }>
 
 /** Shapes that can hold text. */
 export function isTextContainer(element: OpenDrawElement): element is TextContainer {
-  return element.type === 'rectangle' || element.type === 'diamond' || element.type === 'ellipse'
+  return (
+    element.type === 'rectangle' ||
+    element.type === 'diamond' ||
+    element.type === 'ellipse' ||
+    element.type === 'stickynote'
+  )
 }
 
 export function isBoundText(element: OpenDrawElement): element is OpenDrawTextElement & { containerId: string } {
@@ -35,6 +46,9 @@ export function isBoundText(element: OpenDrawElement): element is OpenDrawTextEl
 /** Width of the largest padded rectangle inscribed in the container. */
 export function boundTextMaxWidth(container: TextContainer): number {
   const { width } = container
+  if (container.type === 'stickynote') {
+    return Math.max(width, STICKY_NOTE_MIN_SIZE) - STICKY_NOTE_PADDING * 2
+  }
   if (container.type === 'ellipse') {
     return Math.round((width / 2) * Math.SQRT2) - BOUND_TEXT_PADDING * 2
   }
@@ -47,6 +61,10 @@ export function boundTextMaxWidth(container: TextContainer): number {
 /** Height of the largest padded rectangle inscribed in the container. */
 export function boundTextMaxHeight(container: TextContainer): number {
   const { height } = container
+  if (container.type === 'stickynote') {
+    // The label body ends above the creation-date footer.
+    return Math.max(0, height - STICKY_NOTE_BODY_INSET_Y)
+  }
   if (container.type === 'ellipse') {
     return Math.round((height / 2) * Math.SQRT2) - BOUND_TEXT_PADDING * 2
   }
@@ -71,8 +89,9 @@ export function containerSizeForText(dimension: number, type: TextContainer['typ
 
 /** Top-left of the container's inner text area (unrotated). */
 export function containerTextOrigin(container: TextContainer): Point {
-  let offsetX = BOUND_TEXT_PADDING
-  let offsetY = BOUND_TEXT_PADDING
+  const padding = container.type === 'stickynote' ? STICKY_NOTE_PADDING : BOUND_TEXT_PADDING
+  let offsetX = padding
+  let offsetY = padding
   if (container.type === 'ellipse') {
     offsetX += (container.width / 2) * (1 - Math.SQRT2 / 2)
     offsetY += (container.height / 2) * (1 - Math.SQRT2 / 2)
@@ -151,6 +170,10 @@ export interface BoundTextLayout {
  * redrawTextBoundingBox + computeBoundTextPosition).
  */
 export function layoutBoundText(text: OpenDrawTextElement, container: TextContainer): BoundTextLayout {
+  if (container.type === 'stickynote') {
+    // A note fits its font and grows only past its own base height.
+    return layoutStickyNoteText(text, container)
+  }
   const wrapped = wrapText(text.originalText, text.fontFamily, text.fontSize, boundTextMaxWidth(container))
   const metrics = layoutText(wrapped, text.fontFamily, text.fontSize)
 

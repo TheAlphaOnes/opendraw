@@ -27,6 +27,13 @@ import {
   withFrameChildren,
 } from '../elements/frames.js'
 import { isFrameElement } from '../elements/factories.js'
+import {
+  DEFAULT_STICKY_NOTE_BG,
+  DEFAULT_STICKY_NOTE_STROKE,
+  isStickyNote,
+  stickyNoteColor,
+  stickyNoteStylePatch,
+} from '../elements/stickyNote.js'
 import { bindingFollowPatches, orphanBindingPatches } from '../elements/binding.js'
 import {
   type Alignment,
@@ -90,6 +97,7 @@ export const DEFAULT_APP_STATE: OpenDrawAppState = {
   arrowheads: { start: null, end: 'arrow' },
   // Excalidraw's defaults: rounded shapes and lines, round arrows.
   arrowType: 'round',
+  stickyNoteStyle: { strokeColor: DEFAULT_STICKY_NOTE_STROKE, backgroundColor: DEFAULT_STICKY_NOTE_BG },
 }
 
 export class OpenDrawDocument {
@@ -756,6 +764,19 @@ export class OpenDrawDocument {
 
   /** Style of new elements — set when nothing is selected. */
   setStyle(style: Partial<ElementStyle>): void {
+    // With the note tool armed, colors set the next note's ink and paper.
+    if (this.appState.activeTool === 'stickynote') {
+      const notes = { ...this.appState.stickyNoteStyle }
+      if (style.strokeColor !== undefined) {
+        notes.strokeColor = stickyNoteColor('strokeColor', style.strokeColor)
+      }
+      if (style.backgroundColor !== undefined) {
+        notes.backgroundColor = stickyNoteColor('backgroundColor', style.backgroundColor)
+      }
+      const { strokeColor: _ink, backgroundColor: _paper, ...rest } = style
+      this.commitAppState({ ...this.appState, stickyNoteStyle: notes, style: { ...this.appState.style, ...rest } })
+      return
+    }
     this.commitAppState({
       ...this.appState,
       style: { ...this.appState.style, ...style },
@@ -782,9 +803,21 @@ export class OpenDrawDocument {
     const ids = selected.map((el) => el.id)
     this.mutate((current) => {
       const idSet = new Set(ids)
-      const next = current.map((el) =>
-        idSet.has(el.id) ? patchElement(el, style) : el,
+      // A note's ink is also its label's color (syncStickyNoteInk).
+      const inkedLabels = new Set(
+        current
+          .filter((el) => isBoundText(el) && idSet.has(el.containerId) && isStickyNote(this.elementsMap.get(el.containerId)))
+          .map((el) => el.id),
       )
+      const next = current.map((el) => {
+        if (idSet.has(el.id)) {
+          return patchElement(el, isStickyNote(el) ? stickyNoteStylePatch(style) : style)
+        }
+        if (inkedLabels.has(el.id) && style.strokeColor !== undefined) {
+          return patchElement(el, { strokeColor: stickyNoteColor('strokeColor', style.strokeColor) })
+        }
+        return el
+      })
       return next.some((el, i) => el !== current[i]) ? next : null
     })
   }
@@ -814,11 +847,17 @@ export class OpenDrawDocument {
       const layout: TextLayout = layoutText(el.text, next.fontFamily, next.fontSize)
       return {
         ...next,
+        // A note's label: the picked size is the ceiling it fits under.
+        ...(this.isStickyNoteLabel(el) && style.fontSize !== undefined ? { baseFontSize: style.fontSize } : {}),
         width: layout.width,
         height: layout.height,
       }
     })
     this.endStep()
+  }
+
+  private isStickyNoteLabel(el: OpenDrawElement): boolean {
+    return isBoundText(el) && isStickyNote(this.elementsMap.get(el.containerId))
   }
 
   /**
@@ -845,8 +884,14 @@ export class OpenDrawDocument {
       if (!isTextElement(el)) {
         return {}
       }
-      const scaled = direction === 1 ? el.fontSize * (1 + FONT_SIZE_STEP) : el.fontSize / (1 + FONT_SIZE_STEP)
+      // A note's label steps its ceiling, not the fitted size.
+      const note = this.isStickyNoteLabel(el)
+      const from = note ? (el.baseFontSize ?? el.fontSize) : el.fontSize
+      const scaled = direction === 1 ? from * (1 + FONT_SIZE_STEP) : from / (1 + FONT_SIZE_STEP)
       const fontSize = Math.max(MIN_FONT_SIZE, Math.round(scaled))
+      if (note) {
+        return { baseFontSize: fontSize }
+      }
       const layout = layoutText(el.text, el.fontFamily, fontSize)
       return { fontSize, width: layout.width, height: layout.height }
     })
@@ -928,7 +973,7 @@ export class OpenDrawDocument {
    */
   changeRoundness(roundness: Roundness | null): void {
     const ids = this.getSelectedElements()
-      .filter((el) => el.type === 'rectangle' || el.type === 'diamond' || el.type === 'line')
+      .filter((el) => el.type === 'rectangle' || el.type === 'diamond' || el.type === 'line' || el.type === 'stickynote')
       .map((el) => el.id)
     if (ids.length === 0) {
       this.commitAppState({ ...this.appState, shapeRoundness: roundness })

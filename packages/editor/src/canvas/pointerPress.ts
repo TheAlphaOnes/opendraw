@@ -14,6 +14,7 @@ import {
   newElement,
   newFreedrawElement,
   newFrameElement,
+  newStickyNoteElement,
   newLinearElement,
   pointInSelectionFrame,
   pointsPatch,
@@ -39,7 +40,7 @@ import { tipModifiers } from './tipBinding.js'
 import type { LaserTrail } from './laserTrail.js'
 
 /** Shape tools that draft by dragging. */
-const SHAPE_TOOLS = new Set(['rectangle', 'diamond', 'ellipse', 'line', 'arrow', 'frame'])
+const SHAPE_TOOLS = new Set(['rectangle', 'diamond', 'ellipse', 'line', 'arrow', 'frame', 'stickynote'])
 
 /** Pen/touch pressure, with mice reporting a neutral constant. */
 export function pressureOf(event: PointerEvent): number {
@@ -77,6 +78,16 @@ function draftElement(rt: CanvasRuntime, tool: string, at: Point): OpenDrawEleme
   }
   if (tool === 'frame') {
     return newFrameElement({ x: at.x, y: at.y, style })
+  }
+  if (tool === 'stickynote') {
+    // Notes keep their own ink and paper (appState.stickyNoteStyle).
+    return newStickyNoteElement({
+      x: at.x,
+      y: at.y,
+      style: { ...style, ...rt.ctx.appState.stickyNoteStyle },
+      frameId,
+      roundness: shapeRoundness,
+    })
   }
   return newElement(tool as 'rectangle' | 'diamond' | 'ellipse', {
     x: at.x,

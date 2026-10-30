@@ -31,6 +31,7 @@ export * from './elements/duplicate.js'
 export * from './elements/boundText.js'
 export * from './elements/zindex.js'
 export * from './elements/frames.js'
+export * from './elements/stickyNote.js'
 
 export * from './viewport.js'
 

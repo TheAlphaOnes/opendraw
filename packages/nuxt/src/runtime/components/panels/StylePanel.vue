@@ -5,6 +5,7 @@ import {
   BACKGROUND_PALETTE,
   ROUGHNESS_LEVELS,
   STROKE_PALETTE,
+  STICKY_NOTE_BACKGROUND_PICKS,
   STROKE_WIDTHS,
   TRANSPARENT,
   mostUsedCustomColors,
@@ -54,6 +55,9 @@ const targets = computed<PanelTargets>(() =>
 const first = computed(() => ctx.selectedElements.value[0] ?? null)
 const style = computed<ElementStyle>(() => {
   const el = first.value
+  if (!el && ctx.activeTool.value === 'stickynote') {
+    return { ...ctx.appState.value.style, ...ctx.appState.value.stickyNoteStyle }
+  }
   return el
     ? {
         strokeColor: el.strokeColor,
@@ -68,12 +72,14 @@ const style = computed<ElementStyle>(() => {
 })
 const textStyle = computed<TextStyle>(() => {
   const el = ctx.selectedElements.value.find((e): e is OpenDrawTextElement => e.type === 'text') ?? labels.value[0]
-  return el ? { fontSize: el.fontSize, fontFamily: el.fontFamily, textAlign: el.textAlign } : ctx.appState.value.textStyle
+  return el
+    ? { fontSize: el.baseFontSize ?? el.fontSize, fontFamily: el.fontFamily, textAlign: el.textAlign }
+    : ctx.appState.value.textStyle
 })
 const roundness = computed(() => {
   const el = first.value
   const value =
-    el && (el.type === 'rectangle' || el.type === 'diamond' || el.type === 'line')
+    el && (el.type === 'rectangle' || el.type === 'diamond' || el.type === 'line' || el.type === 'stickynote')
       ? el.roundness
       : ctx.appState.value.shapeRoundness
   return value === 'round' ? 'round' : 'sharp'
@@ -89,7 +95,7 @@ const customStrokeColors = computed(() => mostUsedCustomColors(ctx.elements.valu
 const customBackgroundColors = computed(() => mostUsedCustomColors(ctx.elements.value, 'backgroundColor'))
 
 // Excalidraw shows fill patterns only once there is a background to fill.
-const showFill = computed(() => targets.value.background && style.value.backgroundColor !== TRANSPARENT)
+const showFill = computed(() => targets.value.fill && style.value.backgroundColor !== TRANSPARENT)
 
 const fillOptions: UiSegmentedOption[] = [
   { value: 'hachure', label: 'Hachure fill', icon: 'fillHachure' },
@@ -141,10 +147,10 @@ const alignOptions: UiSegmentedOption[] = [
 <template>
   <UiPanel v-if="targets.visible" position="properties">
     <div class="style-panel" role="region" aria-label="Element properties">
-      <StyleSection v-if="targets.stroke" label="Stroke">
+      <StyleSection v-if="targets.stroke" :label="targets.notes ? 'Text color' : 'Stroke'">
         <UiColorPicker
           kind="stroke"
-          label="Stroke"
+          :label="targets.notes ? 'Text' : 'Stroke'"
           :top-picks="STROKE_PALETTE"
           :model-value="style.strokeColor"
           :custom-colors="customStrokeColors"
@@ -156,7 +162,7 @@ const alignOptions: UiSegmentedOption[] = [
         <UiColorPicker
           kind="background"
           label="Background"
-          :top-picks="BACKGROUND_PALETTE"
+          :top-picks="targets.notes ? STICKY_NOTE_BACKGROUND_PICKS : BACKGROUND_PALETTE"
           :model-value="style.backgroundColor"
           :custom-colors="customBackgroundColors"
           :dark="dark"

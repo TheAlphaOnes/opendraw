@@ -113,6 +113,7 @@ function pointInsideShape(element: OpenDrawElement, local: Point): boolean {
   const { x, y, width, height } = element
   switch (element.type) {
     case 'rectangle':
+    case 'stickynote':
     case 'text':
     case 'image':
     case 'frame':
@@ -145,6 +146,7 @@ function outlineDistance(element: OpenDrawElement, local: Point): number {
   const { x, y, width, height } = element
   switch (element.type) {
     case 'rectangle':
+    case 'stickynote':
     case 'text':
     case 'image':
     case 'frame':
@@ -210,6 +212,8 @@ export function hitTestElement(
   const testInside =
     element.type === 'text' ||
     element.type === 'image' ||
+    // A note is paper: always filled.
+    element.type === 'stickynote' ||
     (hasOpaqueBackground(element) && element.type !== 'line' && element.type !== 'arrow' && element.type !== 'frame')
   if (testInside && pointInsideShape(element, local)) {
     return true

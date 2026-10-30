@@ -9,6 +9,7 @@
 
 import { normalizeFixedPoint } from '../elements/binding.js'
 import { isElementType } from '../elements/factories.js'
+import { STICKY_NOTE_MIN_SIZE, stickyNoteColor } from '../elements/stickyNote.js'
 import type {
   Arrowhead,
   FillStyle,
@@ -158,6 +159,7 @@ export function coerceElement(input: unknown): OpenDrawElement | null {
       textAlign: oneOf<TextAlign>(input.textAlign, ['left', 'center', 'right'] as const, 'left'),
       verticalAlign: oneOf(input.verticalAlign, ['top', 'middle', 'bottom'] as const, 'top'),
       lineHeight: num(input.lineHeight, 1.25),
+      ...(typeof input.baseFontSize === 'number' ? { baseFontSize: input.baseFontSize } : {}),
     }
   }
   if (type === 'rectangle' || type === 'diamond') {
@@ -171,6 +173,21 @@ export function coerceElement(input: unknown): OpenDrawElement | null {
   }
   if (type === 'frame') {
     return { ...base, type, name: str(input.name, 'Frame') }
+  }
+  if (type === 'stickynote') {
+    const height = Math.max(base.height, STICKY_NOTE_MIN_SIZE)
+    return {
+      ...base,
+      type,
+      width: Math.max(base.width, STICKY_NOTE_MIN_SIZE),
+      height,
+      strokeColor: stickyNoteColor('strokeColor', base.strokeColor),
+      backgroundColor: stickyNoteColor('backgroundColor', base.backgroundColor),
+      fillStyle: 'solid',
+      roundness: input.roundness === null ? null : 'round',
+      baseHeight: Math.min(Math.max(num(input.baseHeight, height), STICKY_NOTE_MIN_SIZE), height),
+      created: typeof input.created === 'number' && Number.isFinite(input.created) ? input.created : null,
+    }
   }
   return { ...base, type: 'ellipse' }
 }

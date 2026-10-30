@@ -134,7 +134,9 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
         const end = points[points.length - 1]!
         dragTipTo(rt, el.id, 'end', { x: el.x + end.x, y: el.y + end.y }, tipModifiers(event))
       } else {
-        ctx.doc.forceUpdateElement(el.id, draftShapeRect(current.originScene, scenePoint, modifiers))
+        // A note drags out square unless Shift frees it.
+        const rectModifiers = el.type === 'stickynote' ? { ...modifiers, shift: !modifiers.shift } : modifiers
+        ctx.doc.forceUpdateElement(el.id, draftShapeRect(current.originScene, scenePoint, rectModifiers))
         // A frame being drawn outlines what it will adopt.
         const drawn = ctx.doc.getElement(el.id)
         if (drawn?.type === 'frame') {

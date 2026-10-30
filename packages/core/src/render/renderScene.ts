@@ -32,12 +32,22 @@ import type {
   OpenDrawImageElement,
   OpenDrawLineElement,
   OpenDrawLinearElement,
+  OpenDrawStickyNoteElement,
   OpenDrawTextElement,
 } from '../types.js'
 import { applyViewportTransform, screenToScene } from '../viewport.js'
 import { arrowheadDrawables } from './arrowheads.js'
 import { isBoundText } from '../elements/boundText.js'
 import { elementOverlapsFrame, FRAME_NAME_STYLE, frameNameBounds, frameTitle } from '../elements/frames.js'
+import {
+  STICKY_NOTE_EDGE_SHADOW_OPACITY,
+  STICKY_NOTE_EDGE_SHADOW_WIDTH,
+  STICKY_NOTE_FOOTER,
+  STICKY_NOTE_SHADOW_OPACITY,
+  stickyNoteFooter,
+  stickyNotePathCommands,
+  type StickyNotePathCommand,
+} from '../elements/stickyNote.js'
 import { themeColor, UI } from './theme.js'
 
 /**
@@ -567,6 +577,9 @@ function drawElement(
     case 'frame':
       drawFrame(ctx, element, dark, zoom)
       break
+    case 'stickynote':
+      drawStickyNote(ctx, element, dark)
+      break
   }
   ctx.restore()
 }
@@ -650,6 +663,53 @@ function drawFrame(ctx: CanvasRenderingContext2D, element: OpenDrawFrameElement,
   ctx.beginPath()
   ctx.roundRect(0, 0, element.width, element.height, FRAME_RADIUS / zoom)
   ctx.stroke()
+}
+
+/** Traces sticky-note path commands onto the context. */
+function traceStickyNotePath(ctx: CanvasRenderingContext2D, commands: readonly StickyNotePathCommand[]): void {
+  ctx.beginPath()
+  for (const command of commands) {
+    if (command.type === 'move') {
+      ctx.moveTo(command.point.x, command.point.y)
+    } else if (command.type === 'line') {
+      ctx.lineTo(command.point.x, command.point.y)
+    } else {
+      ctx.quadraticCurveTo(command.control.x, command.control.y, command.point.x, command.point.y)
+    }
+  }
+  ctx.closePath()
+}
+
+/**
+ * A sticky note (Excalidraw's drawElementOnCanvas "stickynote"): the soft
+ * offset shadow, the paper, a faint inner edge, then the date footer in
+ * the note's ink. The label is its own bound text element.
+ */
+function drawStickyNote(ctx: CanvasRenderingContext2D, note: OpenDrawStickyNoteElement, dark: boolean): void {
+  ctx.fillStyle = `rgba(0, 0, 0, ${STICKY_NOTE_SHADOW_OPACITY})`
+  traceStickyNotePath(ctx, stickyNotePathCommands(note, { shadow: true }))
+  ctx.fill()
+
+  const paper = stickyNotePathCommands(note)
+  ctx.fillStyle = themeColor(note.backgroundColor, dark)
+  traceStickyNotePath(ctx, paper)
+  ctx.fill()
+  ctx.save()
+  ctx.clip()
+  ctx.lineWidth = STICKY_NOTE_EDGE_SHADOW_WIDTH * 2
+  ctx.strokeStyle = `rgba(0, 0, 0, ${STICKY_NOTE_EDGE_SHADOW_OPACITY})`
+  traceStickyNotePath(ctx, paper)
+  ctx.stroke()
+  ctx.restore()
+
+  const footer = stickyNoteFooter(note)
+  if (footer) {
+    ctx.font = `${STICKY_NOTE_FOOTER.fontSize}px ${STICKY_NOTE_FOOTER.fontFamily}`
+    ctx.textAlign = 'right'
+    ctx.textBaseline = 'alphabetic'
+    ctx.fillStyle = themeColor(note.strokeColor, dark)
+    ctx.fillText(footer.text, footer.x, footer.y)
+  }
 }
 
 /**

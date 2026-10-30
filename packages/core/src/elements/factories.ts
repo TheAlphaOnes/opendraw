@@ -26,6 +26,7 @@ import type {
 import type { OpenDrawArrowElement, OpenDrawLineElement } from '../types.js'
 import { DEFAULT_ELEMENT_STYLE, DEFAULT_TEXT_STYLE, TRANSPARENT } from './defaults.js'
 import { newId, newNonce, randomSeed } from '../utils/rng.js'
+import { DEFAULT_STICKY_NOTE_BG, DEFAULT_STICKY_NOTE_STROKE, stickyNoteColor } from './stickyNote.js'
 
 /** Runtime element type guards need a value-level list too. */
 export const ELEMENT_TYPES = [
@@ -38,6 +39,7 @@ export const ELEMENT_TYPES = [
   'text',
   'image',
   'frame',
+  'stickynote',
 ] as const
 
 export type OpenDrawElementType = (typeof ELEMENT_TYPES)[number]
@@ -234,6 +236,8 @@ export function newElement<T extends OpenDrawElementType>(
       }) as ElementOf<T>
     case 'frame':
       return newFrameElement(opts) as ElementOf<T>
+    case 'stickynote':
+      return newStickyNoteElement(opts) as ElementOf<T>
   }
   // Unreachable for the closed OpenDrawElementType union; the guard keeps the
   // generic dispatcher total without lying about its return type.
@@ -284,6 +288,27 @@ export function newFrameElement(opts: NewFrameOptions): ElementOf<'frame'> {
   } as ElementOf<'frame'>
 }
 
+/**
+ * A sticky note: always filled solid with never-transparent ink and paper
+ * (Excalidraw's normalizeStickyNoteStyle). Like every tool, the creation
+ * draft starts at its true size; the editor applies the click default and
+ * the minimum on release.
+ */
+export function newStickyNoteElement(
+  opts: NewElementOptions & { baseHeight?: number; created?: number | null },
+): ElementOf<'stickynote'> {
+  const base = baseElement('stickynote', opts)
+  return {
+    ...base,
+    strokeColor: stickyNoteColor('strokeColor', opts.style?.strokeColor ?? DEFAULT_STICKY_NOTE_STROKE),
+    backgroundColor: stickyNoteColor('backgroundColor', opts.style?.backgroundColor ?? DEFAULT_STICKY_NOTE_BG),
+    fillStyle: 'solid',
+    roundness: opts.roundness ?? 'round',
+    baseHeight: opts.baseHeight ?? base.height,
+    created: opts.created === undefined ? Date.now() : opts.created,
+  } as ElementOf<'stickynote'>
+}
+
 /** The style payload a selection panel reads back from an element. */
 export function elementStyleOf(element: OpenDrawElement): ElementStyle {
   return {
@@ -303,7 +328,7 @@ export function stylePayloadOf(element: OpenDrawElement): StylePayload {
   if (element.type === 'text') {
     payload.textStyle = textStyleOf(element)
   }
-  if (element.type === 'rectangle' || element.type === 'diamond' || element.type === 'line') {
+  if (element.type === 'rectangle' || element.type === 'diamond' || element.type === 'line' || element.type === 'stickynote') {
     payload.roundness = element.roundness ?? null
   }
   return payload

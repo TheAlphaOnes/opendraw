@@ -7,6 +7,7 @@
  * stable — accumulated floating point never compounds mid-drag.
  */
 
+import { STICKY_NOTE_MIN_SIZE } from '../elements/stickyNote.js'
 import { rotatePoint } from '../geometry/points.js'
 import type {
   HandleDirection,
@@ -156,7 +157,13 @@ export function resizeSingleElement(
 
   // Text never flips through zero (Excalidraw resizes text by its font,
   // never a mirror); every other element keeps the drag's sign.
-  const dim = original.type === 'text' ? withMinSize : ((size: number) => size)
+  // A note never flips nor shrinks under its 75px floor.
+  const dim =
+    original.type === 'text'
+      ? withMinSize
+      : original.type === 'stickynote'
+        ? (size: number) => Math.max(size, STICKY_NOTE_MIN_SIZE)
+        : (size: number) => size
 
   if (handle === 'nw') {
     width = dim(right - local.x)
@@ -188,7 +195,10 @@ export function resizeSingleElement(
 
   // Shift keeps the aspect ratio — on magnitudes, so a corner dragged
   // through the opposite edge keeps its flip direction.
-  if (modifiers.shift && isCorner(handle) && original.width > 0 && original.height > 0) {
+  // A note's corners keep its proportions unless Shift frees them
+  // (Excalidraw's "hold Shift to resize freely").
+  const proportional = original.type === 'stickynote' ? !modifiers.shift : modifiers.shift
+  if (proportional && isCorner(handle) && original.width > 0 && original.height > 0) {
     const scale = Math.max(Math.abs(width) / original.width, Math.abs(height) / original.height)
     width = (width < 0 ? -1 : 1) * original.width * scale
     height = (height < 0 ? -1 : 1) * original.height * scale
@@ -220,6 +230,13 @@ export function resizeSingleElement(
     y: sceneCenter.y - nextHeight / 2,
     width: nextWidth,
     height: nextHeight,
+  }
+
+  // A note's base height follows height-changing gestures; a width-only
+  // drag keeps it, so the content correction stays (getStickyNoteResizeIntent).
+  if (original.type === 'stickynote') {
+    const changesHeight = (proportional && isCorner(handle)) || handle.includes('n') || handle.includes('s')
+    patch.baseHeight = changesHeight ? nextHeight : original.baseHeight
   }
 
   // Polylines and strokes rescale by the SIGNED ratios around the original

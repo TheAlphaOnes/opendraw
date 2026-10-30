@@ -36,6 +36,7 @@ export const TOOL_GROUPS: readonly (readonly ToolDefinition[])[] = [
   [
     { tool: 'freedraw', icon: 'freedraw', name: 'Freedraw', keys: ['p', 'x', '7'] },
     { tool: 'text', icon: 'text', name: 'Text', keys: ['t', '8'] },
+    { tool: 'stickynote', icon: 'stickyNoteTool', name: 'Sticky note', keys: ['n'] },
     { tool: 'image', icon: 'imageTool', name: 'Image', keys: ['9'], opensPicker: true },
     { tool: 'eraser', icon: 'eraser', name: 'Eraser', keys: ['e', '0'] },
   ],

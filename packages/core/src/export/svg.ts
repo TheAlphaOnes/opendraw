@@ -13,6 +13,14 @@ import {
   getFreedrawOutline,
   outlineCommands,
 } from '../render/renderScene.js'
+import { FRAME_NAME_STYLE, frameTitle } from '../elements/frames.js'
+import {
+  STICKY_NOTE_FOOTER,
+  STICKY_NOTE_SHADOW_OPACITY,
+  stickyNoteFooter,
+  stickyNotePathCommands,
+  stickyNoteSvgPath,
+} from '../elements/stickyNote.js'
 import { themeColor } from '../render/theme.js'
 import type { Drawable, Op } from 'roughjs/bin/core.js'
 import type { ThemeName, OpenDrawElement, OpenDrawFreedrawElement, OpenDrawTextElement } from '../types.js'
@@ -181,9 +189,22 @@ function elementToSvg(element: OpenDrawElement, dark: boolean, background: strin
       break
     }
     case 'frame': {
-      const ink = dark ? '#5c5c5c' : '#a0a0a0'
-      body += `<rect x="0.5" y="0.5" width="${formatNumber(Math.max(0, element.width - 1))}" height="${formatNumber(Math.max(0, element.height - 1))}" fill="none" stroke="${ink}" stroke-width="1" stroke-dasharray="8 6"/>`
-      body += `<text x="0" y="${formatNumber(-6)}" font-family="sans-serif" font-size="12" fill="${ink}">${escapeXml(element.name)}</text>`
+      // FRAME_STYLE: a thin rounded outline and a 14px name above it.
+      const stroke = themeColor('#bbbbbb', dark)
+      const name = dark ? '#7a7a7a' : '#999999'
+      body += `<rect x="0" y="0" width="${formatNumber(element.width)}" height="${formatNumber(element.height)}" rx="8" ry="8" fill="none" stroke="${stroke}" stroke-width="2"/>`
+      body += `<text x="0" y="${formatNumber(-6)}" font-family="${escapeXml(FRAME_NAME_STYLE.fontFamily)}" font-size="${FRAME_NAME_STYLE.fontSize}" fill="${name}">${escapeXml(frameTitle(element))}</text>`
+      break
+    }
+    case 'stickynote': {
+      const shadow = stickyNoteSvgPath(stickyNotePathCommands(element, { shadow: true }))
+      const paper = stickyNoteSvgPath(stickyNotePathCommands(element))
+      body += `<path d="${shadow}" fill="rgba(0, 0, 0, ${STICKY_NOTE_SHADOW_OPACITY})"/>`
+      body += `<path d="${paper}" fill="${themeColor(element.backgroundColor, dark)}"/>`
+      const footer = stickyNoteFooter(element)
+      if (footer) {
+        body += `<text x="${formatNumber(footer.x)}" y="${formatNumber(footer.y)}" text-anchor="end" font-family="${escapeXml(STICKY_NOTE_FOOTER.fontFamily)}" font-size="${STICKY_NOTE_FOOTER.fontSize}" fill="${themeColor(element.strokeColor, dark)}">${escapeXml(footer.text)}</text>`
+      }
       break
     }
   }

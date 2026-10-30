@@ -34,6 +34,7 @@ import type { Bounds, OpenDrawAppState, OpenDrawElement, OpenDrawFrameElement, O
 import { applyViewportTransform } from '../viewport.js'
 import type { CanvasSize } from './renderScene.js'
 import { cornerRadius, renderElementShape } from './renderScene.js'
+import { stickyNoteCornerRadius } from '../elements/stickyNote.js'
 import { themeColor, UI } from './theme.js'
 
 export interface OverlayRenderInput {
@@ -570,6 +571,8 @@ function drawBindingHighlight(
     }
   } else if (shape.type === 'rectangle' && shape.roundness === 'round') {
     appendRoundRect(ctx, 0, 0, width, height, cornerRadius(Math.min(width, height), 'rectangle'))
+  } else if (shape.type === 'stickynote') {
+    appendRoundRect(ctx, 0, 0, width, height, stickyNoteCornerRadius(shape))
   } else {
     // Sharp rectangle, or the text element's frame box.
     ctx.rect(0, 0, width, height)

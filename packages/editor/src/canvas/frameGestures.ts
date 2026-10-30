@@ -19,7 +19,18 @@ import type { CanvasRuntime } from './runtime.js'
  */
 
 /** Tools whose new elements join the frame under the pointer (isEligibleFrameChildType). */
-const FRAME_CHILD_TOOLS = new Set(['rectangle', 'diamond', 'ellipse', 'arrow', 'line', 'freedraw', 'text', 'image', 'frame'])
+const FRAME_CHILD_TOOLS = new Set([
+  'rectangle',
+  'stickynote',
+  'diamond',
+  'ellipse',
+  'arrow',
+  'line',
+  'freedraw',
+  'text',
+  'image',
+  'frame',
+])
 
 /**
  * The topmost element a press at the point grabs. A frame's name label sits

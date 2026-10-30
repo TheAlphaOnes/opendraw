@@ -26,12 +26,14 @@ import { rotatePoint, unrotatePoint } from '../geometry/points.js'
 import { isLinearElement } from './factories.js'
 import { isPointInsideElement } from './hitTest.js'
 import type { ElementPatch } from './mutate.js'
+import { stickyNoteCornerRadius } from './stickyNote.js'
 import type {
   BindMode,
   FixedPoint,
   OpenDrawBinding,
   OpenDrawDiamondElement,
   OpenDrawEllipseElement,
+  OpenDrawStickyNoteElement,
   OpenDrawElement,
   OpenDrawLinearElement,
   OpenDrawRectangleElement,
@@ -44,6 +46,7 @@ export type OpenDrawBindableShape =
   | OpenDrawRectangleElement
   | OpenDrawDiamondElement
   | OpenDrawEllipseElement
+  | OpenDrawStickyNoteElement
   | OpenDrawTextElement
 
 /** Excalidraw's BASE_BINDING_GAP. */
@@ -65,6 +68,7 @@ export function isBindableShape(element: OpenDrawElement): element is OpenDrawBi
     (element.type === 'rectangle' ||
       element.type === 'diamond' ||
       element.type === 'ellipse' ||
+      element.type === 'stickynote' ||
       (element.type === 'text' && element.containerId === null))
   )
 }
@@ -222,7 +226,7 @@ function shapeDiagonals(shape: OpenDrawBindableShape): Array<[Point, Point]> {
       { x: b.x - ux, y: b.y - uy },
     ]
   }
-  const rectangular = shape.type === 'rectangle' || shape.type === 'text'
+  const rectangular = shape.type === 'rectangle' || shape.type === 'stickynote' || shape.type === 'text'
   const local: Array<[Point, Point]> = rectangular
     ? [
         [{ x: 0, y: 0 }, { x: w, y: h }],
@@ -341,7 +345,12 @@ function localOutlineCrossings(shape: OpenDrawBindableShape, a: Point, b: Point,
     return vertices.map((v, i) => segmentCrossing(a, b, v, vertices[(i + 1) % 4]!)).filter((t): t is number => t !== null)
   }
   // Rectangles (with their rounded corners) and free text frame a box.
-  const r = shape.type === 'rectangle' && shape.roundness === 'round' ? cornerRadius(Math.min(w, h), 'rectangle') : 0
+  const r =
+    shape.type === 'rectangle' && shape.roundness === 'round'
+      ? cornerRadius(Math.min(w, h), 'rectangle')
+      : shape.type === 'stickynote'
+        ? stickyNoteCornerRadius(shape)
+        : 0
   const R = r + gap
   const [x1, y1, x2, y2] = [-gap, -gap, w + gap, h + gap]
   const edges: Array<[Point, Point]> = [

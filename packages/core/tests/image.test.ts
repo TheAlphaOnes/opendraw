@@ -114,10 +114,10 @@ describe('image & frame SVG export', () => {
     expect(svg).toContain('width="40" height="30"')
   })
 
-  it('renders frames as a dashed rect with the name label', () => {
+  it("renders frames in excalidraw's style with the name label", () => {
     const frame = newFrameElement({ x: 0, y: 0, width: 120, height: 90, name: 'Group' })
     const svg = exportToSvg([frame], '#ffffff')
-    expect(svg).toContain('stroke-dasharray="8 6"')
+    expect(svg).toContain('rx="8"')
     expect(svg).toContain('>Group</text>')
   })
 })

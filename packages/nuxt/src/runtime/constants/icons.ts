@@ -71,6 +71,7 @@ import {
   Slash,
   Spline,
   Square,
+  StickyNote,
   Sun,
   Trash2,
   Triangle,
@@ -175,4 +176,5 @@ export const iconRegistry: Record<IconName, Component> = {
   arrowSharp: MoveUpRight,
   arrowRound: Spline,
   eyeDropper: Pipette,
+  stickyNoteTool: StickyNote,
 }

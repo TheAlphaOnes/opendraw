@@ -5,6 +5,7 @@ import {
   findElementAt,
   frameNameAt,
   hitThreshold,
+  isStickyNote,
   isTextContainer,
   newTextElement,
   outermostGroupId,
@@ -58,15 +59,19 @@ export function editContainerText(rt: CanvasRuntime, container: TextContainer): 
     return
   }
   const { style, textStyle } = ctx.appState
-  const label = newTextElement({
+  const note = isStickyNote(container)
+  const created = newTextElement({
     x: container.x,
     y: container.y,
     text: '',
     containerId: container.id,
     verticalAlign: 'middle',
-    style,
+    // A note's ink is its label's color; its font size is the fit ceiling.
+    style: note ? { ...style, strokeColor: container.strokeColor } : style,
     textStyle: { ...textStyle, textAlign: 'center' },
+    frameId: container.frameId,
   })
+  const label = note ? { ...created, baseFontSize: textStyle.fontSize } : created
   ctx.doc.addElement(label, { after: container.id })
   ctx.setEditing(label.id)
 }

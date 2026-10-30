@@ -1,6 +1,15 @@
-import { isFreedrawElement, isLinearElement, rebindAfterDrag } from '@opendraw/core'
+import type { OpenDrawStickyNoteElement, Point } from '@opendraw/core'
+import {
+  isFreedrawElement,
+  isLinearElement,
+  isStickyNote,
+  rebindAfterDrag,
+  stickyNoteCreationRect,
+  stickyNoteMinSize,
+} from '@opendraw/core'
 
 import { clearFrameHighlights, dropFrameAt } from './frameGestures.js'
+import { editContainerText } from './textEntry.js'
 import type { LaserTrail } from './laserTrail.js'
 import type { CanvasRuntime } from './runtime.js'
 
@@ -33,6 +42,10 @@ export function onCanvasPointerUp(rt: CanvasRuntime, laser: LaserTrail, event: P
         // double-click ends it.
         ctx.doc.forceUpdateElement(el.id, { points: [{ x: 0, y: 0 }, { x: 0, y: 0 }] })
         rt.interaction.value = { kind: 'draftingLinear', elementId: el.id, committedCount: 1 }
+        return
+      }
+      if (isStickyNote(el)) {
+        finishStickyNote(rt, el, current.originScene, event)
         return
       }
       if (BOX_TOOLS.has(el.type) && el.width < 2 && el.height < 2) {
@@ -123,6 +136,42 @@ export function onCanvasPointerUp(rt: CanvasRuntime, laser: LaserTrail, event: P
       return
     default:
       return
+  }
+}
+
+/** Excalidraw's DRAGGING_THRESHOLD, in screen px: below it a press is a click. */
+const DRAG_THRESHOLD_PX = 10
+
+/**
+ * Releasing the note tool (App.tsx's stickynote pointer-up): a click places
+ * the default 250px square centered on the press, a drag keeps its size
+ * (square unless Shift) at least one line tall. Then — unless the tool is
+ * locked — the note is selected and its label opens for typing.
+ */
+function finishStickyNote(
+  rt: CanvasRuntime,
+  note: OpenDrawStickyNoteElement,
+  origin: Point,
+  event: PointerEvent,
+): void {
+  const { ctx } = rt
+  const zoom = ctx.viewport.zoom
+  const isClick = note.width * zoom < DRAG_THRESHOLD_PX && note.height * zoom < DRAG_THRESHOLD_PX
+  const { fontSize, fontFamily } = ctx.appState.textStyle
+  const rect = stickyNoteCreationRect(note, origin, {
+    isClick,
+    minSize: stickyNoteMinSize(fontSize, fontFamily),
+    keepSquare: !event.shiftKey,
+  })
+  ctx.doc.forceUpdateElement(note.id, { ...rect, baseHeight: rect.height })
+  ctx.doc.endStep()
+  if (ctx.toolLocked) {
+    return
+  }
+  ctx.finishToolUse()
+  const placed = ctx.doc.getElement(note.id)
+  if (placed && isStickyNote(placed)) {
+    editContainerText(rt, placed)
   }
 }
 

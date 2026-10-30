@@ -10,6 +10,10 @@ export interface PanelTargets {
   visible: boolean
   stroke: boolean
   background: boolean
+  /** Fill patterns — paper (a sticky note) has a background but no fill style. */
+  fill: boolean
+  /** Only sticky notes: "Text color" and the note palette (their own color domain). */
+  notes: boolean
   /** Stroke width + stroke style. */
   strokeShape: boolean
   sloppiness: boolean
@@ -22,6 +26,8 @@ const HIDDEN: PanelTargets = {
   visible: false,
   stroke: false,
   background: false,
+  fill: false,
+  notes: false,
   strokeShape: false,
   sloppiness: false,
   corners: false,
@@ -31,17 +37,18 @@ const HIDDEN: PanelTargets = {
 
 /** Tools whose next element the island can pre-style. */
 const STYLED_TOOLS: ReadonlySet<ToolId> = new Set([
-  'rectangle', 'diamond', 'ellipse', 'arrow', 'line', 'freedraw', 'text', 'frame',
+  'rectangle', 'diamond', 'ellipse', 'arrow', 'line', 'freedraw', 'text', 'frame', 'stickynote',
 ])
 
+const BACKGROUNDED: ReadonlySet<ElementType> = new Set(['rectangle', 'stickynote', 'diamond', 'ellipse', 'line', 'freedraw'])
 const FILLABLE: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond', 'ellipse', 'line', 'freedraw'])
 const STROKE_SHAPED: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond', 'ellipse', 'arrow', 'line', 'freedraw'])
-const SLOPPY: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond', 'ellipse', 'arrow', 'line'])
+const SLOPPY: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond', 'ellipse', 'arrow', 'line', 'stickynote'])
 /** Excalidraw's "Edges" control. Arrows have their own "Arrow type". */
-const CORNERED: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond', 'line'])
+const CORNERED: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond', 'line', 'stickynote'])
 /** Images carry no ink of their own — only opacity applies. */
 const INKED: ReadonlySet<ElementType> = new Set([
-  'rectangle', 'diamond', 'ellipse', 'arrow', 'line', 'freedraw', 'text', 'frame',
+  'rectangle', 'diamond', 'ellipse', 'arrow', 'line', 'freedraw', 'text', 'frame', 'stickynote',
 ])
 
 export function panelTargets(
@@ -65,11 +72,14 @@ export function panelTargets(
   return {
     visible: true,
     stroke: any(INKED),
-    background: any(FILLABLE),
+    background: any(BACKGROUNDED),
+    fill: any(FILLABLE),
+    notes: types.every((type) => type === 'stickynote' || type === 'text') && types.includes('stickynote'),
     strokeShape: any(STROKE_SHAPED),
     sloppiness: any(SLOPPY),
     corners: any(CORNERED),
     arrowheads: types.includes('arrow'),
-    text: types.includes('text'),
+    // A note's font size is its label's fit ceiling.
+    text: types.includes('text') || types.includes('stickynote'),
   }
 }

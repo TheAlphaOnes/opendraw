@@ -2,7 +2,7 @@
  * Toolbar e2e — the top-center tool island must match Excalidraw's
  * arrangement: the full tool set, in Excalidraw's order, split into the
  * same groups (tool lock | hand+selection | shapes |
- * freedraw/text/image/eraser | frame/laser).
+ * freedraw/text/sticky note/image/eraser | frame/laser).
  */
 import type { Page } from '@playwright/test'
 
@@ -22,6 +22,7 @@ const TOOL_ORDER = [
   'Line (6)',
   'Freedraw (P)',
   'Text (T)',
+  'Sticky note (N)',
   'Image (9)',
   'Eraser (E)',
   'Frame (F)',
@@ -33,7 +34,7 @@ const TOOL_GROUPS: ReadonlyArray<readonly string[]> = [
   [TOOL_LOCK],
   ['Hand (H)', 'Selection (1)'],
   ['Rectangle (2)', 'Diamond (3)', 'Ellipse (4)', 'Arrow (5)', 'Line (6)'],
-  ['Freedraw (P)', 'Text (T)', 'Image (9)', 'Eraser (E)'],
+  ['Freedraw (P)', 'Text (T)', 'Sticky note (N)', 'Image (9)', 'Eraser (E)'],
   ['Frame (F)', 'Laser (K)'],
 ]
 
