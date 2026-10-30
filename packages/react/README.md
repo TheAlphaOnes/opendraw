@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>Hand-drawn diagrams for React.</strong><br>
-  An Excalidraw-style whiteboard as one component: the tools, shortcuts and feel your users already know.
+  A hand-drawn whiteboard as one component: sketch, connect and share ideas right inside your app.
 </p>
 
 <p align="center">
@@ -18,7 +18,7 @@
   <img src="https://cdn.jsdelivr.net/gh/TheAlphaOnes/opendraw@master/docs/assets/screenshot.png" alt="The opendraw editor: a hand-drawn flow of three shapes joined by arrows, and a sticky note" width="860">
 </p>
 
-`@opendrawjs/react` renders the opendraw editor in React: the hand-drawn canvas with every Excalidraw gesture and shortcut, a toolbar, zoom and history controls, a theme toggle and autosave. It is a thin layer over the framework-free [`@opendrawjs/editor`](https://www.npmjs.com/package/@opendrawjs/editor), so the drawing behavior is identical to the Vue and Svelte versions.
+`@opendrawjs/react` renders the opendraw editor in React: the hand-drawn canvas with every gesture and keyboard shortcut, a toolbar, zoom and history controls, a theme toggle and autosave. It is a thin layer over the framework-free [`@opendrawjs/editor`](https://www.npmjs.com/package/@opendrawjs/editor), so the drawing behavior is identical to the Vue and Svelte versions.
 
 ## Install
 
@@ -182,7 +182,7 @@ On Windows and Linux, <kbd>Ctrl</kbd> replaces <kbd>⌘</kbd>.
 
 | Package | |
 | --- | --- |
-| [`@opendrawjs/nuxt`](https://www.npmjs.com/package/@opendrawjs/nuxt) | Nuxt and Vue, with the full Excalidraw-style UI (properties panel, menus, many drawings). |
+| [`@opendrawjs/nuxt`](https://www.npmjs.com/package/@opendrawjs/nuxt) | Nuxt and Vue, with the full editor UI (properties panel, menus, many drawings). |
 | [`@opendrawjs/svelte`](https://www.npmjs.com/package/@opendrawjs/svelte) | The same editor for Svelte 5. |
 | [`@opendrawjs/editor`](https://www.npmjs.com/package/@opendrawjs/editor) | The framework-free editor. |
 | [`@opendrawjs/core`](https://www.npmjs.com/package/@opendrawjs/core) | The engine: element model, history, rendering and export. |
@@ -192,7 +192,7 @@ On Windows and Linux, <kbd>Ctrl</kbd> replaces <kbd>⌘</kbd>.
 - [Source code and full documentation](https://github.com/TheAlphaOnes/opendraw#readme)
 - [Report a bug or request a feature](https://github.com/TheAlphaOnes/opendraw/issues)
 
-opendraw is an independent implementation, not affiliated with the Excalidraw team.
+opendraw is an independent project, inspired by Excalidraw and not affiliated with it.
 
 ## License
 

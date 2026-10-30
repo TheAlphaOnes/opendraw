@@ -5,7 +5,7 @@ import type { DocsNavGroup } from '../components/docs/DocsShell.vue'
 const base = useRuntimeConfig().public.siteUrl as string
 const DOCS_TITLE = 'Docs — opendraw: add a hand-drawn whiteboard to Vue, Nuxt, React or Svelte'
 const DOCS_DESCRIPTION =
-  'Install opendraw and embed an Excalidraw-style whiteboard: components, props and events, composables, custom UI, theming, React and Svelte, and the framework-free editor API.'
+  'Install opendraw and embed a hand-drawn whiteboard: components, props and events, composables, custom UI, theming, React and Svelte, and the framework-free editor API.'
 
 useSiteSeo({
   path: '/docs',

@@ -51,7 +51,7 @@ persistence.dispose()  // flushes the last save`
     <p>
       The engine has no framework or DOM requirement. <code>OpenDrawDocument</code> holds the elements, the app state
       and history; every change goes through it, so undo, redo and change events always agree. Elements are plain,
-      immutable objects — the same shapes Excalidraw uses (rectangle, diamond, ellipse, arrow, line, freedraw, text,
+      immutable objects — the shapes of the whiteboard (rectangle, diamond, ellipse, arrow, line, freedraw, text,
       image, frame, sticky note).
     </p>
     <DocsCode title="core.ts" :code="CORE" />

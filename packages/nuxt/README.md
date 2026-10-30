@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>Hand-drawn diagrams for Nuxt and Vue.</strong><br>
-  An Excalidraw-style whiteboard as one native component: the tools, shortcuts and feel your users already know.
+  A hand-drawn whiteboard as one native component: sketch, connect and share ideas right inside your app.
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 ## Why opendraw
 
 - **Drop-in.** `<OpenDraw />` is the whole editor: canvas, toolbar, properties panel, color picker, menus, context menu, help and autosave.
-- **Familiar.** Excalidraw's tools, keyboard map, rough.js look and layout, so there is nothing new to learn.
+- **Familiar.** The tools, shortcuts and sketchy rough.js look people know from modern whiteboards, so there is nothing new to learn.
 - **Native Vue.** No iframe and no React runtime inside your app. State comes back as computed refs, and every command is undoable.
 - **Headless when you need it.** Render only the canvas and build your own chrome on the same API.
 - **SSR-safe.** Works with Nuxt server rendering and static generation; saved drawings load after hydration.
@@ -31,7 +31,7 @@
 
 | | |
 | --- | --- |
-| **Tools** | Selection, hand, rectangle, diamond, ellipse, arrow, line, freedraw, text, sticky note, image, eraser, frame and laser pointer, with Excalidraw's letter and number keys and the tool lock (<kbd>Q</kbd>). |
+| **Tools** | Selection, hand, rectangle, diamond, ellipse, arrow, line, freedraw, text, sticky note, image, eraser, frame and laser pointer, with letter and number shortcuts and the tool lock (<kbd>Q</kbd>). |
 | **Arrows that connect** | Lines and arrows bind to shapes and follow them. Arrows come sharp, curved or elbowed; elbow arrows route in right angles around the shapes they connect. |
 | **Text** | Free text and labels inside shapes, edited in place. Sticky notes fit their text. |
 | **Frames** | Group content into frames that carry and clip their children. |
@@ -39,7 +39,7 @@
 | **Styling** | A color picker with shades, hex input and eyedropper; fill, stroke, sloppiness, edges, arrowheads, fonts and opacity. |
 | **Themes** | Light, dark or the system setting. Dark mode inverts element ink; your canvas background stays as chosen. |
 | **Files** | Autosave to `localStorage`, many named drawings with a drawings sidebar, open/save `.opendraw` files, export PNG and SVG. |
-| **Responsive** | A desktop layout like excalidraw.com; on phones the toolbar moves to the bottom and the properties panel becomes a sheet. |
+| **Responsive** | A roomy desktop layout; on phones the toolbar moves to the bottom and the properties panel becomes a sheet. |
 | **Accessible** | Real buttons and menus, labelled controls, keyboard navigation in every popover, reduced-motion support. |
 
 ## Install
@@ -276,7 +276,7 @@ On Windows and Linux, <kbd>Ctrl</kbd> replaces <kbd>⌘</kbd>.
 - [Source code and full documentation](https://github.com/TheAlphaOnes/opendraw#readme)
 - [Report a bug or request a feature](https://github.com/TheAlphaOnes/opendraw/issues)
 
-opendraw is an independent implementation, not affiliated with the Excalidraw team. It builds on [rough.js](https://github.com/rough-stuff/rough), [perfect-freehand](https://github.com/steveruizok/perfect-freehand) and [Lucide](https://lucide.dev) icons.
+opendraw is an independent project, inspired by Excalidraw and not affiliated with it. It builds on [rough.js](https://github.com/rough-stuff/rough), [perfect-freehand](https://github.com/steveruizok/perfect-freehand) and [Lucide](https://lucide.dev) icons.
 
 ## License
 

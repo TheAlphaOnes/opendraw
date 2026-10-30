@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>The framework-free opendraw editor.</strong><br>
-  Everything interactive about an Excalidraw-style whiteboard, with no UI framework.
+  Everything interactive about a hand-drawn whiteboard, with no UI framework.
 </p>
 
 <p align="center">

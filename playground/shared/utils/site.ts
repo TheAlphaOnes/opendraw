@@ -9,7 +9,7 @@ export const SITE = {
   title: 'opendraw — hand-drawn diagrams for Vue, Nuxt, React & Svelte',
   /** ~155 characters: what a search result shows under the title. */
   description:
-    'Free, open-source Excalidraw-style whiteboard for your app. Draw hand-drawn diagrams with shapes, arrows, text and sticky notes — one component for Vue, Nuxt, React and Svelte.',
+    'Free, open-source hand-drawn whiteboard for your app. Draw hand-drawn diagrams with shapes, arrows, text and sticky notes — one component for Vue, Nuxt, React and Svelte.',
   tagline: 'Hand-drawn diagrams, right in your app.',
   locale: 'en_US',
   author: 'Vishnu',
@@ -20,7 +20,6 @@ export const SITE = {
   npm: 'https://www.npmjs.com/package/@opendrawjs/nuxt',
   license: 'https://opensource.org/licenses/MIT',
   keywords: [
-    'excalidraw alternative',
     'whiteboard component',
     'hand-drawn diagrams',
     'vue whiteboard',
@@ -38,7 +37,7 @@ export const SITE = {
     'Light and dark themes',
     'Many named drawings saved in the browser',
     'Export to PNG, SVG and .opendraw files',
-    'Excalidraw keyboard shortcuts',
+    'Keyboard shortcuts for every tool and command',
     'Touch support with pinch to zoom',
     'Works with Vue, Nuxt, React and Svelte',
   ],

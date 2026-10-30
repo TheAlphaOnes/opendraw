@@ -8,14 +8,14 @@ export default defineEventHandler((event) => {
   setHeader(event, 'content-type', 'text/plain; charset=utf-8')
   return `# ${SITE.name}
 
-> ${SITE.name} is a free, open-source (MIT) Excalidraw-style whiteboard that embeds in web apps as a native component for Vue, Nuxt, React and Svelte. Users draw hand-drawn diagrams with shapes, arrows, text and sticky notes; developers add it with one component and control it through a typed API.
+> ${SITE.name} is a free, open-source (MIT) hand-drawn whiteboard that embeds in web apps as a native component for Vue, Nuxt, React and Svelte. Users draw hand-drawn diagrams with shapes, arrows, text and sticky notes; developers add it with one component and control it through a typed API.
 
 Key facts:
 
 - Install for Nuxt or Vue: \`npm install @opendrawjs/nuxt\`, add \`modules: ['@opendrawjs/nuxt']\` to nuxt.config, then render \`<OpenDraw />\` in a container with a height. Plain Vue 3 imports from \`@opendrawjs/nuxt/vue\`.
 - Install for React: \`npm install @opendrawjs/react\`, \`import '@opendrawjs/react/styles.css'\` and render \`<OpenDraw />\`.
 - Install for Svelte 5: \`npm install @opendrawjs/svelte\`, \`import '@opendrawjs/svelte/styles.css'\` and render \`<OpenDraw />\`.
-- It follows Excalidraw's behavior and keyboard shortcuts, but it is an independent implementation, not a fork, and not affiliated with Excalidraw. It renders natively (no iframe, no React inside Vue apps).
+- It renders natively in each framework (no iframe, no React inside Vue apps), with keyboard shortcuts for every tool. It is an independent project, inspired by Excalidraw and not affiliated with it.
 - Drawings autosave to the browser's localStorage. Scenes export to PNG, SVG and .opendraw JSON files.
 - Written in TypeScript. Current version: ${SITE.version}. Author: ${SITE.author}. License: MIT.
 

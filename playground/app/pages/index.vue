@@ -79,7 +79,7 @@ useHead({
   noscript: [
     {
       tagPosition: 'bodyOpen',
-      innerHTML: `<p style="margin:16px;padding:12px 16px;border-radius:8px;background:#fff4ec;font:15px/1.5 system-ui,sans-serif;color:#1b1b1f">${SITE.name} is an Excalidraw-style whiteboard and needs JavaScript to draw. Read the <a href="/docs">documentation</a> or the <a href="${SITE.repository}">source on GitHub</a>.</p>`,
+      innerHTML: `<p style="margin:16px;padding:12px 16px;border-radius:8px;background:#fff4ec;font:15px/1.5 system-ui,sans-serif;color:#1b1b1f">${SITE.name} is a hand-drawn whiteboard and needs JavaScript to draw. Read the <a href="/docs">documentation</a> or the <a href="${SITE.repository}">source on GitHub</a>.</p>`,
     },
   ],
 })

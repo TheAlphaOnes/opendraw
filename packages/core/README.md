@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>The opendraw engine.</strong><br>
-  The element model, scene document, geometry, rendering and export behind an Excalidraw-style whiteboard.
+  The element model, scene document, geometry, rendering and export behind the opendraw whiteboard.
 </p>
 
 <p align="center">
@@ -20,7 +20,7 @@
 
 | Package | |
 | --- | --- |
-| [`@opendrawjs/nuxt`](https://www.npmjs.com/package/@opendrawjs/nuxt) | Nuxt and Vue, with the full Excalidraw-style UI. |
+| [`@opendrawjs/nuxt`](https://www.npmjs.com/package/@opendrawjs/nuxt) | Nuxt and Vue, with the full editor UI. |
 | [`@opendrawjs/react`](https://www.npmjs.com/package/@opendrawjs/react) | React. |
 | [`@opendrawjs/svelte`](https://www.npmjs.com/package/@opendrawjs/svelte) | Svelte 5. |
 | [`@opendrawjs/editor`](https://www.npmjs.com/package/@opendrawjs/editor) | The interactive editor without a UI framework. |
@@ -96,7 +96,7 @@ doc.undo()
 - [Source code and full documentation](https://github.com/TheAlphaOnes/opendraw#readme)
 - [Report a bug or request a feature](https://github.com/TheAlphaOnes/opendraw/issues)
 
-opendraw is an independent implementation, not affiliated with the Excalidraw team. It builds on [rough.js](https://github.com/rough-stuff/rough) and [perfect-freehand](https://github.com/steveruizok/perfect-freehand).
+opendraw is an independent project, inspired by Excalidraw and not affiliated with it. It builds on [rough.js](https://github.com/rough-stuff/rough) and [perfect-freehand](https://github.com/steveruizok/perfect-freehand).
 
 ## License
 

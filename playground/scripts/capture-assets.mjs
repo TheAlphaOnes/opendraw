@@ -153,7 +153,7 @@ async function captureOg(browser) {
       file: 'og.png',
       eyebrow: 'Open source · MIT',
       title: 'Hand-drawn diagrams, right in your app',
-      subtitle: 'An Excalidraw-style whiteboard as one component.',
+      subtitle: 'Sketch, connect and share ideas — one component.',
       chips: ['Vue & Nuxt', 'React', 'Svelte', 'TypeScript'],
     },
     {

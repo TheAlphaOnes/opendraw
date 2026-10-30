@@ -7,7 +7,7 @@
 
 <p align="center">
   <strong>Hand-drawn diagrams for Vue, Nuxt, React &amp; Svelte.</strong><br>
-  An Excalidraw-style whiteboard as one component — the tools, shortcuts and feel you already know.
+  A hand-drawn whiteboard as one component — sketch, connect and share ideas right inside your app.
 </p>
 
 <p align="center">
@@ -37,10 +37,10 @@
 
 ## Why opendraw
 
-Excalidraw set the bar for how a whiteboard should feel. opendraw brings that feel to Vue, Nuxt, React and Svelte as a native component — no iframe, no foreign runtime — with Excalidraw's behavior as its contract: the same element model, selection and binding semantics, history granularity and keyboard map.
+opendraw is a hand-drawn whiteboard that lives inside your app as a native component for Vue, Nuxt, React and Svelte — no iframe, no foreign runtime. Drawing, selecting, connecting and undoing work the way people expect from a modern whiteboard, with a keyboard shortcut for everything.
 
 - **Drop-in** — `<OpenDraw />` is the whole editor: canvas, toolbar, properties panel, menus, help and autosave.
-- **Familiar** — Excalidraw's tools and shortcuts, its rough.js look and its layout, so users already know it.
+- **Familiar** — the tools, shortcuts and sketchy rough.js look people know from modern whiteboards, so there is nothing to learn.
 - **Headless when you need it** — render only the canvas and build your own chrome on the same reactive API.
 - **Framework-free core** — the engine and the interactive editor run without any UI framework; the Vue, React and Svelte packages are thin adapters over it.
 
@@ -48,15 +48,15 @@ Excalidraw set the bar for how a whiteboard should feel. opendraw brings that fe
 
 | | |
 | --- | --- |
-| **Tools** | Selection, hand, rectangle, diamond, ellipse, arrow, line, freedraw, text, sticky note, image, eraser, frame and laser pointer — with Excalidraw's letter and number keys and the tool lock (<kbd>Q</kbd>). |
+| **Tools** | Selection, hand, rectangle, diamond, ellipse, arrow, line, freedraw, text, sticky note, image, eraser, frame and laser pointer — with letter and number shortcuts and the tool lock (<kbd>Q</kbd>). |
 | **Arrows that connect** | Lines and arrows bind to shapes and follow them, with midpoint snapping and inside/outside binding. Arrows come sharp, curved or elbowed: elbow arrows route in right angles around the shapes they connect, and <kbd>A</kbd> cycles the type while the arrow tool is armed. |
 | **Text everywhere** | Free text and labels inside shapes, edited in place; sticky notes fit their text by shrinking the font before growing. |
 | **Frames** | Group content into frames that carry and clip their children; drop elements in or out. |
 | **Editing** | Groups, align &amp; distribute, flip, layers, copy/paste styles, Alt-drag duplicate, lock, a context menu and gesture-level undo/redo. |
-| **Styling** | Excalidraw's color picker with shades, hex input and eyedropper; fill, stroke, sloppiness, edges, arrowheads, fonts and opacity. |
+| **Styling** | A color picker with shades, hex input and eyedropper; fill, stroke, sloppiness, edges, arrowheads, fonts and opacity. |
 | **Themes** | Light and dark; dark mode inverts element ink while your canvas background stays exactly as chosen. |
 | **Files** | Autosave to `localStorage`, many named drawings in one browser (a drawings sidebar to create, open, rename, duplicate, delete and search them), open/save `.opendraw` files, export PNG and SVG. |
-| **Responsive** | Desktop layout like excalidraw.com; on phones the toolbar moves to the bottom and the properties panel becomes a sheet. |
+| **Responsive** | A roomy desktop layout; on phones the toolbar moves to the bottom and the properties panel becomes a sheet. |
 | **Accessible** | Real buttons and menus, labelled controls, keyboard navigation in every popover, reduced-motion support. |
 
 ## Quick start
@@ -246,7 +246,7 @@ export function Board() {
 
 | Package | |
 | --- | --- |
-| [`@opendrawjs/nuxt`](packages/nuxt) | The Vue/Nuxt adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `useOpenDraw()` and the full Excalidraw-style UI. |
+| [`@opendrawjs/nuxt`](packages/nuxt) | The Vue/Nuxt adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `useOpenDraw()` and the full editor UI. |
 | [`@opendrawjs/react`](packages/react) | The React adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `useOpenDrawEditor()`, `useEditorState()`. |
 | [`@opendrawjs/svelte`](packages/svelte) | The Svelte 5 adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `editorState()`. |
 | [`@opendrawjs/editor`](packages/editor) | The framework-free editor: `createEditor()`, `mountCanvas()`, tools, the action registry, persistence, and the shared `styles.css`. |
@@ -321,13 +321,13 @@ test/
   e2e/      one Playwright suite run against all three apps
 ```
 
-Contributions are welcome. Behavior follows Excalidraw: when something is ambiguous, match what Excalidraw does. Please run `pnpm test`, `pnpm typecheck` and `pnpm e2e` before opening a pull request.
+Contributions are welcome. Please run `pnpm test`, `pnpm typecheck` and `pnpm e2e` before opening a pull request.
 
 ## Acknowledgements
 
-opendraw is an independent implementation — not a fork, and not affiliated with the Excalidraw team. It stands on:
+opendraw is an independent project. It stands on:
 
-- [Excalidraw](https://github.com/excalidraw/excalidraw) — the behavioral blueprint and the style previews in the properties panel (MIT)
+- [Excalidraw](https://github.com/excalidraw/excalidraw) — inspiration, and the style previews in the properties panel (MIT); opendraw is not affiliated with it
 - [rough.js](https://github.com/rough-stuff/rough) — hand-drawn geometry (MIT)
 - [perfect-freehand](https://github.com/steveruizok/perfect-freehand) — pressure-aware strokes (MIT)
 - [Lucide](https://lucide.dev) — icons (ISC)

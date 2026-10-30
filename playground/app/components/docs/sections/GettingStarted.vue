@@ -19,14 +19,14 @@ const PAGE = `<template>
   <section id="introduction" class="doc-section">
     <h1>opendraw</h1>
     <p class="lead">
-      A hand-drawn whiteboard for Vue, Nuxt, React &amp; Svelte that looks and behaves like Excalidraw — the same tools, shortcuts,
-      binding arrows, frames, sticky notes and sketchy rough.js rendering, as one component.
+      A hand-drawn whiteboard for Vue, Nuxt, React &amp; Svelte — tools and shortcuts for everything,
+      arrows that connect, frames, sticky notes and sketchy rough.js rendering, as one component.
     </p>
     <p>opendraw ships as five packages:</p>
     <ul>
       <li><code>@opendrawjs/core</code> — the engine: element model, document &amp; history, geometry, hit testing, rendering and export. No framework code.</li>
       <li><code>@opendrawjs/editor</code> — the framework-free editor: tools, gestures, keyboard, the action registry, persistence. Mounts onto any DOM.</li>
-      <li><code>@opendrawjs/nuxt</code> — the Vue/Nuxt adapter: <code>&lt;OpenDraw&gt;</code>, <code>&lt;OpenDrawCanvas&gt;</code>, <code>useOpenDraw()</code> and the full Excalidraw-style UI.</li>
+      <li><code>@opendrawjs/nuxt</code> — the Vue/Nuxt adapter: <code>&lt;OpenDraw&gt;</code>, <code>&lt;OpenDrawCanvas&gt;</code>, <code>useOpenDraw()</code> and the full editor UI.</li>
       <li><code>@opendrawjs/react</code> and <code>@opendrawjs/svelte</code> — the React and Svelte 5 adapters.</li>
     </ul>
   </section>
@@ -42,11 +42,11 @@ const PAGE = `<template>
     <h2>Quick start</h2>
     <p>
       Drop <code>&lt;OpenDraw /&gt;</code> anywhere. It fills its container, so give the container a height. The scene
-      saves itself to <code>localStorage</code> and restores on reload, like excalidraw.com.
+      saves itself to <code>localStorage</code> and restores on reload.
     </p>
     <DocsCode title="pages/index.vue" :code="PAGE" />
     <p>
-      Press <kbd>?</kbd> inside the editor for every keyboard shortcut. Tools follow Excalidraw's keys:
+      Press <kbd>?</kbd> inside the editor for every keyboard shortcut. Every tool has a key:
       <kbd>V</kbd>/<kbd>1</kbd> select, <kbd>R</kbd> rectangle, <kbd>D</kbd> diamond, <kbd>O</kbd> ellipse,
       <kbd>A</kbd> arrow, <kbd>L</kbd> line, <kbd>P</kbd> draw, <kbd>T</kbd> text, <kbd>N</kbd> sticky note,
       <kbd>E</kbd> eraser, <kbd>F</kbd> frame, <kbd>K</kbd> laser.
