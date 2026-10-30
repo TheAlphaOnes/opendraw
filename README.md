@@ -1,50 +1,67 @@
-# opendraw
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
+    <img src="docs/assets/logo.svg" alt="opendraw" width="260" height="64">
+  </picture>
+</p>
 
-An Excalidraw-style hand-drawn canvas, built framework-free with adapters on top. Drop `<OpenDraw />` into any Nuxt app and get the full whiteboard: shapes, arrows, freehand, text, labels inside shapes, groups, alignment, selection, transforms, undo/redo, themes, and export.
+<p align="center">
+  <strong>Hand-drawn diagrams for Vue &amp; Nuxt.</strong><br>
+  An Excalidraw-style whiteboard as one component — the tools, shortcuts and feel you already know.
+</p>
 
-opendraw is a pnpm monorepo: a framework-free engine and editor, with Nuxt as the first adapter. Svelte and React (TanStack Start) adapters can sit on the same editor.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-ea580c" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/Nuxt-4-00DC82?logo=nuxt.js&logoColor=white" alt="Nuxt 4">
+  <img src="https://img.shields.io/badge/Vue-3.5-42b883?logo=vue.js&logoColor=white" alt="Vue 3.5">
+  <img src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white" alt="TypeScript">
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#usage">Usage</a> ·
+  <a href="#packages">Packages</a> ·
+  <a href="#build-your-own-adapter">Adapters</a> ·
+  <a href="#development">Development</a>
+</p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshot-dark.png">
+    <img src="docs/assets/screenshot.png" alt="The opendraw editor: a hand-drawn flow of three shapes joined by arrows, and a sticky note" width="900">
+  </picture>
+</p>
+
+---
+
+## Why opendraw
+
+Excalidraw set the bar for how a whiteboard should feel. opendraw brings that feel to the Vue ecosystem as a native component — no iframe, no React runtime — with Excalidraw's behavior as its contract: the same element model, selection and binding semantics, history granularity and keyboard map.
+
+- **Drop-in** — `<OpenDraw />` is the whole editor: canvas, toolbar, properties panel, menus, help and autosave.
+- **Familiar** — Excalidraw's tools and shortcuts, its rough.js look and its layout, so users already know it.
+- **Headless when you need it** — render only the canvas and build your own chrome on the same reactive API.
+- **Framework-free core** — the engine and the interactive editor run without any UI framework; the Vue layer is a thin adapter.
 
 ## Features
 
-- **The full toolset** — selection, hand (pan), rectangle, diamond, ellipse, arrow, line, freedraw, text, image, eraser, frame, and laser, with Excalidraw's letter and number shortcuts and a tool lock (Q)
-- **Excalidraw's editing model** — groups (Ctrl+G), align/distribute, flip, copy/paste styles, Alt-drag duplicate, text inside shapes, start/end arrowheads, group-aware layering, and a context menu
-- **Hand-drawn rendering** — rough.js sketch geometry for shapes, perfect-freehand pressure-aware strokes for freedraw
-- **Excalidraw-grade interaction** — drag to create, click an edge to select, handles to resize and rotate, marquee select, modifier snapping
-- **Gesture-level history** — snapshot undo/redo where one undo reverts one gesture, not one keystroke
-- **Text editing in place** — a per-session editor with a stable layout box, so the caret behaves during IME composition and fast typing
-- **Themes** — dark mode inverts element colors in-canvas; your canvas background is user data and is never filtered
-- **Export** — PNG download and JSON scene save/load
-- **Headless mode** — every panel is optional; build your own UI on the same editor context
-- **Framework-free all the way up** — `@opendraw/core` (engine) and `@opendraw/editor` (the whole interactive editor) run without any UI framework; an adapter only mirrors state and renders chrome
-
-## Credits
-
-opendraw exists because [Excalidraw](https://github.com/excalidraw/excalidraw) showed how a canvas editor should feel. Its behavior contract was learned by reading the Excalidraw codebase: the element model, the single mutation funnel and history semantics, selection and transform math, text WYSIWYG, and the two-canvas render split. opendraw is an independent implementation for the Nuxt ecosystem; it is not a fork and is not affiliated with the Excalidraw team.
-
-Built on open source:
-
-- [Excalidraw](https://github.com/excalidraw/excalidraw) — the behavioral blueprint, [MIT](https://github.com/excalidraw/excalidraw/blob/master/LICENSE)
-- [rough.js](https://github.com/roughjs/rough) — hand-drawn shape geometry, MIT
-- [perfect-freehand](https://github.com/steveruizok/perfect-freehand) — pressure-aware freehand strokes, MIT
-- [Nuxt](https://nuxt.com) and [Vue](https://vuejs.org) — the ecosystem this is built for
-
-## Packages
-
-| Package | What it is |
+| | |
 | --- | --- |
-| [`@opendraw/nuxt`](./packages/nuxt) | The Nuxt adapter. Registers the `<OpenDraw>` and `<OpenDrawCanvas>` components and auto-imports the `useOpenDraw()` family — a Vue mirror of the editor. Ships the editor chrome: tool dock, properties island, actions panel, context menu, shortcuts dialog. |
-| [`@opendraw/editor`](./packages/editor) | The framework-free editor. `createEditor()` (document + editor state + every command) and `mountCanvas()` (pointer gestures, keyboard, rendering, cursor, laser, text editing), the action registry with Excalidraw's shortcut map, the tool table, and scene persistence. |
-| [`@opendraw/core`](./packages/core) | The engine. Element model, geometry, scene document with snapshot history, groups, bound text, arrange, hit testing, transforms, the rough.js renderer, and PNG/SVG/JSON export. |
+| **Tools** | Selection, hand, rectangle, diamond, ellipse, arrow, line, freedraw, text, sticky note, image, eraser, frame and laser pointer — with Excalidraw's letter and number keys and the tool lock (<kbd>Q</kbd>). |
+| **Arrows that connect** | Lines and arrows bind to shapes and follow them, with midpoint snapping, inside/outside binding and curved or sharp routes. |
+| **Text everywhere** | Free text and labels inside shapes, edited in place; sticky notes fit their text by shrinking the font before growing. |
+| **Frames** | Group content into frames that carry and clip their children; drop elements in or out. |
+| **Editing** | Groups, align &amp; distribute, flip, layers, copy/paste styles, Alt-drag duplicate, lock, a context menu and gesture-level undo/redo. |
+| **Styling** | Excalidraw's color picker with shades, hex input and eyedropper; fill, stroke, sloppiness, edges, arrowheads, fonts and opacity. |
+| **Themes** | Light and dark; dark mode inverts element ink while your canvas background stays exactly as chosen. |
+| **Files** | Autosave to `localStorage`, open/save `.opendraw` files, export PNG and SVG. |
+| **Responsive** | Desktop layout like excalidraw.com; on phones the toolbar moves to the bottom and the properties panel becomes a sheet. |
+| **Accessible** | Real buttons and menus, labelled controls, keyboard navigation in every popover, reduced-motion support. |
 
-## Requirements
-
-* Nuxt 4
-* Node 20.19+
-
-## Quickstart
+## Quick start
 
 ```bash
-pnpm add @opendraw/nuxt
+npm install @opendraw/nuxt
 ```
 
 ```ts
@@ -55,156 +72,180 @@ export default defineNuxtConfig({
 ```
 
 ```vue
+<!-- pages/index.vue -->
 <template>
-  <OpenDraw theme="light" @change="onChange" @select="onSelect" />
-</template>
-
-<script setup lang="ts">
-function onChange({ elements }: { elements: readonly unknown[] }) {
-  // fires on every scene mutation; elements is the full scene in z-order.
-  // autosave here.
-}
-
-function onSelect(ids: string[]) {
-  // the ids of the currently selected elements
-}
-</script>
-```
-
-Components and composables are auto-imported by the module. Element types such
-as `OpenDrawElement` come from `@opendraw/core` (a direct dependency of opendraw);
-add it to your own dependencies if you want explicit type imports.
-
-## API
-
-### `<OpenDraw>`
-
-The full editor, ready to drop on a page.
-
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `ui` | `'full' \| 'minimal' \| 'none'` | `'full'` | Chrome level. `full` adds the tool dock, style panel, actions panel, and context menu. `minimal` keeps the dock and actions. `none` is the bare canvas for custom UI. |
-| `theme` | `'light' \| 'dark'` | `'light'` | Editor theme. Switching swaps the default canvas background (`#ffffff` to `#121212` and back); a background you customized is left untouched. |
-| `grid` | `boolean \| number` | `false` | `true` shows a 20px grid; a number sets the cell size. |
-| `initialElements` | `OpenDrawElement[]` | `[]` | Scene to open with. |
-
-| Event | Payload | Fires |
-| --- | --- | --- |
-| `change` | `{ elements, appState }` | On every scene mutation. `elements` is the full scene, in z-order. |
-| `select` | `ids: string[]` | When the selection set changes. |
-
-### `<OpenDrawCanvas>`
-
-The canvas on its own: pointer interactions, rendering, and the text editing
-session. No chrome and no context creation. Pair it with
-`createOpenDrawContext()`.
-
-### `useOpenDraw()`
-
-The editor context. Every shipped component consumes it through
-provide/inject, and any chrome you build consumes the same:
-
-| Group | Members |
-| --- | --- |
-| document | `doc`, `state`, `elements`, `appState`, `selectedElements` |
-| tools & theme | `activeTool`, `setActiveTool`, `theme`, `setTheme`, `toggleTheme` |
-| selection | `select`, `selectAll`, `isIdSelected` |
-| elements | `updateElement`, `deleteSelection`, `duplicateSelection`, `reorderSelection`, `toggleSelectionLock` |
-| clipboard | `copySelection`, `cutSelection`, `paste`, `clipboardSize` |
-| style | `changeStyle`, `changeTextStyle` |
-| history | `undo`, `redo`, `canUndo`, `canRedo` |
-| viewport | `zoomIn`, `zoomOut`, `zoomAt`, `resetZoom`, `panBy`, `viewport` |
-| export | `serialize`, `toJSON`, `loadFile`, `loadJSON`, `exportPNG`, `exportDataURL` |
-| editing | `setEditing`, `editingId` |
-| grid | `gridSize`, `setGridSize` |
-
-Reactive members are refs and computeds: read `ctx.elements.value` in script,
-`ctx.elements` in templates.
-
-## Headless: build your own UI
-
-`<OpenDraw ui="none" />` and `<OpenDrawCanvas />` render no chrome. Create the
-context yourself, provide it, and talk to the same API the shipped chrome
-uses:
-
-```vue
-<script setup lang="ts">
-const ctx = createOpenDrawContext({
-  // The dark theme inverts element colors, so give the canvas a dark
-  // background to go with it.
-  appState: { theme: 'dark', viewBackgroundColor: '#121212' },
-})
-provideOpenDraw(ctx)
-</script>
-
-<template>
-  <div class="stage">
-    <OpenDrawCanvas />
-
-    <div class="dock">
-      <button
-        type="button"
-        :class="{ active: ctx.activeTool.value === 'rectangle' }"
-        @click="ctx.setActiveTool('rectangle')"
-      >
-        rect
-      </button>
-      <button type="button" :disabled="!ctx.canUndo.value" @click="ctx.undo()">
-        undo
-      </button>
-      <button type="button" @click="ctx.exportPNG('drawing')">export</button>
-    </div>
+  <div style="height: 100vh">
+    <OpenDraw />
   </div>
 </template>
 ```
 
-`createOpenDrawContext(options?)` accepts `elements` (the initial scene) and
-`appState` (a partial state: theme, background, grid, and friends).
-`useOpenDraw()` inside any descendant returns the provided context.
+That's it — the editor fills its container and saves to `localStorage` as you draw. Press <kbd>?</kbd> for every shortcut.
 
-The complete headless example lives in
-[`playground/app/pages/headless.vue`](./playground/app/pages/headless.vue).
+**Requirements:** Nuxt 4 · Vue 3.5 · Node 20.19+
 
-## Tools
+## Usage
 
-`selection`, `hand` (pan), `rectangle`, `diamond`, `ellipse`, `arrow`, `line`,
-`freedraw`, `text`, `image`, `eraser`, `frame`, `laser`.
+### `<OpenDraw>`
 
-## Other frameworks
+| Prop | Type | Default | |
+| --- | --- | --- | --- |
+| `theme` | `'light' \| 'dark' \| 'system'` | `'system'` | Starting theme; a persisted theme wins over it. |
+| `ui` | `'full' \| 'minimal' \| 'none'` | `'full'` | `full`: every island · `minimal`: toolbar and zoom · `none`: bare canvas. |
+| `grid` | `boolean \| number` | `false` | Show the grid; a number sets the cell size. |
+| `initialElements` | `OpenDrawElement[]` | `[]` | Scene to open with when nothing is persisted. |
+| `persist` | `boolean \| string` | `true` | Autosave; a string is the storage key, `false` turns it off. |
+| `menuLinks` | `{ label, href, icon? }[]` | `[]` | Your links in the main menu. |
 
-`@opendraw/editor` holds every behavior; an adapter mirrors it and renders
-chrome. The whole contract:
+| Event | Payload | |
+| --- | --- | --- |
+| `@change` | `{ elements, appState }` | Every document or editor-state change. |
+| `@select` | `string[]` | The selected element ids. |
+
+| Slot | Placement |
+| --- | --- |
+| `#top-right` | Beside the toolbar — a Share or Docs button. |
+| `#footer` | Bottom-right, next to the help button. |
+
+```vue
+<script setup lang="ts">
+import type { OpenDrawElement } from '@opendraw/core'
+
+function save({ elements }: { elements: readonly OpenDrawElement[] }) {
+  // persist the scene anywhere you like
+}
+</script>
+
+<template>
+  <OpenDraw theme="dark" persist="team-board" @change="save">
+    <template #top-right>
+      <button>Share</button>
+    </template>
+  </OpenDraw>
+</template>
+```
+
+### `useOpenDraw()`
+
+Any component inside `<OpenDraw>` can read and drive the editor. State comes back as computed refs; every command is undoable.
+
+```ts
+const { selectedElements, changeStyle, exportPNG } = useOpenDraw()
+
+changeStyle({ strokeColor: '#e03131' })
+exportPNG('diagram')
+```
+
+| Group | Members |
+| --- | --- |
+| State | `elements`, `selectedElements`, `appState`, `activeTool`, `theme`, `viewport`, `canUndo`, `canRedo` |
+| Tools &amp; theme | `setActiveTool`, `toggleToolLock`, `setTheme`, `toggleTheme`, `setGridSize`, `setViewBackgroundColor` |
+| Elements | `updateElement`, `deleteSelection`, `duplicateSelection`, `copySelection`, `cutSelection`, `paste` |
+| Style &amp; arrange | `changeStyle`, `changeTextStyle`, `groupSelection`, `alignSelection`, `distributeSelection`, `flipSelection`, `reorderSelection` |
+| History &amp; view | `undo`, `redo`, `zoomIn`, `zoomOut`, `resetZoom`, `zoomToFitAll`, `panBy` |
+| Files | `serialize`, `loadFile`, `saveToFile`, `openFile`, `exportPNG`, `exportSVG`, `clearCanvas` |
+
+### Custom UI
+
+Render just the canvas and bring your own toolbar:
+
+```vue
+<script setup lang="ts">
+const ctx = createOpenDrawContext()
+provideOpenDraw(ctx)
+</script>
+
+<template>
+  <div class="board">
+    <OpenDrawCanvas />
+    <nav class="my-toolbar">
+      <button @click="ctx.setActiveTool('rectangle')">Rectangle</button>
+      <button :disabled="!ctx.canUndo.value" @click="ctx.undo()">Undo</button>
+    </nav>
+  </div>
+</template>
+```
+
+The canvas keeps every gesture, shortcut and the text editor — you only draw the buttons.
+
+## Packages
+
+| Package | |
+| --- | --- |
+| [`@opendraw/nuxt`](packages/nuxt) | The Vue/Nuxt adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `useOpenDraw()` and the Excalidraw-style UI. |
+| [`@opendraw/editor`](packages/editor) | The framework-free editor: `createEditor()`, `mountCanvas()`, tools, the action registry, persistence. |
+| [`@opendraw/core`](packages/core) | The engine: element model, document &amp; history, geometry, hit testing, rough.js rendering, PNG/SVG/JSON export. |
+
+```ts
+import { OpenDrawDocument, newRectangleElement, exportToSvg } from '@opendraw/core'
+
+const doc = new OpenDrawDocument()
+doc.addElement(newRectangleElement({ x: 0, y: 0, width: 160, height: 90 }))
+const svg = exportToSvg(doc.getElements(), '#ffffff')
+```
+
+## Build your own adapter
+
+`@opendraw/nuxt` is a thin layer over `@opendraw/editor`, and the same layer can be written for React, Svelte, Solid, Angular or plain JavaScript:
 
 ```ts
 import { createEditor, mountCanvas } from '@opendraw/editor'
 
-const editor = createEditor()                 // commands + memoized getters
-const off = editor.subscribe(() => render())  // any change → re-read getters
+const editor = createEditor()
 const session = mountCanvas(editor, { host, staticCanvas, overlayCanvas })
-// …later: session.dispose(); off()
+
+editor.subscribe((ed) => render(ed.activeTool, ed.selectedElements, ed.canUndo))
+// session.dispose() when the host goes away
 ```
 
-Mirror `subscribe` into Svelte stores or React's `useSyncExternalStore`,
-and drive menus and panels from the shared action registry
-(`ACTIONS`, `runAction`, `isActionEnabled`).
+1. **Render the surface** — a focusable host holding two stacked canvases.
+2. **Mount and dispose** — `mountCanvas()` wires every gesture, shortcut, the text editor and rendering.
+3. **Mirror state** — subscribe and re-render your UI from the controller's getters; build toolbars from `TOOLS` and menus from `ACTIONS`.
+
+The full guide, with plain-JS and React examples, is in the docs (`/docs` in the demo app).
+
+## Keyboard shortcuts
+
+| | | | |
+| --- | --- | --- | --- |
+| <kbd>V</kbd> / <kbd>1</kbd> Select | <kbd>R</kbd> / <kbd>2</kbd> Rectangle | <kbd>D</kbd> / <kbd>3</kbd> Diamond | <kbd>O</kbd> / <kbd>4</kbd> Ellipse |
+| <kbd>A</kbd> / <kbd>5</kbd> Arrow | <kbd>L</kbd> / <kbd>6</kbd> Line | <kbd>P</kbd> / <kbd>7</kbd> Draw | <kbd>T</kbd> / <kbd>8</kbd> Text |
+| <kbd>N</kbd> Sticky note | <kbd>9</kbd> Image | <kbd>E</kbd> / <kbd>0</kbd> Eraser | <kbd>F</kbd> Frame · <kbd>K</kbd> Laser |
+| <kbd>⌘</kbd><kbd>Z</kbd> Undo | <kbd>⌘</kbd><kbd>G</kbd> Group | <kbd>⌘</kbd><kbd>D</kbd> Duplicate | <kbd>?</kbd> All shortcuts |
 
 ## Development
 
-This is a pnpm monorepo:
+opendraw is a pnpm monorepo.
 
 ```bash
-pnpm install            # workspace dependencies
-pnpm dev                # prepare packages, then run the playground at :3000
-pnpm build              # build @opendraw/core, @opendraw/editor and @opendraw/nuxt
-pnpm test               # run every package's unit tests
-pnpm e2e                # Playwright suite against the playground
-pnpm typecheck          # typecheck every package
-pnpm build:playground   # production build of the playground
+pnpm install
+pnpm dev          # the demo app (playground/) at http://localhost:3000
+pnpm test         # unit tests for core, editor and nuxt
+pnpm typecheck    # every package, the playground and the e2e specs
+pnpm e2e          # Playwright end-to-end suite
+pnpm build        # build the publishable packages
 ```
 
-The playground is the manual verification surface: `/` is the full editor,
-`/headless` is the bare canvas with custom chrome.
+```
+packages/
+  core/     @opendraw/core    engine — no framework, no DOM requirement
+  editor/   @opendraw/editor  interactive editor — no UI framework
+  nuxt/     @opendraw/nuxt    Vue/Nuxt adapter and UI
+playground/                   demo app, docs page and e2e specs
+```
+
+Contributions are welcome. Behavior follows Excalidraw: when something is ambiguous, match what Excalidraw does. Please run `pnpm test`, `pnpm typecheck` and `pnpm e2e` before opening a pull request.
+
+## Acknowledgements
+
+opendraw is an independent implementation — not a fork, and not affiliated with the Excalidraw team. It stands on:
+
+- [Excalidraw](https://github.com/excalidraw/excalidraw) — the behavioral blueprint and the style previews in the properties panel (MIT)
+- [rough.js](https://github.com/rough-stuff/rough) — hand-drawn geometry (MIT)
+- [perfect-freehand](https://github.com/steveruizok/perfect-freehand) — pressure-aware strokes (MIT)
+- [Lucide](https://lucide.dev) — icons (ISC)
+- [Assistant](https://fonts.google.com/specimen/Assistant) — UI typeface (OFL)
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](LICENSE) © 2026 Vishnu
