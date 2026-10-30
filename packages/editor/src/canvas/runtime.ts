@@ -20,6 +20,8 @@ import type { EditorController } from '../controller.js'
 export type Interaction =
   | { kind: 'none' }
   | { kind: 'panning'; lastScreen: Point }
+  /** Two fingers zooming and panning the viewport (touchGestures.ts). */
+  | { kind: 'pinching' }
   | { kind: 'marquee'; originScene: Point; baseIds: string[] }
   | { kind: 'creating'; elementId: string; originScene: Point }
   | { kind: 'freedrawing'; elementId: string }

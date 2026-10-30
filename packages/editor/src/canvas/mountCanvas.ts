@@ -10,6 +10,7 @@ import { createCanvasRuntime } from './runtime.js'
 import { createCanvasSurface } from './surface.js'
 import { onCanvasDoubleClick } from './textEntry.js'
 import { attachTextEditing } from './textEditor.js'
+import { createTouchGestures } from './touchGestures.js'
 import {
   onCanvasDrop,
   onCanvasWheel,
@@ -53,6 +54,9 @@ export function mountCanvas(editor: EditorController, options: MountCanvasOption
   const surface = createCanvasSurface(rt, staticCanvas, overlayCanvas)
   const laser = createLaserTrail(rt)
   surface.setOverlayPainter(laser.draw)
+  // Multi-touch runs ahead of the press handlers: a second finger turns
+  // the gesture into a pinch, and pinch fingers never draw.
+  const touch = createTouchGestures(rt, laser)
   const keyRoot = options.keyboardRoot ?? host.closest<HTMLElement>('[data-opendraw-root]') ?? host
   const detachKeyboard = attachKeyboard(rt, keyRoot)
   const detachTextEditing = attachTextEditing(editor, host)
@@ -81,9 +85,21 @@ export function mountCanvas(editor: EditorController, options: MountCanvasOption
       event.preventDefault()
     }
   }
-  const onPointerDown = (event: PointerEvent): void => onCanvasPointerDown(rt, laser, event)
-  const onPointerMove = (event: PointerEvent): void => onCanvasPointerMove(rt, laser, event)
-  const onPointerUp = (event: PointerEvent): void => onCanvasPointerUp(rt, laser, event)
+  const onPointerDown = (event: PointerEvent): void => {
+    if (!touch.down(event)) {
+      onCanvasPointerDown(rt, laser, event)
+    }
+  }
+  const onPointerMove = (event: PointerEvent): void => {
+    if (!touch.move(event)) {
+      onCanvasPointerMove(rt, laser, event)
+    }
+  }
+  const onPointerUp = (event: PointerEvent): void => {
+    if (!touch.up(event)) {
+      onCanvasPointerUp(rt, laser, event)
+    }
+  }
   const onPointerLeave = (): void => onCanvasPointerLeave(rt)
   const onDoubleClick = (event: MouseEvent): void => onCanvasDoubleClick(rt, event)
   const onWheel = (event: WheelEvent): void => onCanvasWheel(rt, event)
@@ -135,6 +151,7 @@ export function mountCanvas(editor: EditorController, options: MountCanvasOption
       for (const unsubscribe of unsubscribers) {
         unsubscribe()
       }
+      touch.dispose()
       detachTextEditing()
       detachKeyboard()
       laser.dispose()

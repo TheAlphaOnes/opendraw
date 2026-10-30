@@ -7,10 +7,12 @@ export default defineNuxtConfig({
   // playground edits are live. The built module still consumes their dists.
   vite: {
     resolve: {
-      alias: {
-        '@opendrawjs/core': '../packages/core/src/index.ts',
-        '@opendrawjs/editor': '../packages/editor/src/index.ts',
-      },
+      // Exact matches only: subpaths such as @opendrawjs/editor/fonts.css
+      // must still resolve through the package's exports.
+      alias: [
+        { find: /^@opendrawjs\/core$/, replacement: '../packages/core/src/index.ts' },
+        { find: /^@opendrawjs\/editor$/, replacement: '../packages/editor/src/index.ts' },
+      ],
     },
     optimizeDeps: {
       include: ['lucide-vue-next', 'perfect-freehand', 'roughjs'],
