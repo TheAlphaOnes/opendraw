@@ -22,6 +22,14 @@ const NAV: DocsNavGroup[] = [
     ],
   },
   {
+    title: 'React & Svelte',
+    items: [
+      { id: 'react-svelte', label: 'Overview' },
+      { id: 'react', label: 'React' },
+      { id: 'svelte', label: 'Svelte' },
+    ],
+  },
+  {
     title: 'Packages',
     items: [
       { id: 'core', label: '@opendraw/core' },
@@ -41,6 +49,7 @@ const NAV: DocsNavGroup[] = [
       <DocsSectionsGettingStarted />
       <DocsSectionsComponentApi />
       <DocsSectionsComposableApi />
+      <DocsSectionsReactSvelte />
       <DocsSectionsEngineApi />
       <DocsSectionsAdapterGuide />
     </article>

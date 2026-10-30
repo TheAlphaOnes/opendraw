@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <strong>Hand-drawn diagrams for Vue &amp; Nuxt.</strong><br>
+  <strong>Hand-drawn diagrams for Vue, Nuxt, React &amp; Svelte.</strong><br>
   An Excalidraw-style whiteboard as one component — the tools, shortcuts and feel you already know.
 </p>
 
@@ -20,6 +20,7 @@
 <p align="center">
   <a href="#quick-start">Quick start</a> ·
   <a href="#usage">Usage</a> ·
+  <a href="#react--svelte">React &amp; Svelte</a> ·
   <a href="#packages">Packages</a> ·
   <a href="#build-your-own-adapter">Adapters</a> ·
   <a href="#development">Development</a>
@@ -36,12 +37,12 @@
 
 ## Why opendraw
 
-Excalidraw set the bar for how a whiteboard should feel. opendraw brings that feel to the Vue ecosystem as a native component — no iframe, no React runtime — with Excalidraw's behavior as its contract: the same element model, selection and binding semantics, history granularity and keyboard map.
+Excalidraw set the bar for how a whiteboard should feel. opendraw brings that feel to Vue, Nuxt, React and Svelte as a native component — no iframe, no foreign runtime — with Excalidraw's behavior as its contract: the same element model, selection and binding semantics, history granularity and keyboard map.
 
 - **Drop-in** — `<OpenDraw />` is the whole editor: canvas, toolbar, properties panel, menus, help and autosave.
 - **Familiar** — Excalidraw's tools and shortcuts, its rough.js look and its layout, so users already know it.
 - **Headless when you need it** — render only the canvas and build your own chrome on the same reactive API.
-- **Framework-free core** — the engine and the interactive editor run without any UI framework; the Vue layer is a thin adapter.
+- **Framework-free core** — the engine and the interactive editor run without any UI framework; the Vue, React and Svelte packages are thin adapters over it.
 
 ## Features
 
@@ -168,12 +169,55 @@ provideOpenDraw(ctx)
 
 The canvas keeps every gesture, shortcut and the text editor — you only draw the buttons.
 
+## React & Svelte
+
+The same editor ships as React and Svelte 5 components: a ready-made `<OpenDraw>` (canvas, toolbar, zoom, history, theme and autosave) and a bare `<OpenDrawCanvas>` for your own UI. Both are covered by one shared end-to-end suite.
+
+```bash
+npm install @opendraw/react    # or: npm install @opendraw/svelte
+```
+
+```tsx
+// React
+import '@opendraw/editor/styles.css'
+import { OpenDraw } from '@opendraw/react'
+
+export function Board() {
+  return (
+    <div style={{ height: '100vh' }}>
+      <OpenDraw onChange={(state) => console.log(state.elements.length)} />
+    </div>
+  )
+}
+```
+
+```svelte
+<!-- Svelte 5 -->
+<script lang="ts">
+  import '@opendraw/editor/styles.css'
+  import { OpenDraw } from '@opendraw/svelte'
+</script>
+
+<div style="height: 100vh">
+  <OpenDraw onchange={(state) => console.log(state.elements.length)} />
+</div>
+```
+
+| | React | Svelte |
+| --- | --- | --- |
+| Full editor | `<OpenDraw theme persist initialElements ui onChange>` | `<OpenDraw theme persist initialElements ui onchange>` |
+| Canvas only | `<OpenDrawCanvas editor>` | `<OpenDrawCanvas {editor}>` |
+| Your own controller | `useOpenDrawEditor()` | `createEditor()` |
+| Reactive state | `useEditorState(editor, (e) => e.activeTool)` | `editorState(editor, (e) => e.activeTool).current` |
+
 ## Packages
 
 | Package | |
 | --- | --- |
-| [`@opendraw/nuxt`](packages/nuxt) | The Vue/Nuxt adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `useOpenDraw()` and the Excalidraw-style UI. |
-| [`@opendraw/editor`](packages/editor) | The framework-free editor: `createEditor()`, `mountCanvas()`, tools, the action registry, persistence. |
+| [`@opendraw/nuxt`](packages/nuxt) | The Vue/Nuxt adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `useOpenDraw()` and the full Excalidraw-style UI. |
+| [`@opendraw/react`](packages/react) | The React adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `useOpenDrawEditor()`, `useEditorState()`. |
+| [`@opendraw/svelte`](packages/svelte) | The Svelte 5 adapter: `<OpenDraw>`, `<OpenDrawCanvas>`, `editorState()`. |
+| [`@opendraw/editor`](packages/editor) | The framework-free editor: `createEditor()`, `mountCanvas()`, tools, the action registry, persistence, and the shared `styles.css`. |
 | [`@opendraw/core`](packages/core) | The engine: element model, document &amp; history, geometry, hit testing, rough.js rendering, PNG/SVG/JSON export. |
 
 ```ts
@@ -186,7 +230,7 @@ const svg = exportToSvg(doc.getElements(), '#ffffff')
 
 ## Build your own adapter
 
-`@opendraw/nuxt` is a thin layer over `@opendraw/editor`, and the same layer can be written for React, Svelte, Solid, Angular or plain JavaScript:
+Vue, React and Svelte are thin layers over `@opendraw/editor`, and the same layer can be written for Solid, Angular, Lit or plain JavaScript — `packages/react` and `packages/svelte` are complete references in a few hundred lines each:
 
 ```ts
 import { createEditor, mountCanvas } from '@opendraw/editor'
@@ -222,7 +266,8 @@ pnpm install
 pnpm dev          # the demo app (playground/) at http://localhost:3000
 pnpm test         # unit tests for core, editor and nuxt
 pnpm typecheck    # every package, the playground and the e2e specs
-pnpm e2e          # Playwright end-to-end suite
+pnpm e2e          # Playwright: the Nuxt demo, then React + Svelte
+pnpm e2e:adapters # Playwright: the React and Svelte test apps only
 pnpm build        # build the publishable packages
 ```
 
@@ -231,7 +276,13 @@ packages/
   core/     @opendraw/core    engine — no framework, no DOM requirement
   editor/   @opendraw/editor  interactive editor — no UI framework
   nuxt/     @opendraw/nuxt    Vue/Nuxt adapter and UI
-playground/                   demo app, docs page and e2e specs
+  react/    @opendraw/react   React adapter
+  svelte/   @opendraw/svelte  Svelte 5 adapter
+playground/                   Nuxt demo app, docs page and its e2e specs
+test/
+  react/    React test app (Vite)
+  svelte/   Svelte test app (Vite)
+  e2e/      one Playwright suite run against both apps
 ```
 
 Contributions are welcome. Behavior follows Excalidraw: when something is ambiguous, match what Excalidraw does. Please run `pnpm test`, `pnpm typecheck` and `pnpm e2e` before opening a pull request.

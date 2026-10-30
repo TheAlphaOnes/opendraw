@@ -102,8 +102,9 @@ export function Board({ editor }: { editor: EditorController }) {
   <section id="adapters" class="doc-section">
     <h2>Build an adapter for your framework</h2>
     <p>
-      The Vue/Nuxt package is a thin layer over <code>@opendraw/editor</code>, and you can write the same layer for
-      React, Svelte, Solid, Angular or plain JavaScript. The editor does all the work — gestures, keyboard, text
+      The Vue, React and Svelte packages are thin layers over <code>@opendraw/editor</code> — read
+      <code>packages/react</code> or <code>packages/svelte</code> for complete references — and you can write the same
+      layer for Solid, Angular, Lit or plain JavaScript. The editor does all the work — gestures, keyboard, text
       editing, rendering, persistence. An adapter only has to do three things:
     </p>
     <ol>
