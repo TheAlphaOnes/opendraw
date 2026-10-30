@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { bindingAt, bindingFollowPatches, BASE_BINDING_GAP } from '../src/elements/binding.js'
 import { elbowArrowPath, elbowRoutePatch, elbowSnapPoint, routeElbow } from '../src/elements/elbowArrow.js'
-import { newLinearElement, newRectangleElement } from '../src/elements/factories.js'
+import { newDiamondElement, newEllipseElement, newLinearElement, newRectangleElement } from '../src/elements/factories.js'
 import { parseFile } from '../src/export/serialize.js'
 import { OpenDrawDocument } from '../src/scene/document.js'
 import type { OpenDrawElement, OpenDrawLinearElement, Point } from '../src/types.js'
@@ -117,5 +117,36 @@ describe('elbow arrows (Excalidraw elbowArrow.ts)', () => {
     expectOrthogonal(routed.points)
     doc.undo()
     expect((doc.getElement(arrow.id) as OpenDrawLinearElement).elbowed).toBeFalsy()
+  })
+
+  it('never routes a kink: no leg off axis, no short interior jog between separate shapes', () => {
+    // A seeded sweep over shape kinds, sizes, placements and drop points.
+    // Before the jog cleanup, ~4% of these routes had a 2px step or a leg
+    // a fraction of a pixel off axis — drawn as hooks and doubled strokes.
+    let seed = 7
+    const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647
+    const kinds = [newRectangleElement, newEllipseElement, newDiamondElement]
+    for (let i = 0; i < 1500; i++) {
+      const size = () => ({ width: 60 + random() * 140, height: 40 + random() * 120 })
+      const a = kinds[i % 3]!({ x: 0, y: 0, ...size() })
+      const b = newRectangleElement({ x: (random() - 0.5) * 700, y: (random() - 0.5) * 700, ...size() })
+      const separate =
+        b.x > a.x + a.width + 10 || b.x + b.width < a.x - 10 || b.y > a.y + a.height + 10 || b.y + b.height < a.y - 10
+      const from = { x: a.x + random() * a.width, y: a.y + random() * a.height }
+      const to = { x: b.x + random() * b.width, y: b.y + random() * b.height }
+      const arrow = elbow(from, to, {
+        startBinding: bindingAt(a, from, 'orbit'),
+        endBinding: bindingAt(b, to, 'orbit'),
+      })
+      const points = scene(arrow, elbowRoutePatch(arrow, [a, b] as OpenDrawElement[]))
+      expectOrthogonal(points)
+      // A three-leg route's middle leg is the real offset between the tips: it stays.
+      if (separate && points.length > 4) {
+        for (let k = 2; k < points.length - 1; k++) {
+          const leg = Math.abs(points[k]!.x - points[k - 1]!.x) + Math.abs(points[k]!.y - points[k - 1]!.y)
+          expect(leg, `case ${i}, leg ${k}`).toBeGreaterThanOrEqual(8)
+        }
+      }
+    }
   })
 })

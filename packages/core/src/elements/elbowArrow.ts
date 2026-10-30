@@ -152,7 +152,13 @@ export function elbowSnapPoint(shape: OpenDrawBindableShape, pointer: Point, zoo
 // ---------------------------------------------------------------------------
 
 export const BASE_PADDING = 40
-const DEDUP_THRESHOLD = 1
+/**
+ * Interior legs shorter than this are folded away (see collapseJogs): at
+ * the 16px corner radius a jog that short draws as a hooked kink.
+ */
+const JOG_LENGTH = 8
+/** A U-turn narrower than two corner radii overlaps itself; it is widened to this. */
+const U_TURN_WIDTH = 32
 
 interface GridNode {
   f: number
@@ -498,12 +504,143 @@ function cornerPoints(points: Point[]): Point[] {
   })
 }
 
-/** Drops sub-pixel legs (removeElbowArrowShortSegments). */
-function removeShortSegments(points: Point[]): Point[] {
-  if (points.length < 4) {
-    return points
+const legLength = (a: Point, b: Point): number => Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
+
+/** Drops zero-length legs (a tip that lands exactly on its dongle). */
+function withoutRepeats(points: Point[]): Point[] {
+  return points.filter((p, i) => i === 0 || legLength(p, points[i - 1]!) > 0)
+}
+
+/**
+ * Cleans short interior jogs out of an orthogonal route. Two grid lines a
+ * few px apart (box edges, the tips' own lines) make the search route a
+ * tiny step between them, drawn as a hooked kink or as two strokes on top
+ * of each other. Excalidraw's removeElbowArrowShortSegments deletes the
+ * step's point, which leaves a leg slightly off axis; here a neighbouring
+ * leg moves instead, so every leg stays axis-aligned and the tips never
+ * move:
+ * - a Z-step folds flat: the leg before it slides onto the line after it
+ *   (or the leg after onto the line before);
+ * - a U-turn retraces its own line: the overlap is trimmed (the jog moves
+ *   to where the shorter arm ends, and that arm disappears); when the
+ *   shorter arm is a tip's, the other leg slides outward until the U fits
+ *   both corners instead.
+ * A step between two tip legs is a real offset between the tips and stays.
+ */
+function collapseJogs(route: Point[]): Point[] {
+  let points = cornerPoints(withoutRepeats(route))
+  // Every fold removes points and a widening never makes a new short leg,
+  // so this ends on its own; the cap only guards against float drift.
+  for (let pass = 0, i = 1; i + 2 < points.length && pass < route.length * 4; i++) {
+    const [before, from, to, after] = [points[i - 1]!, points[i]!, points[i + 1]!, points[i + 2]!]
+    const length = legLength(from, to)
+    if (length >= JOG_LENGTH) {
+      continue
+    }
+    // The legs on either side run the same way (a Z-step) or opposite ways (a U-turn).
+    const zStep =
+      Math.sign(from.x - before.x) === Math.sign(after.x - to.x) && Math.sign(from.y - before.y) === Math.sign(after.y - to.y)
+    const unit = { x: Math.sign(to.x - from.x), y: Math.sign(to.y - from.y) }
+    // Z: close the step entirely. U: trim the retraced overlap, else open
+    // the U to the full width, pushing the movable leg away from the other.
+    const next = zStep
+      ? (slideLead(points, i, unit, length) ?? slideTrail(points, i, unit, -length))
+      : (trimUTurn(points, i) ??
+        slideLead(points, i, unit, -(U_TURN_WIDTH - length)) ??
+        slideTrail(points, i, unit, U_TURN_WIDTH - length))
+    if (next) {
+      points = cornerPoints(withoutRepeats(next))
+      pass++
+      i = 0
+    }
   }
-  return points.filter((p, i) => i === 0 || i === points.length - 1 || Math.hypot(p.x - points[i - 1]!.x, p.y - points[i - 1]!.y) > DEDUP_THRESHOLD)
+  return points
+}
+
+/**
+ * Cuts the overlap out of a U-turn at jog i: the arms before and after it
+ * run back over each other, so the jog moves to where the shorter arm
+ * ends and that arm disappears. Null when the shorter arm is a tip's, or
+ * when what is left of the longer arm would be a new jog.
+ */
+function trimUTurn(points: Point[], i: number): Point[] | null {
+  const [before, from, to, after] = [points[i - 1]!, points[i]!, points[i + 1]!, points[i + 2]!]
+  const lead = legLength(before, from)
+  const trail = legLength(to, after)
+  const way = { x: Math.sign(from.x - before.x), y: Math.sign(from.y - before.y) }
+  const next = [...points]
+  if (trail <= lead && i + 2 < points.length - 1) {
+    // The trail arm is the shorter: the lead arm stops where it ends.
+    const stop = { x: from.x - way.x * trail, y: from.y - way.y * trail }
+    if (!keepsCourse(before, from, stop)) {
+      return null
+    }
+    next[i] = stop
+    next[i + 1] = { ...after }
+    return next
+  }
+  if (lead < trail && i - 1 > 0) {
+    // The lead arm is the shorter: the trail arm starts where it began.
+    const start = { x: to.x - way.x * lead, y: to.y - way.y * lead }
+    if (!keepsCourse(after, to, start)) {
+      return null
+    }
+    next[i] = { ...before }
+    next[i + 1] = start
+    return next
+  }
+  return null
+}
+
+/**
+ * Moves leg i-1 (the one before jog i) by `by` along the jog's axis, or
+ * returns null when that leg is the start tip's, or when the leg behind it
+ * (which the move stretches or shrinks) would reverse or turn into a new
+ * jog — a fold must never create the kink it removes.
+ */
+function slideLead(points: Point[], i: number, unit: Point, by: number): Point[] | null {
+  if (i - 1 === 0) {
+    return null
+  }
+  const moved = (p: Point): Point => ({ x: p.x + unit.x * by, y: p.y + unit.y * by })
+  const anchor = points[i - 2]!
+  if (!keepsCourse(anchor, points[i - 1]!, moved(points[i - 1]!))) {
+    return null
+  }
+  const next = [...points]
+  next[i - 1] = moved(points[i - 1]!)
+  next[i] = moved(points[i]!)
+  return next
+}
+
+/** slideLead's mirror: moves leg i+1 (after jog i), never the end tip's. */
+function slideTrail(points: Point[], i: number, unit: Point, by: number): Point[] | null {
+  if (i + 2 === points.length - 1) {
+    return null
+  }
+  const moved = (p: Point): Point => ({ x: p.x + unit.x * by, y: p.y + unit.y * by })
+  const anchor = points[i + 3]!
+  if (!keepsCourse(anchor, points[i + 2]!, moved(points[i + 2]!))) {
+    return null
+  }
+  const next = [...points]
+  next[i + 1] = moved(points[i + 1]!)
+  next[i + 2] = moved(points[i + 2]!)
+  return next
+}
+
+/**
+ * Whether the leg from `anchor` still runs the same way once its far end
+ * moves from `was` to `now`, and is either gone (a fold merges it) or no
+ * shorter than a jog.
+ */
+function keepsCourse(anchor: Point, was: Point, now: Point): boolean {
+  const length = legLength(anchor, now)
+  if (length === 0) {
+    return true
+  }
+  const sameWay = Math.sign(now.x - anchor.x) === Math.sign(was.x - anchor.x) && Math.sign(now.y - anchor.y) === Math.sign(was.y - anchor.y)
+  return sameWay && length >= JOG_LENGTH
 }
 
 export interface ElbowEnds {
@@ -568,7 +705,7 @@ export function routeElbow(
   if (!path) {
     return [start, end]
   }
-  return cornerPoints(removeShortSegments([start, ...path.map((n) => n.pos), end]))
+  return collapseJogs([start, ...path.map((n) => n.pos), end])
 }
 
 // ---------------------------------------------------------------------------
