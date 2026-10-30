@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
 /**
- * llms-full.txt: the complete documentation for AI assistants — every
+ * llms-full.txt: the complete documentation for AI assistants, every
  * package README, as published on npm, in one plain file. Generated at
  * build time (the routes are prerendered), from the monorepo's packages.
  */

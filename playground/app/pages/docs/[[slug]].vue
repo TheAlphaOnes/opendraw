@@ -1,36 +1,55 @@
 <script setup lang="ts">
-import type { DocsNavGroup } from '../components/docs/DocsShell.vue'
+import { defineAsyncComponent, type Component } from 'vue'
 
-/** The opendraw documentation: usage, API reference and the adapter guide. */
+/**
+ * One documentation page per URL (/docs, /docs/component, …), so each
+ * topic can be found, linked and indexed on its own. DOC_PAGES decides
+ * which page exists and what it is called; this file renders it.
+ */
+const SECTIONS: Record<string, Component> = {
+  '': defineAsyncComponent(() => import('../../components/docs/sections/GettingStarted.vue')),
+  'opendraw-app': defineAsyncComponent(() => import('../../components/docs/sections/AppComponent.vue')),
+  component: defineAsyncComponent(() => import('../../components/docs/sections/ComponentApi.vue')),
+  composables: defineAsyncComponent(() => import('../../components/docs/sections/ComposableApi.vue')),
+  'react-svelte': defineAsyncComponent(() => import('../../components/docs/sections/ReactSvelte.vue')),
+  packages: defineAsyncComponent(() => import('../../components/docs/sections/EngineApi.vue')),
+  adapters: defineAsyncComponent(() => import('../../components/docs/sections/AdapterGuide.vue')),
+}
+
+// One instance per page: each sets its own title, description and data.
+definePageMeta({ key: (route) => route.path })
+
+const route = useRoute()
+const slug = computed(() => (typeof route.params.slug === 'string' ? route.params.slug : ''))
+const page = computed(() => DOC_PAGES.find((candidate) => candidate.slug === slug.value))
+if (!page.value) {
+  throw createError({ statusCode: 404, statusMessage: 'Documentation page not found', fatal: true })
+}
+const current = computed(() => page.value!)
+
 const base = useRuntimeConfig().public.siteUrl as string
-const DOCS_TITLE = 'Docs — opendraw: add a hand-drawn whiteboard to Vue, Nuxt, React or Svelte'
-const DOCS_DESCRIPTION =
-  'Install opendraw and embed a hand-drawn whiteboard: components, props and events, composables, custom UI, theming, React and Svelte, and the framework-free editor API.'
+const isHome = computed(() => current.value.slug === '')
 
 useSiteSeo({
-  path: '/docs',
-  title: DOCS_TITLE,
-  description: DOCS_DESCRIPTION,
+  path: docPath(current.value),
+  title: isHome.value
+    ? 'opendraw docs: add a hand-drawn whiteboard to Vue, Nuxt, React or Svelte'
+    : `${current.value.title} | opendraw docs`,
+  description: current.value.description,
   image: '/og-docs.png',
   imageAlt: 'opendraw documentation: add a whiteboard in one line',
   type: 'article',
   jsonLd: [
     {
       '@type': 'TechArticle',
-      '@id': siteUrl(base, '/docs#article'),
-      headline: 'opendraw documentation',
-      description: DOCS_DESCRIPTION,
-      url: siteUrl(base, '/docs'),
+      '@id': siteUrl(base, `${docPath(current.value)}#article`),
+      headline: current.value.title,
+      description: current.value.description,
+      url: siteUrl(base, docPath(current.value)),
       image: siteUrl(base, '/og-docs.png'),
       inLanguage: 'en',
-      proficiencyLevel: 'Beginner',
       author: { '@type': 'Person', name: SITE.author },
-      about: {
-        '@type': 'SoftwareSourceCode',
-        name: SITE.name,
-        codeRepository: SITE.repository,
-        programmingLanguage: ['TypeScript', 'Vue', 'React', 'Svelte'],
-      },
+      about: { '@type': 'SoftwareSourceCode', name: SITE.name, codeRepository: SITE.repository },
       isPartOf: { '@id': siteUrl(base, '/#website') },
     },
     {
@@ -38,61 +57,33 @@ useSiteSeo({
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: SITE.name, item: siteUrl(base, '/') },
         { '@type': 'ListItem', position: 2, name: 'Documentation', item: siteUrl(base, '/docs') },
+        ...(isHome.value
+          ? []
+          : [{ '@type': 'ListItem', position: 3, name: current.value.title, item: siteUrl(base, docPath(current.value)) }]),
       ],
     },
   ],
 })
 
-const NAV: DocsNavGroup[] = [
-  {
-    title: 'Getting started',
-    items: [
-      { id: 'introduction', label: 'Introduction' },
-      { id: 'installation', label: 'Installation' },
-      { id: 'quick-start', label: 'Quick start' },
-      { id: 'opendraw-app', label: '<OpenDrawApp>' },
-    ],
-  },
-  {
-    title: 'Vue & Nuxt',
-    items: [
-      { id: 'component', label: '<OpenDraw>' },
-      { id: 'use-opendraw', label: 'useOpenDraw()' },
-      { id: 'custom-ui', label: 'Custom UI' },
-    ],
-  },
-  {
-    title: 'React & Svelte',
-    items: [
-      { id: 'react-svelte', label: 'Overview' },
-      { id: 'react', label: 'React' },
-      { id: 'svelte', label: 'Svelte' },
-    ],
-  },
-  {
-    title: 'Packages',
-    items: [
-      { id: 'core', label: '@opendrawjs/core' },
-      { id: 'editor', label: '@opendrawjs/editor' },
-    ],
-  },
-  {
-    title: 'Guides',
-    items: [{ id: 'adapters', label: 'Build an adapter' }],
-  },
-]
+// Links written when the docs were one page (/docs#react) still land on
+// the section, now on its own page.
+onMounted(() => {
+  const anchor = route.hash.slice(1)
+  if (anchor && !document.getElementById(anchor)) {
+    const target = docPageForAnchor(anchor)
+    if (target) {
+      void navigateTo({ path: docPath(target), hash: route.hash }, { replace: true })
+    }
+  }
+})
 </script>
 
 <template>
-  <DocsShell :nav="NAV">
+  <DocsShell :current="current">
     <article class="prose">
-      <DocsSectionsGettingStarted />
-      <DocsSectionsAppComponent />
-      <DocsSectionsComponentApi />
-      <DocsSectionsComposableApi />
-      <DocsSectionsReactSvelte />
-      <DocsSectionsEngineApi />
-      <DocsSectionsAdapterGuide />
+      <h1 v-if="!isHome" class="prose__title">{{ current.title }}</h1>
+      <p v-if="!isHome" class="lead">{{ current.description }}</p>
+      <component :is="SECTIONS[current.slug]" />
     </article>
   </DocsShell>
 </template>
@@ -119,7 +110,8 @@ const NAV: DocsNavGroup[] = [
   }
 }
 
-.prose :deep(h1) {
+.prose :deep(h1),
+.prose .prose__title {
   margin: 0 0 12px;
   font-family: 'Excalifont', 'Virgil', 'Segoe Print', 'Bradley Hand', cursive;
   font-size: 44px;

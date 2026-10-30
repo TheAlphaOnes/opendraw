@@ -1,6 +1,6 @@
 /**
  * llms.txt (llmstxt.org): a plain summary for AI assistants and answer
- * engines — what opendraw is, how to install it and where the details are.
+ * engines, what opendraw is, how to install it and where the details are.
  * llms-full.txt carries the full package documentation.
  */
 export default defineEventHandler((event) => {
@@ -26,7 +26,8 @@ ${SITE.features.map((feature) => `- ${feature}`).join('\n')}
 ## Docs
 
 - [Live editor](${siteUrl(base, '/')}): try opendraw in the browser
-- [Documentation](${siteUrl(base, '/docs')}): installation, components, composables, theming and the editor API
+- [About](${siteUrl(base, '/about')}): what opendraw is, how it is built, and answers to common questions
+${DOC_PAGES.map((page) => `- [${page.title}](${siteUrl(base, docPath(page))}): ${page.description}`).join('\n')}
 - [Full documentation as text](${siteUrl(base, '/llms-full.txt')}): every package README in one file
 
 ## Packages

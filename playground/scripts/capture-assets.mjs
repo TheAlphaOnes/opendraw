@@ -3,7 +3,8 @@
  * they always show the real, current editor:
  *
  *   docs/assets/screenshot.png, screenshot-dark.png   README and npm pages
- *   playground/public/og.png, og-docs.png             social previews (1200x630)
+ *   playground/public/screenshot.png                   the About page
+ *   playground/public/og.png, og-about.png, og-docs.png  social previews (1200x630)
  *   playground/public/apple-touch-icon.png, icon-192.png, icon-512.png, favicon-32.png
  *
  * Run the demo first (`pnpm dev`), then: `pnpm --filter opendraw-playground assets`.
@@ -72,7 +73,7 @@ async function drawScene(page) {
   await page.keyboard.press('Escape')
 
   // Name the drawing, as a user would.
-  await page.getByRole('button', { name: /^Drawings — / }).click()
+  await page.getByRole('button', { name: /^Drawings, / }).click()
   await page.locator('.file-item__open').first().focus()
   await page.keyboard.press('F2')
   await page.keyboard.press('ControlOrMeta+a')
@@ -92,6 +93,8 @@ async function captureScreenshots(browser) {
   await drawScene(page)
   await page.mouse.move(1439, 859)
   await page.screenshot({ path: resolve(out.docs, 'screenshot.png') })
+  // The About page shows the same picture.
+  await page.screenshot({ path: resolve(out.public, 'screenshot.png') })
 
   await page.getByRole('button', { name: 'Main menu' }).click()
   await page.getByRole('menuitem', { name: /^Dark mode/ }).click()
@@ -153,8 +156,15 @@ async function captureOg(browser) {
       file: 'og.png',
       eyebrow: 'Open source · MIT',
       title: 'Hand-drawn diagrams, right in your app',
-      subtitle: 'Sketch, connect and share ideas — one component.',
+      subtitle: 'Sketch, connect and share ideas in one component.',
       chips: ['Vue & Nuxt', 'React', 'Svelte', 'TypeScript'],
+    },
+    {
+      file: 'og-about.png',
+      eyebrow: 'About',
+      title: 'A whiteboard you can make your own',
+      subtitle: 'Free, open source, and private by design.',
+      chips: ['MIT licensed', 'Runs in your browser', 'No sign-up'],
     },
     {
       file: 'og-docs.png',

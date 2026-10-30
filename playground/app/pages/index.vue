@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 /**
- * The published demo: <OpenDrawApp> with one config — the drawings button,
+ * The published demo: <OpenDrawApp> with one config, the drawings button,
  * the install command and the docs link top-right, the repository in the
  * main menu.
  *
@@ -90,6 +90,7 @@ const config = defineOpenDrawConfig({
   links: [{ label: 'Docs', icon: 'docs', to: '/docs' }],
   menuLinks: [
     { label: 'Documentation', href: '/docs', icon: 'docs' },
+    { label: 'About', href: '/about', icon: 'help' },
     { label: 'GitHub', href: SITE.repository, icon: 'github' },
   ],
 })

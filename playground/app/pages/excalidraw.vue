@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 // A test page: reachable, but kept out of search results.
-useSiteSeo({ path: '/excalidraw', title: 'Full-viewport demo — opendraw', noindex: true })
+useSiteSeo({ path: '/excalidraw', title: 'Full-viewport demo | opendraw', noindex: true })
 
 /**
  * Full-viewport Excalidraw-style demo: the complete editor chrome against a

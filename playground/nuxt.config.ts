@@ -1,6 +1,6 @@
 /**
  * The public origin, for canonical URLs, social cards, the sitemap and
- * llms.txt — all of which need absolute URLs. Set NUXT_PUBLIC_SITE_URL for
+ * llms.txt, all of which need absolute URLs. Set NUXT_PUBLIC_SITE_URL for
  * a custom domain; on Vercel the production domain is picked up
  * automatically.
  */
@@ -39,7 +39,8 @@ export default defineNuxtConfig({
   // The machine-readable files are generated with the site, as static files.
   nitro: {
     prerender: {
-      routes: ['/sitemap.xml', '/robots.txt', '/llms.txt', '/llms-full.txt'],
+      routes: ['/about', '/sitemap.xml', '/robots.txt', '/llms.txt', '/llms-full.txt'],
+      // Every docs page is linked from the docs sidebar, so the crawler finds them all.
     },
   },
 

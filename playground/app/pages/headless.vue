@@ -49,13 +49,13 @@
 
 <script setup lang="ts">
 // A test page: reachable, but kept out of search results.
-useSiteSeo({ path: '/headless', title: 'Headless canvas demo — opendraw', noindex: true })
+useSiteSeo({ path: '/headless', title: 'Headless canvas demo | opendraw', noindex: true })
 
 import type { ToolId } from '@opendrawjs/core'
 
 const ctx = createOpenDrawContext({
   // The dark theme dark-filters strokes, so the canvas background must go
-  // dark with it — a dark theme over the white default is invisible ink.
+  // dark with it, a dark theme over the white default is invisible ink.
   appState: { theme: 'dark', viewBackgroundColor: '#121212' },
 })
 // Provide for <OpenDrawCanvas> (a child); this page's own chrome talks to

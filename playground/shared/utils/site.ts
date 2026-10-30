@@ -1,15 +1,15 @@
 /**
- * The site's identity in one place — titles, descriptions, links and the
+ * The site's identity in one place, titles, descriptions, links and the
  * facts search engines and AI assistants are given (meta tags, JSON-LD,
  * llms.txt). Pages read from here so every surface says the same thing.
  */
 
 export const SITE = {
   name: 'opendraw',
-  title: 'opendraw — hand-drawn diagrams for Vue, Nuxt, React & Svelte',
+  title: 'opendraw: hand-drawn diagrams for Vue, Nuxt, React & Svelte',
   /** ~155 characters: what a search result shows under the title. */
   description:
-    'Free, open-source hand-drawn whiteboard for your app. Draw hand-drawn diagrams with shapes, arrows, text and sticky notes — one component for Vue, Nuxt, React and Svelte.',
+    'Free, open-source hand-drawn whiteboard for your app. Draw hand-drawn diagrams with shapes, arrows, text and sticky notes, one component for Vue, Nuxt, React and Svelte.',
   tagline: 'Hand-drawn diagrams, right in your app.',
   locale: 'en_US',
   author: 'Vishnu',

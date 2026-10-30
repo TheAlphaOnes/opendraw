@@ -1,8 +1,9 @@
-/** The pages worth indexing: the editor and the documentation. */
+/** The pages worth indexing: the editor, About, and every documentation page. */
 const PAGES = [
   { path: '/', priority: '1.0', changefreq: 'weekly' },
-  { path: '/docs', priority: '0.8', changefreq: 'weekly' },
-] as const
+  { path: '/about', priority: '0.8', changefreq: 'monthly' },
+  ...DOC_PAGES.map((page) => ({ path: docPath(page), priority: page.slug ? '0.7' : '0.8', changefreq: 'weekly' })),
+]
 
 export default defineEventHandler((event) => {
   const base = useRuntimeConfig(event).public.siteUrl as string
