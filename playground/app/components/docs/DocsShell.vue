@@ -54,8 +54,7 @@ onBeforeUnmount(() => observer?.disconnect())
         <Menu v-else :size="18" />
       </button>
       <NuxtLink to="/" class="docs__brand">
-        <img src="/favicon.svg" alt="" class="docs__mark" width="28" height="28" />
-        <span class="docs__logo">opendraw</span>
+        <img src="/logo.svg" alt="opendraw" class="docs__logo" width="145" height="32" />
         <span class="docs__badge">docs</span>
       </NuxtLink>
       <nav class="docs__top-links" aria-label="Site">
@@ -129,16 +128,10 @@ onBeforeUnmount(() => observer?.disconnect())
   text-decoration: none;
 }
 
-.docs__mark {
-  display: block;
-  border-radius: 7px;
-}
-
 .docs__logo {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--docs-ink);
+  display: block;
+  height: 32px;
+  width: auto;
 }
 
 .docs__badge {

@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
-    <img src="docs/assets/logo.svg" alt="opendraw" width="260" height="64">
+    <img src="docs/assets/logo.svg" alt="opendraw" width="290" height="64">
   </picture>
 </p>
 
@@ -318,6 +318,7 @@ opendraw is an independent implementation — not a fork, and not affiliated wit
 - [perfect-freehand](https://github.com/steveruizok/perfect-freehand) — pressure-aware strokes (MIT)
 - [Lucide](https://lucide.dev) — icons (ISC)
 - [Assistant](https://fonts.google.com/specimen/Assistant) — UI typeface (OFL)
+- [Excalifont](https://github.com/excalidraw/excalifont) — the hand-drawn logo wordmark, converted to outlines (OFL)
 
 ## License
 
