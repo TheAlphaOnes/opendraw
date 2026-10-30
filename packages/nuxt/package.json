@@ -7,7 +7,7 @@
   "author": "Vishnu",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vishnu/opendraw",
+    "url": "https://github.com/TheAlphaOnes/opendraw",
     "directory": "packages/nuxt"
   },
   "exports": {
