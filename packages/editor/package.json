@@ -1,7 +1,7 @@
 {
   "name": "@opendraw/editor",
   "version": "0.1.0",
-  "description": "Framework-free opendraw editor: the canvas session (pointer, keyboard, rendering, text editing), the action registry and editor state. Framework adapters (@opendraw/nuxt, …) are thin layers over it.",
+  "description": "Framework-free opendraw editor: the canvas session (pointer, keyboard, rendering, text editing), the action registry and editor state. Framework adapters (@opendraw/nuxt, \u2026) are thin layers over it.",
   "type": "module",
   "license": "MIT",
   "author": "Vishnu",
@@ -10,7 +10,9 @@
     "url": "https://github.com/TheAlphaOnes/opendraw",
     "directory": "packages/editor"
   },
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -18,9 +20,14 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./styles.css": "./styles/opendraw.css"
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src",
+    "styles"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",

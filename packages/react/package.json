@@ -1,0 +1,48 @@
+{
+  "name": "@opendraw/react",
+  "version": "0.1.0",
+  "description": "React adapter for opendraw: <OpenDraw>, <OpenDrawCanvas> and hooks over the framework-free @opendraw/editor.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Vishnu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheAlphaOnes/opendraw",
+    "directory": "packages/react"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@opendraw/core": "workspace:*",
+    "@opendraw/editor": "workspace:*",
+    "lucide-react": "^1.65.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.2.0",
+    "react-dom": ">=18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  }
+}

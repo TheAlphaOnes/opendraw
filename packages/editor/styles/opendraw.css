@@ -1,0 +1,265 @@
+/**
+ * opendraw — the shared stylesheet for framework adapters built on
+ * @opendraw/editor (React, Svelte, plain JS). It styles the canvas surface
+ * mountCanvas() expects and a compact Excalidraw-style chrome: opaque
+ * islands, 8px radii, the island shadow and opendraw's orange accent.
+ *
+ *   import '@opendraw/editor/styles.css'
+ *
+ * Theme with data-theme="dark" on the .opendraw root.
+ */
+
+.opendraw {
+  --od-surface: #ffffff;
+  --od-surface-low: #ececf4;
+  --od-ink: #1b1b1f;
+  --od-ink-soft: #707070;
+  --od-keybinding: #b8b8b8;
+  --od-divider: #e9ecef;
+  --od-accent: #ea580c;
+  --od-accent-soft: #ffe2cf;
+  --od-on-accent-soft: #7c2d12;
+  --od-brand-active: #c2410c;
+  --od-hover: #fff4ec;
+  --od-shadow: 0 0 1px 0 rgba(0, 0, 0, 0.17), 0 0 3px 0 rgba(0, 0, 0, 0.08), 0 7px 14px 0 rgba(0, 0, 0, 0.05);
+  --od-radius: 8px;
+  --od-button: 36px;
+  --od-gutter: 16px;
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: var(--od-ink);
+  font-family: Assistant, system-ui, BlinkMacSystemFont, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.opendraw[data-theme='dark'] {
+  --od-surface: #232329;
+  --od-surface-low: hsl(240, 8%, 15%);
+  --od-ink: #e3e3e8;
+  --od-ink-soft: #9a9aa5;
+  --od-keybinding: #7a7a85;
+  --od-divider: #3a3946;
+  --od-accent: #fb923c;
+  --od-accent-soft: #4a2814;
+  --od-on-accent-soft: #ffedd5;
+  --od-brand-active: #fdba74;
+  --od-hover: #2e2622;
+}
+
+.opendraw *,
+.opendraw *::before,
+.opendraw *::after {
+  box-sizing: border-box;
+}
+
+/* --- the canvas surface mountCanvas() mounts onto ---------------------- */
+
+.opendraw__host {
+  position: absolute;
+  inset: 0;
+  outline: none;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.opendraw__static,
+.opendraw__overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.opendraw-canvas--panning {
+  cursor: grabbing !important;
+}
+
+.opendraw-text-editor__input::selection {
+  background: rgba(234, 88, 12, 0.25);
+}
+
+/* --- islands & buttons --------------------------------------------------- */
+
+.opendraw__island {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--od-surface);
+  border-radius: var(--od-radius);
+  box-shadow: var(--od-shadow);
+  animation: opendraw-island-in 240ms cubic-bezier(0.19, 1, 0.22, 1) both;
+}
+
+.opendraw__toolbar {
+  top: var(--od-gutter);
+  left: 0;
+  right: 0;
+  width: fit-content;
+  max-width: calc(100% - 2 * var(--od-gutter));
+  margin-inline: auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+/* Bottom-left: the zoom and history islands side by side. */
+.opendraw__bottom-left {
+  position: absolute;
+  z-index: 10;
+  bottom: var(--od-gutter);
+  left: var(--od-gutter);
+  display: flex;
+  gap: 8px;
+}
+
+.opendraw__bottom-left > .opendraw__island {
+  position: static;
+  padding: 0;
+  gap: 0;
+}
+
+.opendraw__bottom-left > .opendraw__island + .opendraw__island {
+  animation-delay: 40ms;
+}
+
+.opendraw__corner {
+  top: var(--od-gutter);
+  right: var(--od-gutter);
+  padding: 0;
+}
+
+.opendraw__divider {
+  align-self: stretch;
+  flex-shrink: 0;
+  width: 1px;
+  margin: 6px 2px;
+  background: var(--od-divider);
+}
+
+.opendraw__button {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--od-button);
+  height: var(--od-button);
+  padding: 0;
+  border: none;
+  border-radius: var(--od-radius);
+  background: transparent;
+  color: var(--od-ink);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease-out,
+    transform 90ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.opendraw__button:hover {
+  background: var(--od-hover);
+}
+
+.opendraw__button:active {
+  transform: scale(0.94);
+  box-shadow: inset 0 0 0 1px var(--od-brand-active);
+}
+
+.opendraw__button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--od-accent);
+}
+
+.opendraw__button[aria-pressed='true'] {
+  background: var(--od-accent-soft);
+  color: var(--od-on-accent-soft);
+}
+
+.opendraw__button:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.opendraw__button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.opendraw__key {
+  position: absolute;
+  right: 3px;
+  bottom: 2px;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--od-keybinding);
+  pointer-events: none;
+}
+
+.opendraw__button[aria-pressed='true'] .opendraw__key {
+  color: var(--od-on-accent-soft);
+}
+
+.opendraw__zoom {
+  min-width: 60px;
+  height: var(--od-button);
+  padding: 0 4px;
+  border: none;
+  border-radius: var(--od-radius);
+  background: transparent;
+  color: var(--od-ink);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.opendraw__zoom:hover {
+  background: var(--od-hover);
+}
+
+@keyframes opendraw-island-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* Phones: the toolbar becomes the bottom bar, undo/redo move up. */
+@media (max-width: 640px) {
+  .opendraw {
+    --od-gutter: 12px;
+  }
+
+  .opendraw__toolbar {
+    top: auto;
+    bottom: var(--od-gutter);
+    justify-content: flex-start;
+  }
+
+  .opendraw__key {
+    display: none;
+  }
+
+  .opendraw__bottom-left {
+    top: var(--od-gutter);
+    bottom: auto;
+  }
+
+  .opendraw__zoom-island {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .opendraw__island {
+    animation: none;
+  }
+}
