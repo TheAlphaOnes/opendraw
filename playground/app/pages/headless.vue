@@ -48,6 +48,9 @@
 </template>
 
 <script setup lang="ts">
+// A test page: reachable, but kept out of search results.
+useSiteSeo({ path: '/headless', title: 'Headless canvas demo — opendraw', noindex: true })
+
 import type { ToolId } from '@opendrawjs/core'
 
 const ctx = createOpenDrawContext({

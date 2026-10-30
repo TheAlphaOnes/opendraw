@@ -2,7 +2,46 @@
 import type { DocsNavGroup } from '../components/docs/DocsShell.vue'
 
 /** The opendraw documentation: usage, API reference and the adapter guide. */
-useHead({ title: 'Docs — opendraw' })
+const base = useRuntimeConfig().public.siteUrl as string
+const DOCS_TITLE = 'Docs — opendraw: add a hand-drawn whiteboard to Vue, Nuxt, React or Svelte'
+const DOCS_DESCRIPTION =
+  'Install opendraw and embed an Excalidraw-style whiteboard: components, props and events, composables, custom UI, theming, React and Svelte, and the framework-free editor API.'
+
+useSiteSeo({
+  path: '/docs',
+  title: DOCS_TITLE,
+  description: DOCS_DESCRIPTION,
+  image: '/og-docs.png',
+  imageAlt: 'opendraw documentation: add a whiteboard in one line',
+  type: 'article',
+  jsonLd: [
+    {
+      '@type': 'TechArticle',
+      '@id': siteUrl(base, '/docs#article'),
+      headline: 'opendraw documentation',
+      description: DOCS_DESCRIPTION,
+      url: siteUrl(base, '/docs'),
+      image: siteUrl(base, '/og-docs.png'),
+      inLanguage: 'en',
+      proficiencyLevel: 'Beginner',
+      author: { '@type': 'Person', name: SITE.author },
+      about: {
+        '@type': 'SoftwareSourceCode',
+        name: SITE.name,
+        codeRepository: SITE.repository,
+        programmingLanguage: ['TypeScript', 'Vue', 'React', 'Svelte'],
+      },
+      isPartOf: { '@id': siteUrl(base, '/#website') },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: SITE.name, item: siteUrl(base, '/') },
+        { '@type': 'ListItem', position: 2, name: 'Documentation', item: siteUrl(base, '/docs') },
+      ],
+    },
+  ],
+})
 
 const NAV: DocsNavGroup[] = [
   {

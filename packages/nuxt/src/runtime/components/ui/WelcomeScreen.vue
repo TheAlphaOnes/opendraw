@@ -54,7 +54,7 @@ function openHelp(): void {
       </div>
 
       <section class="welcome__center" aria-label="Welcome">
-        <h1 class="welcome__logo">opendraw</h1>
+        <p class="welcome__logo">opendraw</p>
         <p class="welcome__heading">All your data is saved locally in your browser.</p>
         <div class="welcome__menu">
           <button type="button" class="welcome__item" @click="runAction(ctx.editor, 'openFile')">
