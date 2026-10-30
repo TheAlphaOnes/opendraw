@@ -129,6 +129,16 @@ export interface VueDrawContext {
   // grid
   gridSize: ComputedRef<number | null>
   setGridSize: (size: number | null) => void
+
+  // canvas
+  /** CSS-pixel size of the mounted canvas (zero before it mounts). */
+  viewportSize: ShallowRef<ViewportSize>
+  setViewportSize: (size: ViewportSize) => void
+}
+
+export interface ViewportSize {
+  width: number
+  height: number
 }
 
 export interface CreateVueDrawOptions {
@@ -150,6 +160,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
   let clipboard: VueDrawElement[] = []
 
   const state = shallowRef<VueDrawState>(doc.getState())
+  const viewportSize = shallowRef<ViewportSize>({ width: 0, height: 0 })
 
   doc.subscribe((next) => {
     state.value = next
@@ -338,8 +349,7 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
       if (list.length === 0) {
         return
       }
-      const center: Point =
-        at ?? centerOfViewport(appState.value.viewport, typeof window === 'undefined' ? null : window)
+      const center: Point = at ?? centerOfViewport(appState.value.viewport, viewportSize.value)
       doc.beginStep()
       void (async () => {
         let lastId: string | null = null
@@ -384,6 +394,14 @@ export function createVueDrawContext(options: CreateVueDrawOptions = {}): VueDra
 
     gridSize: computed(() => appState.value.gridSize),
     setGridSize: (size) => doc.setAppState({ gridSize: size }),
+
+    viewportSize,
+    setViewportSize: (size) => {
+      const current = viewportSize.value
+      if (current.width !== size.width || current.height !== size.height) {
+        viewportSize.value = size
+      }
+    },
   }
 
   return context
@@ -454,9 +472,10 @@ function centerOffsetFor(clipboard: readonly VueDrawElement[], at: Point): { x: 
  * position for image insertions that have no pointer position (picker,
  * clipboard).
  */
-function centerOfViewport(viewport: Viewport, win: Window | null): Point {
-  const width = win?.innerWidth ?? 800
-  const height = win?.innerHeight ?? 600
+function centerOfViewport(viewport: Viewport, size: ViewportSize): Point {
+  // Before the canvas mounts there is no size; a typical viewport stands in.
+  const width = size.width || 800
+  const height = size.height || 600
   return screenToScene({ x: width / 2, y: height / 2 }, viewport)
 }
 

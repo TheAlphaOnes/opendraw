@@ -32,6 +32,11 @@ export function isImageFile(file: File): boolean {
   return file.type.startsWith('image/')
 }
 
+/** The image files of a drop or paste payload (null-safe). */
+export function imageFilesOf(files: FileList | null | undefined): File[] {
+  return files ? Array.from(files).filter(isImageFile) : []
+}
+
 /**
  * The resolver handed to core's renderer and PNG exporter: synchronous cache
  * lookup only — a bitmap that is not decoded yet yields null (placeholder).
