@@ -33,7 +33,7 @@ function isNoOp<T extends OpenDrawElement>(element: T, patch: ElementPatch<T>): 
 
 /**
  * Applies a patch copy-on-write. Returns the same reference when nothing
- * actually changed — callers (history, Vue reactivity) rely on that.
+ * actually changed, callers (history, Vue reactivity) rely on that.
  */
 export function patchElement<T extends OpenDrawElement>(element: T, patch: ElementPatch<T>): T {
   if (isNoOp(element, patch)) {
@@ -48,7 +48,7 @@ export function patchElement<T extends OpenDrawElement>(element: T, patch: Eleme
 }
 
 /**
- * Applies a patch regardless of no-op detection — for interactive drags
+ * Applies a patch regardless of no-op detection, for interactive drags
  * where the patch function recomputes fresh geometry each move anyway.
  */
 export function forcePatchElement<T extends OpenDrawElement>(

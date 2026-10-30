@@ -20,7 +20,7 @@ G6-C2/G8-C3. All work stayed inside the repo; no commit/push was attempted
   `packages/nuxt/src/runtime/components/VueDrawCanvas.vue` (selection tool,
   hit-test, `beginStep` + `setEditing(hit.id)`) and `TextEditor.vue`'s
   `onMounted` (`ta.value = el.text`, caret at end) already implement the
-  Excalidraw semantics. What was missing was only the **spec** — a grep for
+  Excalidraw semantics. What was missing was only the **spec**: a grep for
   `dblclick` across `playground/e2e/*.spec.ts` returned nothing before this
   round.
 - **Pinch-zoom handler.** `onWheel` already branches on
@@ -30,26 +30,26 @@ G6-C2/G8-C3. All work stayed inside the repo; no commit/push was attempted
 
 ### Implemented this round (the gap the specs revealed)
 
-**Text-tool click on existing text now edits it in place** —
+**Text-tool click on existing text now edits it in place**,
 `packages/nuxt/src/runtime/components/VueDrawCanvas.vue`, the `tool === 'text'`
 branch of `onPointerDown` (previously it called `createTextAt(scenePoint)`
 unconditionally, stacking a new element under the pointer). Reference:
-`.context/excalidraw/packages/excalidraw/components/App.textTool.ts` —
+`.context/excalidraw/packages/excalidraw/components/App.textTool.ts`,
 `getTargetAt` resolves a `{ type: "text", element }` target *before* free
 creation, and its `handlePointerDown` case `"text"` calls
 `startTextEditing` on that element (line ~304). The vuedraw implementation
 follows the existing architecture: hit-test via `findElementAt`, then
 `ctx.doc.beginStep()` (the one open step the editor commits into),
 `ctx.select(hit.id)`, `ctx.setActiveTool('selection')` (tool revert, matching
-Excalidraw's `finish()`), `ctx.setEditing(hit.id)` — the same sequence shape
+Excalidraw's `finish()`), `ctx.setEditing(hit.id)`: the same sequence shape
 `createTextAt` uses, all mutations through the document. Typed, no swallowed
 errors, no other tool paths touched.
 
 ## New specs (titles and key assertions quoted)
 
-### G2-C2 — `playground/e2e/draw.spec.ts`
+### G2-C2, `playground/e2e/draw.spec.ts`
 
-**"draws an ellipse that lands in the document selected"** — mirrors the
+**"draws an ellipse that lands in the document selected"**: mirrors the
 rectangle case:
 
 ```ts
@@ -62,7 +62,7 @@ expect((await scene(page)).selection).toEqual([drawn.id])
 await expect(page.getByRole('button', { name: 'Undo (Ctrl+Z)' })).toBeEnabled()
 ```
 
-**"captures a freedraw stroke as a pointer-move pressure path"** — pins the
+**"captures a freedraw stroke as a pointer-move pressure path"**: pins the
 freedraw tool via the pointer-move path capture, read through the
 `window.__vuedraw` mirror:
 
@@ -91,7 +91,7 @@ excludes freedraw from the post-draw auto-selection
 && newElement` guard), and vuedraw's `case 'freedrawing'` in `onPointerUp`
 matches it (no `ctx.select`), so the spec pins non-selection.
 
-### G8-C2 — `playground/e2e/text.spec.ts`
+### G8-C2, `playground/e2e/text.spec.ts`
 
 **"double-clicking existing text reopens the editor with its content"**:
 
@@ -105,7 +105,7 @@ expect(edited.id).toBe(created.id)                  // same element, extended
 expect(edited.text).toBe('hello vuedraw!')
 ```
 
-**"clicking existing text with the text tool edits it in place"** — the spec
+**"clicking existing text with the text tool edits it in place"**: the spec
 that drove this round's implementation change:
 
 ```ts
@@ -119,13 +119,13 @@ expect(edited.id).toBe(created.id)
 expect(edited.text).toBe('hello vuedraw again')
 ```
 
-### G4-C1 — `playground/e2e/zoom.spec.ts`
+### G4-C1, `playground/e2e/zoom.spec.ts`
 
 **"trackpad pinch-zoom surfaces as ctrl+wheel and zooms toward the cursor"**:
 
 ```ts
 // Honesty note: Playwright's input API cannot express a two-finger
-// pinch. A trackpad pinch never reaches the page as a gesture anyway —
+// pinch. A trackpad pinch never reaches the page as a gesture anyway,
 // the browser translates it into a stream of wheel events carrying the
 // ctrl modifier (the documented pinch-zoom mechanism in Chrome and
 // Safari). This spec drives exactly that event stream: ctrlKey wheel
@@ -146,14 +146,14 @@ expect(Math.abs(after!.y - before!.y)).toBeLessThan(6)
 **What this spec emulates, stated plainly:** the two-finger gesture itself
 is not reproducible through Playwright's input API, and no attempt was made
 to fake one. The spec emulates the *mechanism* the browser exposes to the
-page — ctrl-modified wheel events at the cursor — which is the exact same
+page, ctrl-modified wheel events at the cursor, which is the exact same
 handler path a real trackpad pinch takes (`onWheel`'s `event.ctrlKey`
 branch). The 332% readout is deterministic (`Math.exp(-(-12) * 0.01)` per
 tick, ten ticks, `Math.round(3.3201 * 100)`); the pre-existing
 "ctrl+wheel zooms toward the cursor" spec still independently covers the
 keyboard-ctrl form.
 
-### G6-C2 / G8-C3 — round-11 receipts re-read and confirmed accurate
+### G6-C2 / G8-C3, round-11 receipts re-read and confirmed accurate
 
 - **G6-C2** maps to `playground/e2e/system-theme.spec.ts` ("opens in the dark
   theme with no persisted scene" with `test.use({ colorScheme: 'dark' })`,
@@ -164,7 +164,7 @@ keyboard-ctrl form.
   needed.
 - **G8-C3** maps to the marquee assertions in `draw.spec.ts`: the marquee
   drag in "narrows a multi-selection with a plain click on one shape" starts
-  at the empty point (200, 120) — outside both shapes' bounds — and
+  at the empty point (200, 120), outside both shapes' bounds, and
   `expect.poll(... selection.length).toBe(2)` pins that intersecting elements
   are selected; "clears the marquee chrome when the drag ends empty" pins the
   frame teardown. Mapping accurate; no fix needed.
@@ -172,13 +172,13 @@ keyboard-ctrl form.
 ## Commands run locally (actual output quoted)
 
 The e2e suite **cannot be executed in this sandbox** (no TCP bind / no
-browser drive — same environment denials proven in the round-5 receipt §3), so
+browser drive, same environment denials proven in the round-5 receipt §3), so
 the new specs are delivered typechecked but not browser-run; the user must run
 `pnpm e2e` outside the sandbox as in round 11. Everything runnable here was
 run, using round-11's documented substitute commands for the sandbox write
 denials:
 
-### 1. Core unit suite — PASS (unchanged tree for this package)
+### 1. Core unit suite, PASS (unchanged tree for this package)
 
 ```
 cd packages/core && ../../node_modules/.bin/vitest run --configLoader runner
@@ -188,7 +188,7 @@ cd packages/core && ../../node_modules/.bin/vitest run --configLoader runner
    Duration  246ms
 ```
 
-### 2. Nuxt unit suite (includes the changed package) — PASS
+### 2. Nuxt unit suite (includes the changed package), PASS
 
 ```
 cd packages/nuxt && ../../node_modules/.bin/vitest run --configLoader runner
@@ -196,7 +196,7 @@ cd packages/nuxt && ../../node_modules/.bin/vitest run --configLoader runner
    Duration  103ms
 ```
 
-### 3. Typechecks — all four passes clean, exit 0
+### 3. Typechecks, all four passes clean, exit 0
 
 ```
 packages/core  : pnpm exec tsc --noEmit -p tsconfig.json          → EXIT:0
@@ -207,7 +207,7 @@ playground app : pnpm exec vue-tsc --noEmit -p .nuxt/tsconfig.json → EXIT:0
 
 The playground-app pass prints the pre-existing vue-tsc plugin warning
 (`[Vue] Failed to create plugin TypeError: plugin is not a function`) to
-stderr — present on baselines, documented in the round-11 receipt §2, and
+stderr, present on baselines, documented in the round-11 receipt §2, and
 the real exit code is still 0 (re-verified with stderr discarded:
 `REAL-EXIT:0`). The `.nuxt` snapshot from today already exists, so the
 denied `nuxt prepare` preflight was skipped as in round 11.
@@ -221,7 +221,7 @@ this round: a deliberately ill-typed line added to
 Both probes were reverted and the files re-verified clean afterwards (the
 clean passes quoted above are post-probe-removal).
 
-### 4. Core compile+emit build — PASS (dist writes denied, output redirected)
+### 4. Core compile+emit build, PASS (dist writes denied, output redirected)
 
 ```
 cd packages/core && ../../node_modules/.bin/tsc -p tsconfig.build.json \
@@ -234,7 +234,7 @@ the clean `vue-tsc --noEmit` pass over that package plus its unit suite. As
 in round 11, a fresh unrestricted `pnpm build` remains the outstanding
 authoritative witness for the nuxt dist.
 
-### 5. Lint — no lint script exists
+### 5. Lint, no lint script exists
 
 G9-C1 names "linter/typecheck/build commands (as configured in package.json)".
 No `lint`/`eslint` script is configured in any package's `package.json`
@@ -249,14 +249,14 @@ complete configurable set.
    run outside (as the user did for round 11) before the new pins count as
    passing evidence.
 2. The trackpad-pinch spec emulates the page-visible mechanism (ctrl+wheel),
-   not the hardware gesture — Playwright cannot express a two-finger pinch;
+   not the hardware gesture, Playwright cannot express a two-finger pinch;
    the spec and this receipt say so explicitly.
 3. `pnpm build` for the nuxt package and a fresh `nuxt prepare`-backed
    playground typecheck remain un-witnessable here (write denials); core
    compile+emit is proven via the redirected build.
 4. The freedraw spec's `points.length` assertion assumes one appended point
    per dispatched `pointermove` (verified against the `case 'freedrawing'`
-   handler, which appends unconditionally) — if the browser run ever
+   handler, which appends unconditionally), if the browser run ever
    coalesces moves, that count is the first assertion to revisit.
 5. No lint command exists to run (see §5 above); nothing was lint-checked
    because the repo configures no linter.

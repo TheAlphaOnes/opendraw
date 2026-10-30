@@ -26,7 +26,7 @@ import { computed, useId } from 'vue'
 import { ARROW_TYPE_OPTIONS } from '@opendrawjs/editor'
 
 /**
- * StyleGlyph — a drawing of a style value (a hatched square, a dashed line,
+ * StyleGlyph, a drawing of a style value (a hatched square, a dashed line,
  * a rough stroke), not an icon: Lucide has no glyph for "this fill" or
  * "this sloppiness", and these previews are what tell the options apart.
  * Paths are Excalidraw's own (components/icons.tsx, MIT), so the panel

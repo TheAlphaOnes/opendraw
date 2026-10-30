@@ -5,7 +5,7 @@ import type { CanvasRuntime } from './runtime.js'
 import { dragTipTo, type TipModifiers } from './tipBinding.js'
 
 /**
- * Multi-point line/arrow drafting — Excalidraw's `multiElement` flow. A
+ * Multi-point line/arrow drafting, Excalidraw's `multiElement` flow. A
  * no-drag click with the line or arrow tool parks the first point; every
  * later click appends one until Enter, Escape or a double-click ends it.
  */
@@ -19,9 +19,9 @@ const LINE_CONFIRM_THRESHOLD = 8
 
 /**
  * A press in the live multi-point draft:
- *   — no temp yet: a press beyond the threshold spins one up; inside the
+ *  - no temp yet: a press beyond the threshold spins one up; inside the
  *     zone the press is swallowed (the cursor sits on the committed tip);
- *   — temp live: a press beyond the threshold commits it and pushes a new
+ *  - temp live: a press beyond the threshold commits it and pushes a new
  *     temp at the press; a press back inside the zone retreats (pops the
  *     temp), which is also how a double-click's second press unwinds it.
  */
@@ -52,7 +52,7 @@ export function appendDraftPoint(rt: CanvasRuntime, at: Point): void {
     return
   }
   if (distance < LINE_CONFIRM_THRESHOLD) {
-    // Retreat — but never below the first committed point plus one.
+    // Retreat, but never below the first committed point plus one.
     if (points.length > 2) {
       ctx.doc.forceUpdateElement(el.id, pointsPatch(el, points.slice(0, -1)))
     }

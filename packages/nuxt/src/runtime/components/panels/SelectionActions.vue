@@ -7,7 +7,7 @@ import ActionButton from './ActionButton.vue'
 import StyleSection from './StyleSection.vue'
 
 /**
- * The selection-only tail of the properties island — Excalidraw's
+ * The selection-only tail of the properties island, Excalidraw's
  * "Layers", "Align" and "Actions" rows. Align appears from two selected
  * elements, distribute from three.
  */

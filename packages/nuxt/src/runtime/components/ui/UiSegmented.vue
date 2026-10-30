@@ -7,7 +7,7 @@ export interface UiSegmentedOption {
   value: string
   /** Accessible name, tooltip, and (when no icon is set) the visible text. */
   label: string
-  /** Optional registry icon — icon options render as 32x32 hit areas. */
+  /** Optional registry icon, icon options render as 32x32 hit areas. */
   icon?: IconName
   /** A drawing of the style value itself (fill, stroke, sloppiness, edges). */
   glyph?: StyleGlyphName

@@ -1,19 +1,19 @@
 /**
- * Linear bindings — Excalidraw's fixed-point binding model
+ * Linear bindings, Excalidraw's fixed-point binding model
  * (packages/element/src/binding.ts, "simple" strategy), for lines and
  * arrows alike.
  *
  * A bound tip records the shape, a FIXED POINT (where inside the shape the
  * tip aims, as ratios of the shape's size) and a MODE:
- *   — `inside`: the tip sits exactly at the fixed point — what you get by
+ *  - `inside`: the tip sits exactly at the fixed point, what you get by
  *     dropping a tip inside a shape (or holding Alt);
- *   — `orbit`: the tip stops on the outline, dilated by a small gap, where
- *     the line from the fixed point toward the other end crosses it — what
+ *  - `orbit`: the tip stops on the outline, dilated by a small gap, where
+ *     the line from the fixed point toward the other end crosses it, what
  *     you get by dropping a tip just outside a shape. Its fixed point is a
  *     side midpoint when the tip lands near one, else the drop point
  *     projected onto the shape's diagonals.
  * Fixed points survive the shape moving, resizing and rotating, so an
- * arrow keeps aiming at the spot the user chose — no predefined zones.
+ * arrow keeps aiming at the spot the user chose, no predefined zones.
  *
  * Constants and rules follow the reference: BASE_BINDING_GAP,
  * maxBindingDistance_simple, BASE_ARROW_MIN_LENGTH, normalizeFixedPoint,
@@ -52,11 +52,11 @@ export type OpenDrawBindableShape =
 
 /** Excalidraw's BASE_BINDING_GAP. */
 export const BASE_BINDING_GAP = 5
-/** Excalidraw's BASE_ARROW_MIN_LENGTH — shorter arrows aim at the fixed point. */
+/** Excalidraw's BASE_ARROW_MIN_LENGTH, shorter arrows aim at the fixed point. */
 export const BASE_ARROW_MIN_LENGTH = 10
 /** Excalidraw's FOCUS_POINT_SIZE (screen px). */
 export const FOCUS_POINT_SIZE = 10 / 1.5
-/** Excalidraw's FIXED_POINT_BOUND — fixed points stay within ±10 sizes. */
+/** Excalidraw's FIXED_POINT_BOUND, fixed points stay within ±10 sizes. */
 const FIXED_POINT_BOUND = 10
 /** Below this size a shape has no interior to anchor a ratio into. */
 const MIN_BINDABLE_SIZE = 1
@@ -87,7 +87,7 @@ export function maxBindingDistance(zoom = 1): number {
 }
 
 /**
- * Topmost bindable shape within `threshold` scene px of `point` — the
+ * Topmost bindable shape within `threshold` scene px of `point`: the
  * shape a tip at `point` would bind to.
  */
 export function bindableShapeAt(
@@ -141,7 +141,7 @@ function centerOf(element: OpenDrawElement): Point {
 }
 
 /**
- * The fixed point for a scene point — Excalidraw's
+ * The fixed point for a scene point, Excalidraw's
  * calculateFixedPointForNonElbowArrowBinding: the point un-rotated about
  * the shape's center, as ratios of its size (floored at the binding gap so
  * tiny shapes stay bounded).
@@ -176,7 +176,7 @@ export function bindingAt(shape: OpenDrawBindableShape, focus: Point, mode: Bind
 
 /**
  * The shape's side midpoints in scene space (Excalidraw's getAllMidpoints):
- * right, bottom, left, top — a diamond's are its four corners.
+ * right, bottom, left, top, a diamond's are its four corners.
  */
 export function shapeMidpoints(shape: OpenDrawBindableShape): Point[] {
   const { width: w, height: h } = shape
@@ -203,7 +203,7 @@ export function midpointSnapDistance(shape: OpenDrawBindableShape, zoom: number)
 }
 
 /**
- * The side midpoint a tip at `point` snaps to — only from OUTSIDE the
+ * The side midpoint a tip at `point` snaps to, only from OUTSIDE the
  * shape, within the snap distance (getSnapOutlineMidPoint for simple
  * arrows). Null when none is near.
  */
@@ -247,7 +247,7 @@ function segmentIntersection(a: Point, b: Point, c: Point, d: Point): Point | nu
 }
 
 /**
- * Where a tip dropped just outside the shape aims — Excalidraw's
+ * Where a tip dropped just outside the shape aims, Excalidraw's
  * projectFixedPointOntoDiagonal: a near side midpoint wins; else the line
  * from `from` (the other end) through `point` is projected onto the shape's
  * diagonals, keeping the crossing nearest `from` that lies inside the shape.
@@ -374,7 +374,7 @@ function localOutlineCrossings(shape: OpenDrawBindableShape, a: Point, b: Point,
 
 /**
  * Scene points where segment a→b crosses the shape's outline dilated by
- * `gap` — rotation-aware (the segment is tested in the shape's local frame).
+ * `gap`: rotation-aware (the segment is tested in the shape's local frame).
  */
 export function outlineIntersections(shape: OpenDrawBindableShape, a: Point, b: Point, gap: number): Point[] {
   const la = localPointOf(shape, a)
@@ -416,7 +416,7 @@ export function localPointOf(element: OpenDrawElement, scene: Point): Point {
 }
 
 /**
- * Points patch with size fields re-synced — unrotated elements carry the
+ * Points patch with size fields re-synced, unrotated elements carry the
  * points' extents in width/height; with an angle those fields are the
  * rotation pivot and must stay untouched. Every linear points write in
  * the app goes through here so the size fields never go stale.
@@ -463,13 +463,13 @@ export interface TipBindingResult {
 }
 
 /**
- * The binding a dragged tip takes at `tip` — Excalidraw's
+ * The binding a dragged tip takes at `tip`: Excalidraw's
  * getBindingStrategyForDraggingBindingElementEndpoints_simple:
- *   — no shape within the magnetic distance: loose;
- *   — the other end already bound to the same shape: both ends bind
+ *  - no shape within the magnetic distance: loose;
+ *  - the other end already bound to the same shape: both ends bind
  *     inside (the other at its own fixed point);
- *   — Alt held, or the tip inside the shape: `inside` at the tip;
- *   — otherwise `orbit`, aiming at a near side midpoint or at the tip's
+ *  - Alt held, or the tip inside the shape: `inside` at the tip;
+ *  - otherwise `orbit`, aiming at a near side midpoint or at the tip's
  *     projection onto the shape's diagonals (else the tip itself).
  */
 export function resolveTipBinding(
@@ -533,16 +533,16 @@ function asMap(elements: readonly OpenDrawElement[] | ReadonlyMap<string, OpenDr
 }
 
 export interface BoundTipOptions {
-  /** True while the tip is being dragged — skips the nested-shape rule. */
+  /** True while the tip is being dragged, skips the nested-shape rule. */
   dragging?: boolean
 }
 
 /**
- * Where a bound tip sits right now — Excalidraw's updateBoundPoint:
- *   — `inside`: exactly at the fixed point;
- *   — `orbit`: where the line from the fixed point toward the other end (its
+ * Where a bound tip sits right now, Excalidraw's updateBoundPoint:
+ *  - `inside`: exactly at the fixed point;
+ *  - `orbit`: where the line from the fixed point toward the other end (its
  *     fixed point when also bound and the arrow has two points, else the
- *     neighboring point) crosses the dilated outline — falling back to the
+ *     neighboring point) crosses the dilated outline, falling back to the
  *     fixed point when the arrow would be too short or would invert into a
  *     smaller shape nested in this one.
  * Null when the tip is unbound or its shape is gone.
@@ -664,7 +664,7 @@ export function bindingFollowPatches(
 
 /**
  * After a line or arrow is dragged on its own, each tip binds to whatever
- * shape it now lands on (by the same rules as dragging a tip) or unbinds —
+ * shape it now lands on (by the same rules as dragging a tip) or unbinds,
  * Excalidraw's bindOrUnbindBindingElements at the end of a drag.
  */
 export function rebindAfterDrag(
@@ -684,7 +684,7 @@ export function rebindAfterDrag(
 }
 
 /**
- * Patches nulling out bindings whose target was deleted — applied inside the
+ * Patches nulling out bindings whose target was deleted, applied inside the
  * deletion's own undo step so the element and the cleanup revert together.
  */
 export function orphanBindingPatches(

@@ -3,13 +3,13 @@ import type { OpenDrawElement } from '@opendrawjs/core'
 import type { CanvasRuntime } from './runtime.js'
 
 /**
- * Web fonts for the canvas — Excalidraw's Fonts.loadSceneFonts. A canvas
+ * Web fonts for the canvas, Excalidraw's Fonts.loadSceneFonts. A canvas
  * never asks the browser for a font: drawing text with a face that has not
  * downloaded yet silently uses the fallback, and the text is measured with
  * the fallback's metrics too. So the editor requests Excalifont itself, for
  * exactly the characters on the canvas (its Unicode subsets download only
- * as needed). When a face arrives, every text is re-measured — outside
- * undo history — and the scene repaints.
+ * as needed). When a face arrives, every text is re-measured, outside
+ * undo history, and the scene repaints.
  *
  * The text being edited is left alone until the edit ends: its session
  * keeps a stable layout box (textEditor.ts).

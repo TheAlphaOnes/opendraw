@@ -36,7 +36,7 @@ import UiColorPicker from '../ui/UiColorPicker.vue'
 import UiIcon from '../ui/UiIcon.vue'
 
 /**
- * The properties island — Excalidraw's left-hand shape-properties panel.
+ * The properties island, Excalidraw's left-hand shape-properties panel.
  * It appears while something is selected or a drawing tool is armed, and
  * lists only the properties that apply to those element types. Edits
  * patch the selection, or set the defaults for the next element when
@@ -51,7 +51,7 @@ const ctx = useOpenDraw()
  */
 const expanded = ref(false)
 
-/** Labels inside the selected shapes — styled through the text section. */
+/** Labels inside the selected shapes, styled through the text section. */
 const labels = computed(() =>
   withBoundTexts(ctx.elements.value, ctx.selectedElements.value.map((el) => el.id)).filter(
     (el): el is OpenDrawTextElement => el.type === 'text' && el.containerId !== null,

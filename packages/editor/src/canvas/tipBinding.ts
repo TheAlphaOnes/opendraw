@@ -10,19 +10,19 @@ import {
 import type { CanvasRuntime } from './runtime.js'
 
 /**
- * Binding a dragged line/arrow tip as it moves — Excalidraw's
+ * Binding a dragged line/arrow tip as it moves, Excalidraw's
  * bindOrUnbindBindingElement during a point drag:
- *   — Ctrl/⌘ held skips binding altogether (the tip stays loose);
- *   — Alt binds inside at the exact point;
- *   — otherwise the "simple" strategy decides (see resolveTipBinding);
+ *  - Ctrl/⌘ held skips binding altogether (the tip stays loose);
+ *  - Alt binds inside at the exact point;
+ *  - otherwise the "simple" strategy decides (see resolveTipBinding);
  * then every bound tip snaps where its binding says, live, and the shape
  * being bound to becomes the suggested binding the overlay highlights.
  */
 
 export interface TipModifiers {
-  /** Ctrl/⌘ — skip binding (Excalidraw's bindMode "skip"). */
+  /** Ctrl/⌘, skip binding (Excalidraw's bindMode "skip"). */
   skip: boolean
-  /** Alt — bind inside at the exact point. */
+  /** Alt, bind inside at the exact point. */
   inside: boolean
 }
 

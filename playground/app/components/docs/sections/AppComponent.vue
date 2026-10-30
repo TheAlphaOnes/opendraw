@@ -45,7 +45,7 @@ const CONFIG = [
   ['share', 'boolean | { url?, title?, label? }', 'The primary Share button: share sheet on phones, else copy link.'],
   ['menuLinks', '{ label, href?, onSelect?, icon? }[]', 'Links (or actions) in the main menu.'],
   ['files', 'boolean | { indexKey? }', 'Many named drawings: a Drawings button and sidebar to create, open, rename, duplicate, delete and search them. Each autosaves on its own.'],
-  ['theme · persist · grid · initialElements', '—', 'The editor options of <OpenDraw> (persist is ignored with files).'],
+  ['theme · persist · grid · initialElements', 'as on <OpenDraw>', 'The editor options of <OpenDraw> (persist is ignored with files).'],
   ['fullscreen', 'boolean', 'Fill the viewport (default) or the parent.'],
   ['onReady · onChange · onSelect · onCopy · onShare', 'functions', 'Hooks; also emitted as @ready, @change, @select, @copy, @share.'],
 ] as const
@@ -53,10 +53,10 @@ const CONFIG = [
 
 <template>
   <section id="opendraw-app" class="doc-section">
-    <h2>&lt;OpenDrawApp&gt; — the demo in one component</h2>
+    <h2>&lt;OpenDrawApp&gt;, the demo in one component</h2>
     <p>
-      Want exactly what this site shows? <code>&lt;OpenDrawApp&gt;</code> is the whole demo — the full editor filling
-      the page, your buttons, the glowing install command and a Share button top-right, your links in the main menu —
+      Want exactly what this site shows? <code>&lt;OpenDrawApp&gt;</code> is the whole demo, the full editor filling
+      the page, your buttons, the glowing install command and a Share button top-right, your links in the main menu,
       configured with one typed object. Every control sits on the same 40px island bar, light and dark.
     </p>
     <DocsCode title="pages/index.vue" :code="APP" />

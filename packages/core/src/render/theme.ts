@@ -2,8 +2,8 @@
  * Rendering theme helpers.
  *
  * Light mode is a pure pass-through. Dark mode re-creates the CSS filter
- * `invert(93%) hue-rotate(180deg)` in JS — the same approach Excalidraw
- * uses — so element colors stay readable on a dark canvas without shipping
+ * `invert(93%) hue-rotate(180deg)` in JS, the same approach Excalidraw
+ * uses, so element colors stay readable on a dark canvas without shipping
  * a color library. Only the two color notations the element model actually
  * produces are parsed: `#rgb`/`#rrggbb` (plus alpha extensions) and
  * `rgb()`/`rgba()`. Anything else is returned unchanged.
@@ -14,10 +14,10 @@ export interface RenderTheme {
   dark: boolean
 }
 
-/** Chrome colors used by the overlay renderer — not element user data. */
+/** Chrome colors used by the overlay renderer, not element user data. */
 export const UI = {
   /**
-   * Selection borders, handles and the marquee — opendraw's orange accent
+   * Selection borders, handles and the marquee, opendraw's orange accent
    * (the chrome's --od-accent) per theme. Chrome colors are consumed as-is
    * (like `grid`), never through the element dark filter.
    */
@@ -30,7 +30,7 @@ export const UI = {
   focus: 'rgba(234, 88, 12, 0.6)',
   /** De-emphasized accent for locked selections. */
   locked: '#ced4da',
-  /** Scene grid ink per theme — low contrast so content stays in focus. */
+  /** Scene grid ink per theme, low contrast so content stays in focus. */
   grid: { light: '#dddddd', dark: '#2e2e2e' },
 } as const
 
@@ -48,14 +48,14 @@ export interface Rgba {
   a: number
 }
 
-/** RGB channels only — the intermediate state between filter steps. */
+/** RGB channels only, the intermediate state between filter steps. */
 interface Channels {
   r: number
   g: number
   b: number
 }
 
-/** Dark-mode results keyed by input — colors repeat heavily per scene. */
+/** Dark-mode results keyed by input, colors repeat heavily per scene. */
 const darkFilterCache = new Map<string, string>()
 
 /**
@@ -160,7 +160,7 @@ function parseRgbFunction(color: string): Rgba | null {
 // ---------------------------------------------------------------------------
 
 /**
- * The dark-mode filter: invert(93%) first, then hue-rotate(180deg) — the
+ * The dark-mode filter: invert(93%) first, then hue-rotate(180deg), the
  * order matches the CSS `filter: invert(93%) hue-rotate(180deg)`.
  */
 function darkFilter(color: Rgba): Rgba {

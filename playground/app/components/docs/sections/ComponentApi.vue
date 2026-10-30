@@ -15,9 +15,9 @@ const EVENTS = [
 ] as const
 
 const SLOTS = [
-  ['top-left', 'After the main menu — the open document\'s name.'],
-  ['top-right', 'Beside the toolbar, top-right — a Share or Docs button.'],
-  ['footer', 'Bottom-right, before the help button — status or install hints.'],
+  ['top-left', 'After the main menu, the open document\'s name.'],
+  ['top-right', 'Beside the toolbar, top-right, a Share or Docs button.'],
+  ['footer', 'Bottom-right, before the help button, status or install hints.'],
 ] as const
 
 const EXAMPLE = `<script setup lang="ts">

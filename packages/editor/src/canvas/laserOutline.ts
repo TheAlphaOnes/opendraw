@@ -1,5 +1,5 @@
 /**
- * The laser stroke's outline — a port of Excalidraw's
+ * The laser stroke's outline, a port of Excalidraw's
  * `@excalidraw/laser-pointer` (state.ts + math.ts). A stroke is one filled
  * polygon whose half-width at each point comes from `sizeMapping`, so the
  * trail tapers and decays as a single shape instead of overlapping
@@ -7,7 +7,7 @@
  * Douglas–Peucker pass is not ported.
  */
 
-/** [x, y, pressure] — the laser stores the point's timestamp as pressure. */
+/** [x, y, pressure], the laser stores the point's timestamp as pressure. */
 export type OutlinePoint = [x: number, y: number, r: number]
 
 export interface SizeMappingDetails {
@@ -20,7 +20,7 @@ export interface SizeMappingDetails {
 export interface LaserStrokeOptions {
   /** Half-width of the stroke before `sizeMapping` scales it. */
   size: number
-  /** 0..1 — how far each new point lags toward the previous one. */
+  /** 0..1, how far each new point lags toward the previous one. */
   streamline: number
   keepHead: boolean
   sizeMapping: (details: SizeMappingDetails) => number

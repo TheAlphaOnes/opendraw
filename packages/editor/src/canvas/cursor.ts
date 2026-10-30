@@ -22,7 +22,7 @@ import {
 } from './selectionHits.js'
 
 /**
- * The CSS cursor advertises what a press would do right here — the same
+ * The CSS cursor advertises what a press would do right here, the same
  * precedence the press handler resolves: point handles, transform
  * handles, border sides, the selection box, then element hits.
  */

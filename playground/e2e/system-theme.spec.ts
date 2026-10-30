@@ -20,7 +20,7 @@ test.describe('system dark color scheme', () => {
 
   test('a persisted light theme still wins over the system default', async ({ page }) => {
     // First visit with a dark system: the editor opens dark, then the user
-    // explicitly switches to light — that choice is persisted.
+    // explicitly switches to light, that choice is persisted.
     await openEditor(page)
     await runMenuItem(page, /^Light mode/)
     await expect(page.locator('.opendraw-root')).toHaveAttribute('data-theme', 'light')

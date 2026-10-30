@@ -8,12 +8,12 @@ import { Cell } from '../cell.js'
 /**
  * Whether shortcut DISPLAYS use Apple glyphs. Starts false so a server
  * render and the hydration render agree (the server cannot know the
- * platform), then flips once a canvas mounts — see `detectKeyPlatform`.
+ * platform), then flips once a canvas mounts, see `detectKeyPlatform`.
  * Event handling never reads this; it checks the live platform.
  */
 export const appleKeyDisplay = new Cell(false)
 
-/** Resolves the display platform — call from a mounted hook only. */
+/** Resolves the display platform, call from a mounted hook only. */
 export function detectKeyPlatform(): void {
   appleKeyDisplay.value = isApplePlatform()
 }
@@ -23,13 +23,13 @@ export function isApplePlatform(): boolean {
   return typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform)
 }
 
-/** Ctrl, or ⌘ on Apple platforms — Excalidraw's CTRL_OR_CMD. */
+/** Ctrl, or ⌘ on Apple platforms, Excalidraw's CTRL_OR_CMD. */
 export function isMod(event: KeyboardEvent): boolean {
   return isApplePlatform() ? event.metaKey : event.ctrlKey
 }
 
 /**
- * Mod with no Alt — the plain "command" chord. Either Ctrl or ⌘ counts so
+ * Mod with no Alt, the plain "command" chord. Either Ctrl or ⌘ counts so
  * remote-desktop and automation key streams still reach the action.
  */
 export function plainMod(event: KeyboardEvent): boolean {
@@ -46,7 +46,7 @@ export function keyIs(event: KeyboardEvent, key: string): boolean {
   return event.key.toLowerCase() === key.toLowerCase()
 }
 
-/** Typing contexts own their keys — shortcuts never fire inside them. */
+/** Typing contexts own their keys, shortcuts never fire inside them. */
 export function isTypingTarget(target: EventTarget | null): boolean {
   return (
     target instanceof HTMLElement &&

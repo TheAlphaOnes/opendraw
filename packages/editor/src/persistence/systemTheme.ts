@@ -19,7 +19,7 @@ const PREFERS_DARK_QUERY = '(prefers-color-scheme: dark)'
 /**
  * Resolves a theme default against the browser color scheme: `'system'`
  * becomes `'dark'` or `'light'` per the media query, an explicit theme passes
- * through untouched. SSR-safe — without `matchMedia` the light theme is the
+ * through untouched. SSR-safe, without `matchMedia` the light theme is the
  * conservative default and the client re-resolves on hydration.
  */
 export function resolveThemeDefault(theme: ThemeDefault): ThemeName {

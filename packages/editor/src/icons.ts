@@ -1,5 +1,5 @@
 /**
- * Semantic icon names — the contract between the framework-free editor
+ * Semantic icon names, the contract between the framework-free editor
  * (actions and tools name their icon) and each adapter's icon registry,
  * which maps every name to a glyph (Lucide in @opendrawjs/nuxt).
  */

@@ -6,7 +6,7 @@ import { finishLinearDraft } from './linearDraft.js'
 import type { CanvasRuntime } from './runtime.js'
 
 /**
- * Two-finger pinch and pan on touch screens, and Safari's trackpad pinch —
+ * Two-finger pinch and pan on touch screens, and Safari's trackpad pinch,
  * Excalidraw's multi-touch gesture (App.updateGestureOnPointerDown /
  * updateMultiTouchGesture, and onGestureChange).
  *

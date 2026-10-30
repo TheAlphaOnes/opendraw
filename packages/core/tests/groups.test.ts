@@ -19,7 +19,7 @@ function ids(record: Readonly<Record<string, true>>): string[] {
   return Object.keys(record).sort()
 }
 
-describe('groups — pure helpers', () => {
+describe('groups, pure helpers', () => {
   it('resolves the outermost group visible from the editing group', () => {
     const el = rect(0, ['inner', 'outer'])
     expect(outermostGroupId(el)).toBe('outer')
@@ -61,7 +61,7 @@ describe('groups — pure helpers', () => {
   })
 })
 
-describe('groups — document', () => {
+describe('groups, document', () => {
   it('groups the selection in one undo step and makes members z-contiguous', () => {
     const a = rect(0)
     const between = rect(10)
@@ -176,7 +176,7 @@ describe('duplicateElements', async () => {
   })
 })
 
-describe('frames — document behaviors', async () => {
+describe('frames, document behaviors', async () => {
   const { newFrameElement } = await import('../src/elements/factories.js')
   it('deletes, moves and duplicates children with their frame', () => {
     const frame = newFrameElement({ x: 0, y: 0, width: 100, height: 100 })

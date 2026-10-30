@@ -1,11 +1,11 @@
 /**
- * Drawing files — several drawings in one browser, Excalidraw+-style: a
+ * Drawing files, several drawings in one browser, Excalidraw+-style: a
  * small index of named drawings, each scene under its own storage key.
  *
  * The library owns the index and the previews; it never touches a scene's
  * content except to copy (duplicate) or delete it. Scenes are written by
  * the editor's own scene persistence, pointed at the active drawing's
- * `storageKey` — so switching drawings is switching that key.
+ * `storageKey`: so switching drawings is switching that key.
  *
  *   const files = createDrawingFiles()
  *   attachScenePersistence(editor, { storageKey: files.active.storageKey })
@@ -96,7 +96,7 @@ function defaultStorage(): Storage {
   return memoryStorage()
 }
 
-/** A Storage over a Map — the fallback without a browser, and for tests. */
+/** A Storage over a Map, the fallback without a browser, and for tests. */
 export function memoryStorage(): Storage {
   const data = new Map<string, string>()
   return {
@@ -194,7 +194,7 @@ export function createDrawingFiles(options: DrawingFilesOptions = {}): DrawingFi
 
   /**
    * Without a readable index, the drawings are rebuilt from the scenes
-   * still in storage — a lost index must never lose a drawing. The scene
+   * still in storage, a lost index must never lose a drawing. The scene
    * saved before files existed becomes the first one.
    */
   function recoverFiles(): DrawingFile[] {
@@ -281,8 +281,8 @@ export function createDrawingFiles(options: DrawingFilesOptions = {}): DrawingFi
   const patch = (id: string, change: Partial<DrawingFile>): DrawingFile[] =>
     files.map((file) => (file.id === id ? { ...file, ...change } : file))
 
-  // Scene keys and previews a healthy index does not list — left behind by
-  // a tab that closed mid-delete — are reclaimed on start. (Recovery lists
+  // Scene keys and previews a healthy index does not list, left behind by
+  // a tab that closed mid-delete, are reclaimed on start. (Recovery lists
   // every scene instead, so this never runs on a rebuilt index.)
   function collectOrphans(): void {
     const owned = new Set(files.flatMap((file) => [file.storageKey, `${FILE_THUMBNAIL_KEY_PREFIX}${file.id}`]))
@@ -485,7 +485,7 @@ export function createDrawingFiles(options: DrawingFilesOptions = {}): DrawingFi
         // Unchanged, and the preview is current (or there is nothing to show).
         return
       }
-      // Changed — or a drawing with content but no preview yet (one adopted
+      // Changed, or a drawing with content but no preview yet (one adopted
       // from a single-scene save): render it once the edits settle.
       pendingScenes.set(id, scene)
       schedulePreviews()

@@ -22,16 +22,16 @@ const canAlign = (ctx: EditorController): boolean => ctx.selectedElements.length
 /** Distribute needs three units for a gap to equalize. */
 const canDistribute = (ctx: EditorController): boolean => ctx.selectedElements.length > 2
 
-/** Ctrl or ⌘, either one, with Alt — and the physical key. */
+/** Ctrl or ⌘, either one, with Alt, and the physical key. */
 const modAlt = (e: KeyboardEvent, code: string): boolean =>
   (e.metaKey || e.ctrlKey) && e.altKey && e.code === code
-/** Alt alone (Shift free) — and the physical key. */
+/** Alt alone (Shift free), and the physical key. */
 const altOnly = (e: KeyboardEvent, code: string): boolean =>
   e.altKey && !e.metaKey && !e.ctrlKey && e.code === code
 /** Ctrl/⌘ + Shift, no Alt. */
 const modShift = (e: KeyboardEvent): boolean => plainMod(e) && e.shiftKey
 
-/** The canvas center, in host-local screen px — where keyboard zoom anchors. */
+/** The canvas center, in host-local screen px, where keyboard zoom anchors. */
 function canvasCenter(ctx: EditorController): { x: number; y: number } {
   const { width, height } = ctx.viewportSize
   return { x: width / 2, y: height / 2 }
@@ -412,7 +412,7 @@ export function runAction(ctx: EditorController, id: ActionId): boolean {
 
 /**
  * Keyboard dispatch: the first action whose key test matches handles the
- * event — it is consumed (default prevented) even when the action does
+ * event, it is consumed (default prevented) even when the action does
  * not apply right now, so Mod+D never falls through to the browser's
  * bookmark dialog.
  */

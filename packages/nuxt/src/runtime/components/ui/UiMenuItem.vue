@@ -7,7 +7,7 @@ import type { IconName } from '../../constants/icons.js'
 import UiIcon from './UiIcon.vue'
 
 /**
- * UiMenuItem — Excalidraw's dropdown-menu-item: a 32px row with a 16px
+ * UiMenuItem, Excalidraw's dropdown-menu-item: a 32px row with a 16px
  * icon, a 14px label and the shortcut at half opacity on the right. With
  * `href` it is a link (opening a new tab for external URLs).
  */

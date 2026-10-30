@@ -1,5 +1,5 @@
 /**
- * Sticky notes — a port of Excalidraw's element/src/stickyNote.ts.
+ * Sticky notes, a port of Excalidraw's element/src/stickyNote.ts.
  *
  * A note is paper: a slightly jittered (by sloppiness) rounded sheet with a
  * soft drop shadow, a lifted corner at "cartoonist" sloppiness, and its
@@ -64,7 +64,7 @@ export function stickyNoteColor(property: 'strokeColor' | 'backgroundColor', col
 
 /**
  * The part of a style change a note takes: never-transparent colors,
- * sloppiness and opacity — fill, stroke width and stroke style do not
+ * sloppiness and opacity, fill, stroke width and stroke style do not
  * apply to paper (Excalidraw's hasFillStyle / hasStrokeWidth).
  */
 export function stickyNoteStylePatch(style: Partial<ElementStyle>): Partial<ElementStyle> {
@@ -129,8 +129,8 @@ function renderPoints(note: OpenDrawStickyNoteElement, offset = 0, seedOffset = 
 
 /**
  * The paper (or, with `shadow`, its offset shadow) as path commands in
- * note-local space. At "cartoonist" sloppiness one corner — the same for
- * paper and shadow, picked by the seed — lifts off the page.
+ * note-local space. At "cartoonist" sloppiness one corner, the same for
+ * paper and shadow, picked by the seed, lifts off the page.
  */
 export function stickyNotePathCommands(
   note: OpenDrawStickyNoteElement,
@@ -258,7 +258,7 @@ interface FontFit {
 
 /**
  * The largest size on the grid {ceiling − k·2} ∪ {min} whose wrapped text
- * fits — binary search warm-started from the previous fit, so a keystroke
+ * fits, binary search warm-started from the previous fit, so a keystroke
  * costs one or two measure passes (fitStickyNoteFont).
  */
 function fitFont(
@@ -319,7 +319,7 @@ export interface StickyNoteLayout {
 /**
  * Lays a note's label out (getStickyNoteLayout): wrap at the padded width,
  * fit the font under the ceiling, grow the note only when the text still
- * overflows at the minimum, then place the label — vertically centered in
+ * overflows at the minimum, then place the label, vertically centered in
  * the whole padded note while it stays clear of the footer.
  */
 export function layoutStickyNoteText(text: OpenDrawTextElement, note: OpenDrawStickyNoteElement): StickyNoteLayout {

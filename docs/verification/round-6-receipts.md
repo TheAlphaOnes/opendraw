@@ -6,7 +6,7 @@
 > work) and the validation evidence I could gather inside this sandbox.
 >
 > As in rounds 4–5, the sandbox denies writes under `.git/`, so nothing here
-> can be committed or pushed — see "Blockers".
+> can be committed or pushed, see "Blockers".
 
 Date: 2026-10-17. Environment: macOS, pnpm workspace at repo root.
 
@@ -16,20 +16,20 @@ Date: 2026-10-17. Environment: macOS, pnpm workspace at repo root.
 (`git log` HEAD is still `4018725 pin outline-true docking with an e2e spec`).
 Relative to the round-5 receipt, the tree now additionally contains:
 
-- **Eraser tool** — core hit-testing changes
+- **Eraser tool**: core hit-testing changes
   (`packages/core/src/elements/hitTest.ts` + its tests) and
   `playground/e2e/eraser.spec.ts`.
-- **Image tool** — `packages/nuxt/src/runtime/services/image.service.ts`,
+- **Image tool**: `packages/nuxt/src/runtime/services/image.service.ts`,
   core image support (`packages/core/tests/image.test.ts`, png/serialize
   export paths), and `playground/e2e/image.spec.ts`.
-- **SVG export** — `packages/core/src/export/svg.ts` (pure string building,
+- **SVG export**: `packages/core/src/export/svg.ts` (pure string building,
   no DOM, so it also runs under SSR/Node) with
   `packages/core/tests/export-svg.test.ts`, exported through
   `packages/core/src/index.ts`.
-- **Scene persistence** — `packages/nuxt/src/runtime/persistence/persistedScene.ts`
+- **Scene persistence**: `packages/nuxt/src/runtime/persistence/persistedScene.ts`
   and `systemTheme.ts`, the `useScenePersistence` composable, with
   `packages/nuxt/tests/persistedScene.test.ts` and a
-  `playground/e2e/persistence.spec.ts` (the nuxt package's first unit suite —
+  `playground/e2e/persistence.spec.ts` (the nuxt package's first unit suite,
   `packages/nuxt/vitest.config.ts` is new).
 - Carried over from rounds 4–5: `ZoomControls.vue`, `ShortcutsDialog.vue`,
   `UiSlider.vue`, `WelcomeScreen.vue`, `playground/app/pages/excalidraw.vue`,
@@ -38,7 +38,7 @@ Relative to the round-5 receipt, the tree now additionally contains:
 
 ## Commands run (actual output quoted)
 
-### 1. `pnpm test` — BLOCKED as written, PASS via workaround
+### 1. `pnpm test`: BLOCKED as written, PASS via workaround
 
 `pnpm test` fails at startup in both packages:
 
@@ -57,7 +57,7 @@ cd packages/core && ../../node_modules/.bin/vitest run --configLoader runner
 cd packages/nuxt  && ../../node_modules/.bin/vitest run --configLoader runner
 ```
 
-Results — **PASS** in both packages:
+Results, **PASS** in both packages:
 
 ```
 packages/core:  Test Files  11 passed (11)
@@ -72,10 +72,10 @@ packages/nuxt:   Test Files  1 passed (1)
 
 191 core tests is up from 169 at round 5; the new eraser/image/SVG work is
 covered. (Caveat for reproduction elsewhere: with the default `bundle` loader
-the same suites pass as plain `pnpm test` — the workaround is only needed
+the same suites pass as plain `pnpm test`: the workaround is only needed
 under this write-restricted sandbox.)
 
-### 2. `pnpm typecheck` — core and nuxt PASS; playground step needs substitution
+### 2. `pnpm typecheck`: core and nuxt PASS; playground step needs substitution
 
 ```
 packages/core typecheck:  Done
@@ -107,19 +107,19 @@ on stderr as in every prior run and does not affect the exit code. Caveat: the
 `pnpm typecheck` in an unrestricted environment remains the authoritative
 playground check.
 
-### 3. `E2E_PORT=3310 pnpm e2e` — not attempted, still blocked
+### 3. `E2E_PORT=3310 pnpm e2e`: not attempted, still blocked
 
 The Playwright suite cannot run here: this sandbox denies TCP bind and
 loopback connect at the OS level (proven in the round-5 receipt, §3, with a
 `net.createServer().listen()` EPERM probe), and a stale dev server still
 holds port 3310 unkillable from here. Nothing has changed that would lift
-that, so the e2e specs — including the new `eraser.spec.ts`,
-`image.spec.ts`, `persistence.spec.ts`, and `toolbar.spec.ts` — remain
+that, so the e2e specs, including the new `eraser.spec.ts`,
+`image.spec.ts`, `persistence.spec.ts`, and `toolbar.spec.ts`: remain
 **written and typechecked but not executed in this environment**. They must be
 run with `E2E_PORT=3310 pnpm e2e` from `playground/` in a port-permitting
 environment.
 
-### 4. `pnpm build` — not attempted
+### 4. `pnpm build`: not attempted
 
 Both package builds write to `packages/*/dist`, which is outside this round's
 writable set; a run would fail on EPERM for the dist writes, not on anything
@@ -133,9 +133,9 @@ unrestricted environment.
 
 - Demo route `/excalidraw` with the full Excalidraw chrome (tool dock in
   Excalidraw order, style panel, zoom island, welcome screen, shortcuts
-  dialog) — components present and typechecked; behavior pinned by
+  dialog), components present and typechecked; behavior pinned by
   `demo.spec.ts` / `toolbar.spec.ts`; **live e2e execution blocked** (§3).
-- Eraser, image tool, SVG export, scene persistence + system theme — unit
+- Eraser, image tool, SVG export, scene persistence + system theme, unit
   tests all pass (§1); browser-level specs written but not executed (§3).
 - Mission-level verdict: the code and tests are in place and everything
   runnable in this sandbox is green, but the *browser-verified* parity claim
@@ -144,10 +144,10 @@ unrestricted environment.
 
 ## Blockers
 
-1. **Commit/push still impossible** — all writes under `.git/` are denied, as
+1. **Commit/push still impossible**: all writes under `.git/` are denied, as
    in rounds 4–5. The accumulated rounds 4–6 changes (40 paths) are present
    and tested in the working tree but uncommitted and unpushed.
-2. **E2e and live demo load still impossible** — no TCP bind/connect, stale
+2. **E2e and live demo load still impossible**: no TCP bind/connect, stale
    server on 3310 (round-5 receipt §3). The new specs must be executed and
    the demo visually re-verified in a port-permitting environment.
 3. **Sandbox-write denials shaped the evidence** this round: `pnpm test` needed

@@ -2,7 +2,7 @@
  * Rotation-aware element hit-testing.
  *
  * The idiom throughout: to test a rotated element we un-rotate the POINT
- * about the element center and test against the axis-aligned local shape —
+ * about the element center and test against the axis-aligned local shape,
  * cheaper and simpler than rotating the shape.
  *
  * Two-stage like Excalidraw: a padded-AABB fast path, then a precise
@@ -208,7 +208,7 @@ export function hitTestElement(
   const local = toLocal(element, point)
 
   // A frame is transparent: only its outline (and its name label, which the
-  // editor tests separately) grabs it — Excalidraw's shouldTestInside.
+  // editor tests separately) grabs it, Excalidraw's shouldTestInside.
   const testInside =
     element.type === 'text' ||
     element.type === 'image' ||
@@ -234,7 +234,7 @@ export function hitTestElement(
 
 /**
  * True when the scene point lies inside the element's area, regardless of
- * fill — the "inside" half of the hit test, rotation-aware.
+ * fill, the "inside" half of the hit test, rotation-aware.
  */
 export function isPointInsideElement(element: OpenDrawElement, point: Point): boolean {
   return pointInsideShape(element, toLocal(element, point))
@@ -266,7 +266,7 @@ export function findElementAt(
   return null
 }
 
-/** Elements whose (rotation-aware) bounds intersect `bounds` — marquee. */
+/** Elements whose (rotation-aware) bounds intersect `bounds`: marquee. */
 export function elementsInBounds(
   elements: readonly OpenDrawElement[],
   bounds: Bounds,
@@ -275,7 +275,7 @@ export function elementsInBounds(
 }
 
 /**
- * Elements whose (rotation-aware) bounds lie wholly inside `bounds` —
+ * Elements whose (rotation-aware) bounds lie wholly inside `bounds`,
  * the marquee's box selection. Excalidraw's default `boxSelectionMode`
  * is "contain": brushing past an element's edge does not select it.
  */

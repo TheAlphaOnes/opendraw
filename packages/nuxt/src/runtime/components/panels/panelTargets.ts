@@ -1,7 +1,7 @@
 import type { ElementType, ToolId, OpenDrawElement } from '@opendrawjs/core'
 
 /**
- * Which property sections the properties island shows — Excalidraw's
+ * Which property sections the properties island shows, Excalidraw's
  * per-type predicates (hasBackground, hasStrokeWidth, hasStrokeStyle,
  * canChangeRoundness, …) applied to the selection, or to the armed tool
  * when nothing is selected.
@@ -10,7 +10,7 @@ export interface PanelTargets {
   visible: boolean
   stroke: boolean
   background: boolean
-  /** Fill patterns — paper (a sticky note) has a background but no fill style. */
+  /** Fill patterns, paper (a sticky note) has a background but no fill style. */
   fill: boolean
   /** Only sticky notes: "Text color" and the note palette (their own color domain). */
   notes: boolean
@@ -46,7 +46,7 @@ const STROKE_SHAPED: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond',
 const SLOPPY: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond', 'ellipse', 'arrow', 'line', 'stickynote'])
 /** Excalidraw's "Edges" control. Arrows have their own "Arrow type". */
 const CORNERED: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond', 'line', 'stickynote'])
-/** Images carry no ink of their own — only opacity applies. */
+/** Images carry no ink of their own, only opacity applies. */
 const INKED: ReadonlySet<ElementType> = new Set([
   'rectangle', 'diamond', 'ellipse', 'arrow', 'line', 'freedraw', 'text', 'frame', 'stickynote',
 ])

@@ -50,10 +50,10 @@ export interface OverlayRenderInput {
   previewElements: readonly OpenDrawElement[]
   /**
    * The shape a dragged (or hovering) line/arrow tip would bind to, and the
-   * pointer over it — Excalidraw's suggestedBinding. Null when none.
+   * pointer over it, Excalidraw's suggestedBinding. Null when none.
    */
   suggestedBinding?: { shape: OpenDrawBindableShape; pointer: Point } | null
-  /** Every element — the focus-point indicator looks bound shapes up here. */
+  /** Every element, the focus-point indicator looks bound shapes up here. */
   elements?: readonly OpenDrawElement[]
   /**
    * Group-aware chrome (see `groupSelectionChrome`): per-element outlines
@@ -69,14 +69,14 @@ export interface OverlayRenderInput {
   dpr: number
 }
 
-/** Handle fill per theme — dark chrome sits on a dark canvas. */
+/** Handle fill per theme, dark chrome sits on a dark canvas. */
 const HANDLE_FILL_LIGHT = '#ffffff'
 const HANDLE_FILL_DARK = '#121212'
 
 /** Rounded-corner radius of resize handles, in screen px. */
 const HANDLE_RADIUS_PX = 2
 
-/** Marquee fill opacity — a whisper, not a wash. */
+/** Marquee fill opacity, a whisper, not a wash. */
 const MARQUEE_FILL_ALPHA = 0.06
 
 export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRenderInput): void {
@@ -87,7 +87,7 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
   const selectionColor = dark ? UI.selection.dark : UI.selection.light
 
   // The overlay is transparent by design and nothing else wipes it, so each
-  // frame starts by clearing the whole bitmap — under the identity transform,
+  // frame starts by clearing the whole bitmap, under the identity transform,
   // in device pixels. Without this, moving chrome (selection borders, handles,
   // the marquee) trails behind the pointer and a deselect leaves its last
   // paint on the canvas forever.
@@ -120,8 +120,8 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
     drawElementsBoxHighlight(ctx, input.elementsToHighlight, dark, zoom)
   }
 
-  // While text is being edited — free text, or a label inside its selected
-  // shape — the DOM editor draws its own affordances; chrome would only
+  // While text is being edited, free text, or a label inside its selected
+  // shape, the DOM editor draws its own affordances; chrome would only
   // double it.
   const isEditingText = editingId !== null
 
@@ -143,7 +143,7 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
           : selectionColor
       const boxed = hasBoundingBox(selectedElements)
       if (!boxed) {
-        // A lone two-point line or arrow: no box, no transform handles —
+        // A lone two-point line or arrow: no box, no transform handles,
         // only its point handles below (Excalidraw's hasBoundingBox).
       } else if (selectedElements.length === 1) {
         drawSingleBorder(ctx, frame, accent, zoom)
@@ -173,7 +173,7 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
       }
       // A lone selected line/arrow also shows its point handles: filled
       // endpoint circles that drag tips, plus the hollow midpoint that
-      // inserts a point — Excalidraw's selected-linear affordance.
+      // inserts a point, Excalidraw's selected-linear affordance.
       const only = selectedElements.length === 1 ? selectedElements[0]! : null
       if (only && isLinearElement(only) && input.elements && !only.locked) {
         drawFocusPointIndicators(ctx, only, input.elements, zoom, dark)
@@ -259,7 +259,7 @@ function drawFrameHighlight(
   ctx.restore()
 }
 
-/** One blue box per element — or per outermost group — a frame would hold. */
+/** One blue box per element, or per outermost group, a frame would hold. */
 function drawElementsBoxHighlight(
   ctx: CanvasRenderingContext2D,
   elements: readonly OpenDrawElement[],
@@ -355,7 +355,7 @@ function appendRoundRect(
 /**
  * The point circles of a selected linear element, drawn over the box
  * chrome: a filled dot at every point and, for a two-point line, the
- * hollow segment midpoint — Excalidraw's `renderLinearPointHandles` at
+ * hollow segment midpoint, Excalidraw's `renderLinearPointHandles` at
  * POINT_HANDLE_SIZE / 2 while the point editor is closed.
  */
 function drawLinearPointHandles(
@@ -446,7 +446,7 @@ function drawMidpointIndicators(
 /**
  * Excalidraw's focus-point indicator on a selected two-point line/arrow:
  * for each bound end, a dashed connector from the tip to the point it aims
- * at, and a small ringed circle there — hidden when the two overlap.
+ * at, and a small ringed circle there, hidden when the two overlap.
  */
 function drawFocusPointIndicators(
   ctx: CanvasRenderingContext2D,
@@ -519,7 +519,7 @@ function drawMarquee(
 
 /**
  * A clean (non-rough) outline over the shape an in-flight line/arrow tip
- * would dock onto, tracing its own geometry — rounded corners included —
+ * would dock onto, tracing its own geometry, rounded corners included,
  * and rotating with it. The stroke clamps against the shape's own width so
  * thin outlines stay readable, mirroring Excalidraw's
  * `renderBindingHighlightForBindableElement`.

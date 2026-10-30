@@ -3,7 +3,7 @@ import { ARROW_TYPE_OPTIONS, type EditorController } from '@opendrawjs/editor'
 import { useEditorState } from './useOpenDrawEditor.js'
 
 /**
- * Excalidraw's "Arrow type" — sharp, curved or elbow — shown while the
+ * Excalidraw's "Arrow type", sharp, curved or elbow, shown while the
  * arrow tool is armed or arrows are selected. Picking applies to the
  * selected arrows, else to the next arrow drawn.
  */

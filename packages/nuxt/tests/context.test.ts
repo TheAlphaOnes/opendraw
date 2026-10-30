@@ -6,7 +6,7 @@ import { createEditor } from '@opendrawjs/editor'
 
 import { createOpenDrawContext } from '../src/runtime/composables/useOpenDraw.js'
 
-describe('createOpenDrawContext — the Vue bridge over the editor', () => {
+describe('createOpenDrawContext, the Vue bridge over the editor', () => {
   it('re-evaluates computeds on document changes', () => {
     const rect = newRectangleElement({ x: 0, y: 0, width: 10, height: 10 })
     const ctx = createOpenDrawContext({ elements: [rect] })

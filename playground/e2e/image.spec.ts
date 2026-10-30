@@ -1,5 +1,5 @@
 /**
- * Image tool e2e — toolbar picker insertion and drag behavior.
+ * Image tool e2e, toolbar picker insertion and drag behavior.
  *
  * Written but NOT executed in this round: the Playwright suite boots the
  * playground dev server, which cannot run in the sandbox this slice was
@@ -12,7 +12,7 @@ import { at, canvasBox, drag, openEditor, pickTool, scene, settleFrames, test } 
 import { expect } from './helpers'
 
 /**
- * A genuine 40x30 PNG rendered by the browser itself — no binary fixture
+ * A genuine 40x30 PNG rendered by the browser itself, no binary fixture
  * needs to live in the repo, and the dimensions are known exactly.
  */
 async function tinyPngBuffer(page: import('@playwright/test').Page): Promise<Buffer> {
@@ -68,7 +68,7 @@ test('moves the inserted image like any other element', async ({ page }) => {
   const before = (await scene(page)).elements[0]!
   await settleFrames(page)
 
-  // Grab the image by its interior and drag it — selection tool, default
+  // Grab the image by its interior and drag it, selection tool, default
   // identity viewport, so scene coordinates map 1:1 to canvas-local ones.
   await pickTool(page, 'Selection (1)')
   const box = await canvasBox(page)

@@ -27,9 +27,9 @@ import UiMenuSeparator from '../ui/UiMenuSeparator.vue'
 import CanvasBackgroundPicker from './CanvasBackgroundPicker.vue'
 
 /**
- * The top-left hamburger — Excalidraw's MainMenu with its default items:
+ * The top-left hamburger, Excalidraw's MainMenu with its default items:
  * open, save, export, help and reset; then the host's own links; then
- * preferences — theme, grid and canvas background.
+ * preferences, theme, grid and canvas background.
  */
 const props = withDefaults(defineProps<{ links?: readonly MainMenuLink[] }>(), { links: () => [] })
 

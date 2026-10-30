@@ -1,7 +1,7 @@
 /**
  * Selection-frame interaction tests: frame containment, border grabbing and
  * the resize cursors that advertise it. The hit tolerances are pinned to
- * Excalidraw's constants on purpose — a silent change to the grab zones
+ * Excalidraw's constants on purpose, a silent change to the grab zones
  * should turn this suite red.
  */
 
@@ -84,7 +84,7 @@ describe('sideHandleAt', () => {
 
   it('tests rotated frames in their local space', () => {
     const rotated: SelectionFrame = { x: 0, y: 0, width: 100, height: 50, angle: Math.PI / 2 }
-    // The local top edge sits visually at x = 50..? — its midpoint is (75, 25),
+    // The local top edge sits visually at x = 50..?, its midpoint is (75, 25),
     // with the local "up" direction pointing visually right.
     expect(sideHandleAt(rotated, { x: 77, y: 25 }, 1)).toBe('n')
   })

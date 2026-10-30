@@ -42,7 +42,7 @@ export function onCanvasPointerUp(rt: CanvasRuntime, laser: LaserTrail, event: P
       }
       if (isLinearElement(el) && (el.points.length < 2 || (el.points[1]!.x === 0 && el.points[1]!.y === 0))) {
         // Excalidraw's multi-point creation: a no-drag click parks the
-        // first point and keeps the draft live — each later click beyond
+        // first point and keeps the draft live, each later click beyond
         // the commit threshold appends a point until Enter, Escape or a
         // double-click ends it.
         ctx.doc.forceUpdateElement(el.id, { points: [{ x: 0, y: 0 }, { x: 0, y: 0 }] })
@@ -86,7 +86,7 @@ export function onCanvasPointerUp(rt: CanvasRuntime, laser: LaserTrail, event: P
     }
     case 'moving': {
       // A line or arrow dragged on its own rebinds to whatever its tips
-      // landed on (or unbinds) — one moved with its bound shapes keeps
+      // landed on (or unbinds), one moved with its bound shapes keeps
       // its bindings. Folded into the drag's own undo step.
       if (current.didDrag) {
         const movedIds = new Set(current.originals.map((el) => el.id))
@@ -120,7 +120,7 @@ export function onCanvasPointerUp(rt: CanvasRuntime, laser: LaserTrail, event: P
     }
     case 'draftingLinear':
       // The commit/retreat logic lives on pointerdown (Excalidraw's
-      // multiElement flow) — the release just keeps the draft live.
+      // multiElement flow), the release just keeps the draft live.
       rt.interaction.value = current
       return
     case 'laser':
@@ -150,8 +150,8 @@ const DRAG_THRESHOLD_PX = 10
 /**
  * Releasing the note tool (App.tsx's stickynote pointer-up): a click places
  * the default 250px square centered on the press, a drag keeps its size
- * (square unless Shift) at least one line tall. Then — unless the tool is
- * locked — the note is selected and its label opens for typing.
+ * (square unless Shift) at least one line tall. Then, unless the tool is
+ * locked, the note is selected and its label opens for typing.
  */
 function finishStickyNote(
   rt: CanvasRuntime,

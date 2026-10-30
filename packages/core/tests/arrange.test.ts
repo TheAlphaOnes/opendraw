@@ -15,7 +15,7 @@ function apply(elements: OpenDrawElement[], entries: ReturnType<typeof alignUnit
   return elements.map((el) => ({ ...el, ...(byId.get(el.id) ?? {}) }) as OpenDrawElement)
 }
 
-describe('arrange — align', () => {
+describe('arrange, align', () => {
   it('aligns left, center and right edges', () => {
     const a = rect(0, 0, 10)
     const b = rect(50, 30, 30)
@@ -48,7 +48,7 @@ describe('arrange — align', () => {
   })
 })
 
-describe('arrange — distribute', () => {
+describe('arrange, distribute', () => {
   it('equalizes the gaps and keeps the outer units fixed', () => {
     const a = rect(0, 0, 10)
     const b = rect(15, 0, 10)
@@ -62,7 +62,7 @@ describe('arrange — distribute', () => {
   })
 })
 
-describe('arrange — flip', () => {
+describe('arrange, flip', () => {
   it('mirrors boxes across the selection center', () => {
     const a = rect(0, 0, 10)
     const b = rect(90, 0, 10)
@@ -92,7 +92,7 @@ describe('arrange — flip', () => {
   })
 })
 
-describe('arrange — document', () => {
+describe('arrange, document', () => {
   it('aligns in one undo step and leaves locked elements alone', () => {
     const a = rect(0, 0)
     const b = rect(50, 0)
@@ -107,7 +107,7 @@ describe('arrange — document', () => {
   })
 })
 
-describe('styles — copy and paste', async () => {
+describe('styles, copy and paste', async () => {
   const { stylePayloadOf, newTextElement } = await import('../src/elements/factories.js')
   it('pastes onto the selection in one step and leaves defaults alone', () => {
     const source = { ...rect(0, 0), strokeColor: '#e03131', roundness: 'round' as const }

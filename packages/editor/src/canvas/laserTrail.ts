@@ -6,7 +6,7 @@ import { LaserStroke, svgPathFromOutline } from './laserOutline.js'
 import type { CanvasRuntime } from './runtime.js'
 
 /**
- * Laser pointer — transient overlay ink, never document state. A port of
+ * Laser pointer, transient overlay ink, never document state. A port of
  * Excalidraw's LaserTrails + AnimatedTrail: each press is one stroke drawn
  * as a single filled outline whose width decays with age and tapers toward
  * the tail, so nothing overlaps into dots. Finished strokes keep fading

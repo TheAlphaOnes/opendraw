@@ -9,7 +9,7 @@ function rect(x = 0, y = 0, w = 10, h = 10) {
   return newRectangleElement({ x, y, width: w, height: h })
 }
 
-describe('OpenDrawDocument — basics', () => {
+describe('OpenDrawDocument, basics', () => {
   it('starts empty with default app state', () => {
     const doc = new OpenDrawDocument()
     expect(doc.getElements()).toHaveLength(0)
@@ -82,7 +82,7 @@ describe('OpenDrawDocument — basics', () => {
   })
 })
 
-describe('OpenDrawDocument — history', () => {
+describe('OpenDrawDocument, history', () => {
   it('undoes and redoes an addition', () => {
     const doc = new OpenDrawDocument()
     const el = rect()
@@ -183,7 +183,7 @@ describe('OpenDrawDocument — history', () => {
   })
 })
 
-describe('OpenDrawDocument — z-order', () => {
+describe('OpenDrawDocument, z-order', () => {
   it('moves a single selection forward and backward by one', () => {
     const doc = new OpenDrawDocument()
     const a = rect()
@@ -228,7 +228,7 @@ describe('OpenDrawDocument — z-order', () => {
   })
 })
 
-describe('OpenDrawDocument — styles & duplication', () => {
+describe('OpenDrawDocument, styles & duplication', () => {
   it('styles the selection and defaults when nothing is selected', () => {
     const doc = new OpenDrawDocument()
     const el = rect()
@@ -271,7 +271,7 @@ describe('OpenDrawDocument — styles & duplication', () => {
   })
 })
 
-describe('OpenDrawDocument — serialization', () => {
+describe('OpenDrawDocument, serialization', () => {
   it('round-trips through file format', () => {
     const doc = new OpenDrawDocument()
     doc.addElements([

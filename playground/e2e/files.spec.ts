@@ -1,5 +1,5 @@
 /**
- * Drawing files e2e — the demo's many-drawings system: each drawing keeps
+ * Drawing files e2e, the demo's many-drawings system: each drawing keeps
  * its own scene, the open one survives a reload, and the sidebar creates,
  * renames, duplicates, deletes and searches them.
  */
@@ -12,7 +12,7 @@ const sidebar = (page: Page) => page.getByRole('dialog', { name: /^Drawings/ })
 const row = (page: Page, name: string) => sidebar(page).getByRole('button', { name: new RegExp(`^${name}(?: \\(open\\))?,`) })
 
 async function openSidebar(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Drawings — / }).click()
+  await page.getByRole('button', { name: /^Drawings, / }).click()
   await expect(sidebar(page)).toBeVisible()
 }
 
@@ -35,7 +35,7 @@ test('each drawing keeps its own scene', async ({ page }) => {
 
   await openSidebar(page)
   await sidebar(page).getByRole('button', { name: 'New', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'Drawings — Untitled drawing 2' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Drawings, Untitled drawing 2' })).toBeVisible()
   await expect.poll(async () => (await scene(page)).elements.length).toBe(0)
   await page.keyboard.press('Escape')
 
@@ -65,7 +65,7 @@ test('reopens the open drawing after a reload, with its name', async ({ page }) 
 
   await page.reload()
   await openEditor(page)
-  await expect(page.getByRole('button', { name: 'Drawings — Roadmap' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Drawings, Roadmap' })).toBeVisible()
   await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
 })
 
@@ -88,7 +88,7 @@ test('duplicates a drawing with its content', async ({ page }) => {
   await openSidebar(page)
   await rowAction(page, 'Untitled drawing', 'Duplicate')
   await row(page, 'Untitled drawing copy').click()
-  await expect(page.getByRole('button', { name: 'Drawings — Untitled drawing copy' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Drawings, Untitled drawing copy' })).toBeVisible()
   await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
 })
 
@@ -107,7 +107,7 @@ test('deletes after confirming, then opens the next drawing', async ({ page }) =
   await rowAction(page, 'Untitled drawing 2', 'Delete')
   await sidebar(page).getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click()
   await expect(row(page, 'Untitled drawing 2')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Drawings — Untitled drawing' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Drawings, Untitled drawing' })).toBeVisible()
   await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
 })
 

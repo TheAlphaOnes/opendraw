@@ -1,6 +1,6 @@
 /**
  * Browser file plumbing: saving a blob to disk and picking a file to open.
- * SSR-safe — every entry point no-ops without a document.
+ * SSR-safe, every entry point no-ops without a document.
  */
 
 /** Triggers a download of `url` as `filename`. */

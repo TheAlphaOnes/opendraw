@@ -10,7 +10,7 @@ function arrow(points = [{ x: 0, y: 0 }, { x: 100, y: 0 }]) {
   return newLinearElement('arrow', { x: 0, y: 0, points }) as OpenDrawLinearElement
 }
 
-describe('arrowheads — geometry', () => {
+describe('arrowheads, geometry', () => {
   it('opens an arrow head 20° either side of the shaft, 25px long', () => {
     const [tx, ty, x3, y3, x4, y4] = arrowheadPoints(arrow(), 'end', 'arrow')!
     expect([tx, ty]).toEqual([100, 0])
@@ -41,7 +41,7 @@ describe('arrowheads — geometry', () => {
   })
 })
 
-describe('arrowheads — model', () => {
+describe('arrowheads, model', () => {
   it('defaults arrows to an end arrow and lines to none', () => {
     const a = arrow()
     expect([a.startArrowhead, a.endArrowhead]).toEqual([null, 'arrow'])

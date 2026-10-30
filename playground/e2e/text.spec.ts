@@ -35,7 +35,7 @@ test('renders text once: the canvas stays blank while the editor is open', async
   await expect(editor).toBeFocused()
   await page.keyboard.type('hello opendraw')
 
-  // The textarea is the single live copy while the session is open — the
+  // The textarea is the single live copy while the session is open, the
   // static renderer skips the editing element, so the window around the
   // click holds no canvas ink yet.
   await settleFrames(page)
@@ -73,7 +73,7 @@ test('double-clicking existing text reopens the editor with its content', async 
   // The session seeds from the existing content, not from empty.
   await expect(editor).toHaveValue('hello opendraw')
 
-  // Typing extends the same element — no new element is created.
+  // Typing extends the same element, no new element is created.
   await page.keyboard.type('!')
   await page.keyboard.press('Escape')
 

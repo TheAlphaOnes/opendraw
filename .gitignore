@@ -27,7 +27,7 @@ playwright-report/
 # scratch
 /tmp
 
-# local agent instructions — kept on disk, never published
+# local agent instructions, kept on disk, never published
 AGENTS.md
 .agents/
 

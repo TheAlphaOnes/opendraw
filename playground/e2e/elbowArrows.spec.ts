@@ -1,5 +1,5 @@
 /**
- * Elbow arrows e2e — Excalidraw's "Arrow type" property: sharp, curved and
+ * Elbow arrows e2e, Excalidraw's "Arrow type" property: sharp, curved and
  * elbow. An elbow arrow routes in axis-aligned legs around the shapes it
  * binds, re-routes when they move, and A cycles the type while the arrow
  * tool is armed.

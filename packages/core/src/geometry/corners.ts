@@ -1,5 +1,5 @@
 /**
- * Corner rounding — Excalidraw's getCornerRadius. Shared by the renderer,
+ * Corner rounding, Excalidraw's getCornerRadius. Shared by the renderer,
  * the overlay highlight and binding geometry, so every consumer traces the
  * exact corners that are drawn.
  */
@@ -7,7 +7,7 @@
 /** Excalidraw's DEFAULT_PROPORTIONAL_RADIUS: corners at 25% of the side. */
 export const PROPORTIONAL_RADIUS = 0.25
 
-/** Excalidraw's DEFAULT_ADAPTIVE_RADIUS — rectangles' fixed corner radius. */
+/** Excalidraw's DEFAULT_ADAPTIVE_RADIUS, rectangles' fixed corner radius. */
 export const ADAPTIVE_RADIUS = 32
 
 /**

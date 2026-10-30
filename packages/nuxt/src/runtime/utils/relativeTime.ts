@@ -1,5 +1,5 @@
 /**
- * "Just now", "5 min ago", "Yesterday", then a date — how the files list
+ * "Just now", "5 min ago", "Yesterday", then a date, how the files list
  * says when a drawing was last edited. Intl does the wording, so it reads
  * naturally in the user's locale.
  */

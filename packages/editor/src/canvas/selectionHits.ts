@@ -20,7 +20,7 @@ import type { CanvasRuntime } from './runtime.js'
 
 /**
  * Screen-px slack around the selection frame that still grabs (moves) the
- * selection — Excalidraw sums its collision threshold (≈8px) and handle
+ * selection, Excalidraw sums its collision threshold (≈8px) and handle
  * spacing (4px) into roughly this padding.
  */
 export const SELECTION_GRAB_PADDING = 12
@@ -58,14 +58,14 @@ export function sideGrabAt(
   return sideHandleAt(frame, point, rt.ctx.viewport.zoom)
 }
 
-/** The lone selected, unlocked line/arrow — or null. */
+/** The lone selected, unlocked line/arrow, or null. */
 export function loneSelectedLinear(rt: CanvasRuntime): OpenDrawLinearElement | null {
   const selected = rt.ctx.selectedElements
   const only = selected.length === 1 ? selected[0] : null
   return only && !only.locked && isLinearElement(only) ? only : null
 }
 
-/** Live copies of the selection — the pointerdown snapshot transforms read. */
+/** Live copies of the selection, the pointerdown snapshot transforms read. */
 export function snapshotSelection(rt: CanvasRuntime): readonly OpenDrawElement[] {
   return rt.ctx.selectedElements.map((el) => rt.ctx.doc.getElement(el.id) ?? el)
 }

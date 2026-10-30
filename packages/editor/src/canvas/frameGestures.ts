@@ -12,7 +12,7 @@ import {
 import type { CanvasRuntime } from './runtime.js'
 
 /**
- * Frame-aware pointer queries — Excalidraw's frame interaction in App.tsx
+ * Frame-aware pointer queries, Excalidraw's frame interaction in App.tsx
  * and App.selectionTool.ts: which element a press grabs (a frame's name
  * label grabs the frame), which frame a new element joins, which frame a
  * dragged selection would drop into, and the highlights that preview it.
@@ -67,7 +67,7 @@ export function dropFrameAt(rt: CanvasRuntime, point: Point): OpenDrawFrameEleme
 }
 
 /**
- * While dragging the selection: highlight the frame it would drop into —
+ * While dragging the selection: highlight the frame it would drop into,
  * none when a frame is among the dragged elements (frames never nest).
  */
 export function updateDragFrameHighlight(rt: CanvasRuntime, point: Point): void {

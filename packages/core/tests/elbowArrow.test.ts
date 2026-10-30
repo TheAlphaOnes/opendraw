@@ -122,7 +122,7 @@ describe('elbow arrows (Excalidraw elbowArrow.ts)', () => {
   it('never routes a kink: no leg off axis, no short interior jog between separate shapes', () => {
     // A seeded sweep over shape kinds, sizes, placements and drop points.
     // Before the jog cleanup, ~4% of these routes had a 2px step or a leg
-    // a fraction of a pixel off axis — drawn as hooks and doubled strokes.
+    // a fraction of a pixel off axis, drawn as hooks and doubled strokes.
     let seed = 7
     const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647
     const kinds = [newRectangleElement, newEllipseElement, newDiamondElement]

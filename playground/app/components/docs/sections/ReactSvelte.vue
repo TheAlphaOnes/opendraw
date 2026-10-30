@@ -60,8 +60,8 @@ const SVELTE_HEADLESS = `<script lang="ts">
     <h2>React &amp; Svelte</h2>
     <p>
       The editor also ships as React and Svelte 5 components, over the same <code>@opendrawjs/editor</code>. Each offers
-      a ready-made <code>&lt;OpenDraw&gt;</code> — canvas, toolbar with key hints, zoom and history islands, theme toggle
-      and autosave — and a bare <code>&lt;OpenDrawCanvas&gt;</code> for your own UI. One Playwright suite runs against
+      a ready-made <code>&lt;OpenDraw&gt;</code>, canvas, toolbar with key hints, zoom and history islands, theme toggle
+      and autosave, and a bare <code>&lt;OpenDrawCanvas&gt;</code> for your own UI. One Playwright suite runs against
       both, so they behave identically.
     </p>
     <DocsCode title="terminal" :code="INSTALL" />

@@ -75,11 +75,11 @@ export interface SceneRenderInput {
     Pick<OpenDrawAppState, 'theme' | 'viewBackgroundColor' | 'viewport' | 'gridSize' | 'editingId'>
   >
   canvasSize: CanvasSize
-  /** devicePixelRatio — fold into the transform so callers stay CSS-px. */
+  /** devicePixelRatio, fold into the transform so callers stay CSS-px. */
   dpr: number
   /**
    * Supplies a decoded bitmap for an image element, or null when it is not
-   * (yet) available — core never decodes itself, keeping the package
+   * (yet) available, core never decodes itself, keeping the package
    * environment-agnostic. Missing bitmaps render a placeholder instead.
    */
   resolveImage?: SceneImageResolver
@@ -89,7 +89,7 @@ export interface SceneRenderInput {
    * into, not the one they are leaving.
    */
   frameDrag?: { ids: ReadonlySet<string>; targetFrameId: string | null } | null
-  /** A frame whose name is being edited — the DOM input replaces its label. */
+  /** A frame whose name is being edited, the DOM input replaces its label. */
   editingFrameNameId?: string | null
 }
 
@@ -101,7 +101,7 @@ export interface SceneRenderInput {
 export type SceneImageResolver = (element: OpenDrawImageElement) => CanvasImageSource | null
 
 // ---------------------------------------------------------------------------
-// Stroke dash arrays — shared with tests
+// Stroke dash arrays, shared with tests
 // ---------------------------------------------------------------------------
 
 export function getDashArrayDashed(strokeWidth: number): number[] {
@@ -113,7 +113,7 @@ export function getDashArrayDotted(strokeWidth: number): number[] {
 }
 
 // ---------------------------------------------------------------------------
-// Roughness scaling — small shapes look cleaner with reduced jitter
+// Roughness scaling, small shapes look cleaner with reduced jitter
 // ---------------------------------------------------------------------------
 
 type BoxElement = Extract<OpenDrawElement, { type: 'rectangle' | 'diamond' | 'ellipse' }>
@@ -185,11 +185,11 @@ export function adjustRoughness(element: OpenDrawElement): number {
 // rough.js options & shape generation
 // ---------------------------------------------------------------------------
 
-/** One generator instance for the whole module — drawables are seed-stable. */
+/** One generator instance for the whole module, drawables are seed-stable. */
 const generator = rough.generator()
 
 interface CachedShape {
-  /** Theme the drawables were colored for — a theme switch regenerates. */
+  /** Theme the drawables were colored for, a theme switch regenerates. */
   dark: boolean
   /** Canvas background outline arrowheads were filled with. */
   background: string
@@ -203,7 +203,7 @@ const DEFAULT_BACKGROUND = '#ffffff'
 const shapeCache = new WeakMap<OpenDrawElement, CachedShape>()
 
 /**
- * Rough options — Excalidraw's generateRoughOptions. `continuousPath`
+ * Rough options, Excalidraw's generateRoughOptions. `continuousPath`
  * marks single-path outlines (rounded rectangles and diamonds): rough.js
  * must keep their vertices, or high roughness frays the stroke apart at
  * every corner join.
@@ -215,7 +215,7 @@ function buildRoughOptions(element: OpenDrawElement, dark: boolean, continuousPa
     roughness: adjustRoughness(element),
     stroke: themeColor(element.strokeColor, dark),
     // Non-solid strokes lose the second sketch pass, so widen a touch to
-    // keep the perceived weight — and keep fill metrics tied to the plain
+    // keep the perceived weight, and keep fill metrics tied to the plain
     // width so hachure density doesn't shift.
     strokeWidth:
       element.strokeStyle !== 'solid' ? strokeWidth + 0.5 : strokeWidth,
@@ -245,7 +245,7 @@ function toRoughPoints(points: readonly Point[]): [number, number][] {
 export { ADAPTIVE_RADIUS, cornerRadius, PROPORTIONAL_RADIUS } from '../geometry/corners.js'
 import { cornerRadius } from '../geometry/corners.js'
 
-/** Rounded-rectangle outline as an SVG path — Q curves at each corner. */
+/** Rounded-rectangle outline as an SVG path, Q curves at each corner. */
 function roundedRectPath(width: number, height: number, radius: number): string {
   const r = Math.min(radius, width / 2, height / 2)
   return [
@@ -412,7 +412,7 @@ export function getElementDrawables(
 }
 
 // ---------------------------------------------------------------------------
-// Freedraw — perfect-freehand outline filled as one smoothed path
+// Freedraw, perfect-freehand outline filled as one smoothed path
 // ---------------------------------------------------------------------------
 
 /** Stroke size relative to `strokeWidth`, tuned by Excalidraw visually. */
@@ -562,7 +562,7 @@ function drawElement(
     case 'line':
     case 'arrow': {
       for (const drawable of getShape(element, dark, background)) {
-        // rough.js resets some ctx state per opset — re-apply alpha so
+        // rough.js resets some ctx state per opset, re-apply alpha so
         // multi-drawable elements (arrowheads) stay uniformly faded.
         ctx.globalAlpha = element.opacity / 100
         rc.draw(drawable)
@@ -589,15 +589,15 @@ function drawElement(
 }
 
 // ---------------------------------------------------------------------------
-// Images & frames — box-like, never hand-drawn
+// Images & frames, box-like, never hand-drawn
 // ---------------------------------------------------------------------------
 
-/** Placeholder ink per theme — chrome color, never the dark element filter. */
+/** Placeholder ink per theme, chrome color, never the dark element filter. */
 const IMAGE_PLACEHOLDER = { fill: '#ececec', stroke: '#b3b3b3' } as const
 const IMAGE_PLACEHOLDER_DARK = { fill: '#2a2a2a', stroke: '#525252' } as const
 
 /**
- * Draws an image at its scene rect. A decoded bitmap is composited as-is —
+ * Draws an image at its scene rect. A decoded bitmap is composited as-is,
  * images are user content and are never color-inverted in dark mode. Without
  * a bitmap (not yet decoded, or a broken data URL) a neutral placeholder
  * renders so the canvas never breaks.
@@ -649,7 +649,7 @@ function drawImagePlaceholder(
   ctx.stroke()
 }
 
-/** Frame chrome ink per theme — muted, so contents stay the focus. */
+/** Frame chrome ink per theme, muted, so contents stay the focus. */
 /**
  * Excalidraw's FRAME_STYLE: a thin rounded outline, constant on screen.
  * The outline color is element-like (dark-filtered); the name label is UI.
@@ -718,7 +718,7 @@ function drawStickyNote(ctx: CanvasRenderingContext2D, note: OpenDrawStickyNoteE
 
 /**
  * Every frame's name above its top-left corner, at a constant screen size,
- * ellipsized to the frame's width — Excalidraw renders these as DOM labels
+ * ellipsized to the frame's width, Excalidraw renders these as DOM labels
  * over the canvas; painting them last keeps them above every element.
  */
 function drawFrameNames(
@@ -772,7 +772,7 @@ function visibleSceneRect(canvasSize: CanvasSize, viewport: Viewport) {
 
 /**
  * Elements a scene render paints: everything except the one being edited.
- * The wysiwyg editor is the only visible copy while editing — it mirrors the
+ * The wysiwyg editor is the only visible copy while editing, it mirrors the
  * live text through a transparent textarea, so painting the canvas copy too
  * would double every glyph under the caret.
  */
@@ -783,7 +783,7 @@ export function renderableElements(
   return editingId === null ? elements : elements.filter((el) => el.id !== editingId)
 }
 
-/** Beyond this many grid lines the grid is visual noise — skip the frame's cost. */
+/** Beyond this many grid lines the grid is visual noise, skip the frame's cost. */
 const MAX_GRID_LINES = 10_000
 
 function drawGrid(
@@ -820,7 +820,7 @@ function drawGrid(
 
 /**
  * The frame an element renders clipped to (Excalidraw's getTargetFrame +
- * shouldApplyFrameClip): its own frame — but while the selection is
+ * shouldApplyFrameClip): its own frame, but while the selection is
  * dragged, the frame it would drop into, and only while it overlaps it.
  */
 function clipFrameOf(
@@ -878,7 +878,7 @@ export function renderScene(ctx: CanvasRenderingContext2D, input: SceneRenderInp
   ctx.save()
   applyViewportTransform(ctx, viewport, dpr)
   const visible = visibleSceneRect(canvasSize, viewport)
-  // The canvas background is user data — it is never dark-filtered.
+  // The canvas background is user data, it is never dark-filtered.
   ctx.fillStyle = viewBackgroundColor
   ctx.fillRect(visible.x1, visible.y1, visible.x2 - visible.x1, visible.y2 - visible.y1)
   if (gridSize !== null && gridSize > 0) {
@@ -911,7 +911,7 @@ export function renderScene(ctx: CanvasRenderingContext2D, input: SceneRenderInp
 // ---------------------------------------------------------------------------
 
 /**
- * Draws a single element as-is — assumes `ctx` already carries whatever
+ * Draws a single element as-is, assumes `ctx` already carries whatever
  * transform the caller wants (identity for exports, viewport for previews).
  */
 export function renderElementShape(

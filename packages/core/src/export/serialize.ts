@@ -3,7 +3,7 @@
  *
  * Files carry a version and the elements verbatim. Parsing coerces unknown
  * input into valid elements, dropping anything malformed instead of
- * throwing mid-restore — a corrupted third-party file must not take the
+ * throwing mid-restore, a corrupted third-party file must not take the
  * editor down with it.
  */
 
@@ -195,7 +195,7 @@ export function coerceElement(input: unknown): OpenDrawElement | null {
 
 /**
  * Fills fields newer than the element's author knew about, keeping the
- * same reference when nothing is missing — the cheap repair for elements a
+ * same reference when nothing is missing, the cheap repair for elements a
  * host app builds by hand (full coercion is for untrusted files).
  */
 export function normalizeElement(element: OpenDrawElement): OpenDrawElement {

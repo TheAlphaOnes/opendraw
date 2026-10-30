@@ -1,5 +1,5 @@
 /**
- * The color picker's palette and helpers — a port of Excalidraw's
+ * The color picker's palette and helpers, a port of Excalidraw's
  * common/src/colors.ts and ColorPicker/colorPickerUtils.ts. The palette is
  * a 5×3 grid of base colors (each with five shades where it has them),
  * picked by the q-w-e-r-t / a-s-d-f-g / z-x-c-v-b hotkeys.
@@ -33,7 +33,7 @@ export type PaletteEntry = string | readonly string[]
 export type ColorPalette = Readonly<Record<string, PaletteEntry>>
 
 /**
- * The picker grid, row by row (DEFAULT_ELEMENT_STROKE_COLOR_PALETTE —
+ * The picker grid, row by row (DEFAULT_ELEMENT_STROKE_COLOR_PALETTE,
  * Excalidraw uses the same grid for strokes and backgrounds).
  */
 export const ELEMENT_COLOR_PALETTE: ColorPalette = {
@@ -134,7 +134,7 @@ export function normalizeInputColor(input: string): string | null {
 }
 
 /**
- * Why a typed color was rejected — Excalidraw's two messages — or null
+ * Why a typed color was rejected, Excalidraw's two messages, or null
  * when it is fine (or empty).
  */
 export function inputColorError(input: string): string | null {

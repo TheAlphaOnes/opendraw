@@ -5,7 +5,7 @@ import type { IconName } from '../../constants/icons.js'
 import UiIcon from '../ui/UiIcon.vue'
 
 /**
- * OpenDrawButton — a ready-made button for <OpenDraw>'s `top-right` and
+ * OpenDrawButton, a ready-made button for <OpenDraw>'s `top-right` and
  * `footer` slots, styled like Excalidraw's on-canvas buttons:
  *
  *   <template #top-right>

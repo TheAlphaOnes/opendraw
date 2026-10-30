@@ -62,7 +62,7 @@ export interface TextLayout {
 }
 
 /**
- * Lays text out: line splitting is explicit (no wrapping in v1 — the
+ * Lays text out: line splitting is explicit (no wrapping in v1, the
  * editor textarea wraps visually but stored text keeps its own breaks).
  */
 export function layoutText(
@@ -87,7 +87,7 @@ export function layoutText(
 }
 
 /**
- * Word-wraps text to `maxWidth` (local px), keeping explicit line breaks —
+ * Word-wraps text to `maxWidth` (local px), keeping explicit line breaks,
  * Excalidraw's `wrapText` for bound text. Words longer than a line break
  * between characters; whitespace at a wrap point is dropped so wrapped
  * lines never start or end with the gap they wrapped at.

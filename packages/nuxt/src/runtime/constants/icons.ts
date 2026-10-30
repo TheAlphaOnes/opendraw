@@ -1,5 +1,5 @@
 /**
- * Central semantic icon registry — the ONLY module allowed to import
+ * Central semantic icon registry, the ONLY module allowed to import
  * lucide-vue-next. Every icon in the product flows through `<UiIcon>` and a
  * name from `IconName`, so swapping the icon set or tuning a single glyph
  * happens in exactly one place.
@@ -91,7 +91,7 @@ import {
   Terminal,
 } from 'lucide-vue-next'
 
-/** Semantic icon names — defined by @opendrawjs/editor, glyphs chosen here. */
+/** Semantic icon names, defined by @opendrawjs/editor, glyphs chosen here. */
 export type { IconName } from '@opendrawjs/editor'
 import type { IconName } from '@opendrawjs/editor'
 

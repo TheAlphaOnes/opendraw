@@ -29,7 +29,7 @@ export interface OpenDrawProps {
 }
 
 /**
- * The editor, ready to drop on a page — the canvas with an Excalidraw-style
+ * The editor, ready to drop on a page, the canvas with an Excalidraw-style
  * toolbar, zoom and history islands and a theme toggle. Import the styles
  * once: `import '@opendrawjs/react/styles.css'`.
  */

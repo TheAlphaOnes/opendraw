@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { fitViewportToBounds, sceneToScreen } from '../src/viewport.js'
 
-describe('viewport — fit to bounds', () => {
+describe('viewport, fit to bounds', () => {
   it('centers and scales down without zooming past 100%', () => {
     const vp = fitViewportToBounds(
       { scrollX: 0, scrollY: 0, zoom: 2 },

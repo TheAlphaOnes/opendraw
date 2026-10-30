@@ -4,7 +4,7 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import OpenDrawButton from './OpenDrawButton.vue'
 
 /**
- * OpenDrawShareButton — Excalidraw's primary "Share" button for the
+ * OpenDrawShareButton, Excalidraw's primary "Share" button for the
  * `top-right` slot. Uses the platform share sheet where there is one
  * (phones), otherwise copies the link and says so for a moment.
  *

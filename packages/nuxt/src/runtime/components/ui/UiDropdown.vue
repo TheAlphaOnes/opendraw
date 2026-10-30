@@ -2,7 +2,7 @@
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 /**
- * UiDropdown — Excalidraw's DropdownMenu: a trigger (slot) that opens an
+ * UiDropdown, Excalidraw's DropdownMenu: a trigger (slot) that opens an
  * island of menu items below it. The panel teleports to the editor root
  * so scrolling islands never clip it. Escape and an outside press close
  * it; picking an item closes it too (items emit through the default slot's

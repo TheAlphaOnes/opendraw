@@ -1,5 +1,5 @@
 /**
- * SVG export — the same rough.js drawables the canvas renderer uses,
+ * SVG export, the same rough.js drawables the canvas renderer uses,
  * converted to standalone SVG markup. Pure string building: no DOM is
  * involved, so this runs in Node and SSR contexts too (unlike PNG export,
  * which needs an offscreen canvas).
@@ -150,7 +150,7 @@ function textToSvg(element: OpenDrawTextElement, dark: boolean): string {
 
 /**
  * One element as a positioned `<g>`: translate to the element origin, rotate
- * around its center — the same transform the canvas renderer applies.
+ * around its center, the same transform the canvas renderer applies.
  */
 function elementToSvg(element: OpenDrawElement, dark: boolean, background: string): string {
   const rotate =
@@ -236,7 +236,7 @@ export function exportToSvg(
   const width = Math.max(1, boundsWidth(contentBounds))
   const height = Math.max(1, boundsHeight(contentBounds))
 
-  // The canvas background is user data — it is never dark-filtered.
+  // The canvas background is user data, it is never dark-filtered.
   const backgroundRect =
     background.toLowerCase() === TRANSPARENT
       ? ''

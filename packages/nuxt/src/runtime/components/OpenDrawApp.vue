@@ -13,7 +13,7 @@ import OpenDrawCopyCommand from './slots/OpenDrawCopyCommand.vue'
 import OpenDrawShareButton from './slots/OpenDrawShareButton.vue'
 
 /**
- * OpenDrawApp — the opendraw demo site as one component: the full editor
+ * OpenDrawApp, the opendraw demo site as one component: the full editor
  * filling the page, with your buttons, the glowing copyable command and a
  * Share button top-right, and your links in the main menu. Everything is
  * one config object; hooks arrive both as config callbacks and as events.
@@ -60,7 +60,7 @@ if (files) {
 // switching this key (OpenDraw loads the new scene in place).
 const persist = computed(() => (files ? files.storageKey.value : props.config.persist))
 
-// The main menu also opens the drawings — the only way in on phones.
+// The main menu also opens the drawings, the only way in on phones.
 const menuLinks = computed(() => [
   ...(files ? [{ label: 'Drawings', icon: 'files' as const, onSelect: () => (files.sidebarOpen.value = true) }] : []),
   ...(props.config.menuLinks ?? []),

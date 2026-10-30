@@ -1,5 +1,5 @@
 /**
- * @opendrawjs/react — the React adapter. A thin layer over the
+ * @opendrawjs/react, the React adapter. A thin layer over the
  * framework-free @opendrawjs/editor: the controller owns every behavior,
  * these components render the surface and mirror its state.
  */

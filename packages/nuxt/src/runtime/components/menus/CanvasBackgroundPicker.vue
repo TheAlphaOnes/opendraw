@@ -6,7 +6,7 @@ import { CANVAS_BACKGROUND } from '@opendrawjs/core'
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
 
 /**
- * The main menu's "Canvas background" row — Excalidraw's
+ * The main menu's "Canvas background" row, Excalidraw's
  * DEFAULT_CANVAS_BACKGROUND_PICKS (white, radix slate2, blue2, yellow2,
  * bronze2), with the dark default in the dark theme. The background is
  * user data: it is painted as picked, never dark-filtered.

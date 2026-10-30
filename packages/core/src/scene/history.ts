@@ -8,7 +8,7 @@
  *
  * Parity law: only scene (element) changes become entries, so every push
  * clears the redo stack. AppState-only changes (selection, tool, style)
- * are never recorded at all — the redo stack survives them trivially.
+ * are never recorded at all, the redo stack survives them trivially.
  */
 
 import type { OpenDrawAppState, OpenDrawElement } from '../types.js'
@@ -49,7 +49,7 @@ export class SceneHistory {
     this.redoStack.length = 0
   }
 
-  /** Pops the last entry for undo — the entry moves to the redo stack. */
+  /** Pops the last entry for undo, the entry moves to the redo stack. */
   popForUndo(): HistoryEntry | null {
     const entry = this.undoStack.pop()
     if (!entry) {
@@ -59,7 +59,7 @@ export class SceneHistory {
     return entry
   }
 
-  /** Pops the redo entry — moves back onto the undo stack. */
+  /** Pops the redo entry, moves back onto the undo stack. */
   popForRedo(): HistoryEntry | null {
     const entry = this.redoStack.pop()
     if (!entry) {

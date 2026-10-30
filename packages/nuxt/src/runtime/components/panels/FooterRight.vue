@@ -3,7 +3,7 @@ import { useHelpDialog } from '../../composables/useHelpDialog.js'
 import UiIconButton from '../ui/UiIconButton.vue'
 
 /**
- * The bottom-right footer — the host's own content (the `footer` slot of
+ * The bottom-right footer, the host's own content (the `footer` slot of
  * <OpenDraw>) beside Excalidraw's filled "?" help button.
  */
 const help = useHelpDialog()

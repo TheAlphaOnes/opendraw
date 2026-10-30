@@ -4,7 +4,7 @@ import { expect } from './helpers'
 /**
  * Eraser parity: the stroke is the whole segment between pointer samples,
  * not just the sampled endpoints (Excalidraw eraser/index.ts). The fast
- * stroke below jumps the full width of the shape in ONE pointermove event —
+ * stroke below jumps the full width of the shape in ONE pointermove event,
  * endpoint-only erasing would pass around it on both sides.
  */
 test('eraser removes an element it is dragged over, including one fast stroke', async ({ page }) => {
@@ -20,7 +20,7 @@ test('eraser removes an element it is dragged over, including one fast stroke', 
   const to = at(box, 400, 190)
   await page.mouse.move(from.x, from.y)
   await page.mouse.down()
-  // steps: 1 — the entire crossing arrives as a single pointermove.
+  // steps: 1, the entire crossing arrives as a single pointermove.
   await page.mouse.move(to.x, to.y, { steps: 1 })
   await page.mouse.up()
 
@@ -39,7 +39,7 @@ test('a whole eraser stroke is a single undo step', async ({ page }) => {
   await drag(page, at(box, 200, 190), at(box, 400, 190))
   await expect.poll(async () => (await scene(page)).elements.length).toBe(0)
 
-  // One undo resurrects everything the stroke removed — beginStep on
+  // One undo resurrects everything the stroke removed, beginStep on
   // pointerdown, endStep on pointerup.
   await page.getByRole('button', { name: /^Undo \(/ }).click()
   await expect.poll(async () => (await scene(page)).elements.length).toBe(1)

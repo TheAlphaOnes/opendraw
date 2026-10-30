@@ -1,5 +1,5 @@
 /**
- * Renderer unit tests — pure functions only, no canvas required.
+ * Renderer unit tests, pure functions only, no canvas required.
  *
  * The dark-mode filter values below are pinned to the implementation on
  * purpose: they encode the `invert(93%) hue-rotate(180deg)` contract, and

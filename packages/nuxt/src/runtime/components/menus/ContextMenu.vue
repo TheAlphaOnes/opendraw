@@ -6,7 +6,7 @@ import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import UiMenuItem from '../ui/UiMenuItem.vue'
 
 /**
- * The right-click menu — Excalidraw's App.getContextMenuItems, generated
+ * The right-click menu, Excalidraw's App.getContextMenuItems, generated
  * from the action registry. Actions that do not apply right now are left
  * out (Excalidraw's contextItemPredicate), and separators collapse so the
  * menu never shows an empty section.
@@ -73,7 +73,7 @@ const sections = computed<MenuSection[]>(() => {
 })
 
 // ---------------------------------------------------------------------------
-// Placement — measured after mount, clamped inside the viewport
+// Placement, measured after mount, clamped inside the viewport
 // ---------------------------------------------------------------------------
 
 const VIEWPORT_MARGIN = 8

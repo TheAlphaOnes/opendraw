@@ -1,5 +1,5 @@
 /**
- * Element factories — the only sanctioned way to create elements.
+ * Element factories, the only sanctioned way to create elements.
  *
  * Mirrors Excalidraw's `_newElementBase` pattern: one base spread, per-type
  * extras, deterministic seeds for rough.js, and `version: 1` at birth.
@@ -66,7 +66,7 @@ export interface NewElementOptions {
   locked?: boolean
   groupIds?: readonly string[]
   frameId?: string | null
-  /** Corner treatment — consumed by the rectangle and diamond factories. */
+  /** Corner treatment, consumed by the rectangle and diamond factories. */
   roundness?: Roundness | null
 }
 
@@ -90,14 +90,14 @@ export interface NewTextOptions extends NewElementOptions {
   containerId?: string | null
   verticalAlign?: VerticalAlign
   textStyle?: Partial<TextStyle>
-  /** Optional layout override — pass your own measurement context. */
+  /** Optional layout override, pass your own measurement context. */
   layout?: TextLayout
 }
 
 export interface NewImageOptions extends NewElementOptions {
   /** Self-contained `data:image/...;base64,` payload. */
   dataUrl: string
-  /** Intrinsic pixel size — required, images are never born with zero extent. */
+  /** Intrinsic pixel size, required, images are never born with zero extent. */
   width: number
   height: number
 }
@@ -205,7 +205,7 @@ export function newTextElement(opts: NewTextOptions): OpenDrawTextElement {
   }
 }
 
-/** Generic dispatcher — the Vue layer stores the active tool, not a factory. */
+/** Generic dispatcher, the Vue layer stores the active tool, not a factory. */
 export function newElement<T extends OpenDrawElementType>(
   type: T,
   opts: NewElementOptions & { text?: string; dataUrl?: string },
@@ -253,7 +253,7 @@ export function newElement<T extends OpenDrawElementType>(
 
 /**
  * Images carry their bitmap inline as a data URL (single-document model) and
- * behave box-like for all geometry. Decoding is deliberately NOT done here —
+ * behave box-like for all geometry. Decoding is deliberately NOT done here,
  * core stays environment-agnostic; the host injects a bitmap resolver at
  * render/export time.
  */
@@ -272,7 +272,7 @@ export function newImageElement(opts: NewImageOptions): ElementOf<'image'> {
 
 /** Frames render a dashed, named outline; membership is visual, not stored. */
 /**
- * Excalidraw's FRAME_STYLE: a frame never takes the current drawing style —
+ * Excalidraw's FRAME_STYLE: a frame never takes the current drawing style,
  * it is a transparent, crisp container whatever the style panel says.
  */
 export const FRAME_ELEMENT_STYLE: Partial<ElementStyle> = {
@@ -395,7 +395,7 @@ export function isFrameElement(element: OpenDrawElement): element is OpenDrawFra
 }
 
 /**
- * Narrow to the arrow element — the only linear type that carries
+ * Narrow to the arrow element, the only linear type that carries
  * `startBinding`/`endBinding` (binding logic relies on this).
  */
 export function isArrowElement(element: OpenDrawElement): element is OpenDrawArrowElement {

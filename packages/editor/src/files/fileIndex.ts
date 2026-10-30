@@ -1,6 +1,6 @@
 /**
  * The drawing-files index: which drawings exist, what they are called and
- * where each one's scene lives. The index is small metadata only — every
+ * where each one's scene lives. The index is small metadata only, every
  * scene is a separate persisted-scene envelope under its own storage key,
  * written by the same scene persistence that saves a single-scene editor.
  *
@@ -31,7 +31,7 @@ export interface DrawingFile {
   /** The scene's storage key (an existing single-scene save keeps its own). */
   storageKey: string
   createdAt: number
-  /** Last content change — opening or panning a drawing never bumps it. */
+  /** Last content change, opening or panning a drawing never bumps it. */
   updatedAt: number
   /** Live (not deleted) elements, for the list's caption. */
   elementCount: number
@@ -51,7 +51,7 @@ export interface DrawingFileIndex {
 
 /**
  * A cheap content fingerprint: every edit bumps an element's `version`, so
- * count + version sum changes exactly when the content does — and reloading
+ * count + version sum changes exactly when the content does, and reloading
  * the same scene reproduces it, so merely opening a drawing never reads as
  * an edit.
  */
@@ -68,7 +68,7 @@ export function normalizeFileName(name: string): string {
   return name.replace(/\s+/g, ' ').trim().slice(0, MAX_FILE_NAME_LENGTH)
 }
 
-/** `base`, or `base 2`, `base 3`, … — the first one not already taken. */
+/** `base`, or `base 2`, `base 3`, …, the first one not already taken. */
 export function uniqueFileName(base: string, taken: Iterable<string>): string {
   const names = new Set(taken)
   if (!names.has(base)) {
@@ -110,8 +110,8 @@ function parseFileEntry(input: unknown): DrawingFile | null {
 
 /**
  * Coerces unknown input into an index, or null when it is not ours. Entries
- * that cannot be salvaged — and repeats of an id or a storage key, which
- * would make two drawings share one scene — are dropped.
+ * that cannot be salvaged, and repeats of an id or a storage key, which
+ * would make two drawings share one scene, are dropped.
  */
 export function parseFileIndex(input: unknown): DrawingFileIndex | null {
   if (!isRecord(input) || input.type !== FILE_INDEX_TYPE || input.version !== FILE_INDEX_VERSION || !Array.isArray(input.files)) {

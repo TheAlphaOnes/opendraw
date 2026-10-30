@@ -1,13 +1,13 @@
 /**
- * @opendrawjs/editor — the framework-free opendraw editor.
+ * @opendrawjs/editor, the framework-free opendraw editor.
  *
- *   controller   — EditorController: document + editor state + commands
- *   canvas       — mountCanvas: gestures, keyboard, rendering, text editing
- *   actions      — the command registry (shortcuts, labels, predicates)
- *   tools/icons  — the tool table and the semantic icon contract
- *   persistence  — localStorage scene persistence, theme defaults
- *   files        — several named drawings in one browser (index, previews)
- *   services     — file and image plumbing
+ *   controller  , EditorController: document + editor state + commands
+ *   canvas      , mountCanvas: gestures, keyboard, rendering, text editing
+ *   actions     , the command registry (shortcuts, labels, predicates)
+ *   tools/icons , the tool table and the semantic icon contract
+ *   persistence , localStorage scene persistence, theme defaults
+ *   files       , several named drawings in one browser (index, previews)
+ *   services    , file and image plumbing
  *
  * Framework adapters (@opendrawjs/nuxt, …) mirror the controller into their
  * own reactivity and render chrome around a mounted canvas.

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * UiSlider — the central range control, mirroring Excalidraw's opacity
+ * UiSlider, the central range control, mirroring Excalidraw's opacity
  * slider: a filled progress track, a native thumb, and a live value readout.
- * Dumb by design — a value in, an update out; no domain logic.
+ * Dumb by design, a value in, an update out; no domain logic.
  */
 import { computed } from 'vue'
 

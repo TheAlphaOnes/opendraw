@@ -31,7 +31,7 @@ import {
 } from '@opendrawjs/editor'
 
 /**
- * OpenDrawContext — the Vue face of the framework-free EditorController.
+ * OpenDrawContext, the Vue face of the framework-free EditorController.
  *
  * Every component in the editor (canvas, toolbar, panels, menus) consumes
  * this one context through provide/inject. It is also the public
@@ -54,7 +54,7 @@ export type { ViewportSize }
 export interface OpenDrawContext {
   /** The framework-free controller this context mirrors. */
   editor: EditorController
-  /** The raw document — escape hatch for advanced use. */
+  /** The raw document, escape hatch for advanced use. */
   doc: OpenDrawDocument
   /** Bumps on every document or editor-state change. */
   revision: Readonly<ShallowRef<number>>
@@ -68,7 +68,7 @@ export interface OpenDrawContext {
   // tools & theme
   activeTool: ComputedRef<ToolId>
   setActiveTool: (tool: ToolId) => void
-  /** Q — a locked tool stays armed after each use (Excalidraw's tool lock). */
+  /** Q, a locked tool stays armed after each use (Excalidraw's tool lock). */
   toolLocked: ComputedRef<boolean>
   toggleToolLock: () => void
   /** Reverts to selection after one use unless the tool is locked. */

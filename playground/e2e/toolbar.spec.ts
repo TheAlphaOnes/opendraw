@@ -1,5 +1,5 @@
 /**
- * Toolbar e2e — the top-center tool island must match Excalidraw's
+ * Toolbar e2e, the top-center tool island must match Excalidraw's
  * arrangement: the tool lock, every main tool with its key hint, and the
  * "More tools" dropdown holding the frame tool and the laser pointer.
  */
@@ -101,7 +101,7 @@ test('keeps the image insertion gesture without a persistent active state', asyn
   await openEditor(page)
 
   // The image tool opens the file picker instead of arming a canvas mode,
-  // so its button never shows a pressed state — matching Excalidraw.
+  // so its button never shows a pressed state, matching Excalidraw.
   const image = page.getByRole('button', { name: 'Image (9)' })
   await expect(image).toHaveAttribute('aria-pressed', 'false')
 

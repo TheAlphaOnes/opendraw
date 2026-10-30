@@ -44,7 +44,7 @@ import {
 } from './services/image.service.js'
 
 /**
- * EditorController — the framework-free editor.
+ * EditorController, the framework-free editor.
  *
  * Wraps one OpenDrawDocument with the editor-only state the document does
  * not own (clipboard, copied style, tool lock, canvas size) and exposes the
@@ -70,11 +70,11 @@ export type EditorListener = (editor: EditorController) => void
 /** Zoom-button step (multiplicative). */
 const ZOOM_STEP = 1.25
 
-/** The theme defaults — the canvas background swaps with the theme. */
+/** The theme defaults, the canvas background swaps with the theme. */
 export const THEME_BACKGROUNDS = { light: '#ffffff', dark: '#121212' } as const satisfies Record<ThemeName, string>
 
 export class EditorController {
-  /** The raw document — escape hatch for advanced use. */
+  /** The raw document, escape hatch for advanced use. */
   readonly doc: OpenDrawDocument
 
   private snapshot: OpenDrawState
@@ -85,7 +85,7 @@ export class EditorController {
 
   /** In-app clipboard: plain element copies; ids are regenerated on paste. */
   private clipboard: OpenDrawElement[] = []
-  /** Style remembered by copyStyles — editor intent, never document state. */
+  /** Style remembered by copyStyles, editor intent, never document state. */
   private copiedStyle: StylePayload | null = null
   /** Tool lock is editor intent, never document state (not persisted). */
   private locked = false
@@ -197,7 +197,7 @@ export class EditorController {
     return this.doc.canRedo
   }
 
-  /** Q — a locked tool stays armed after each use (Excalidraw's tool lock). */
+  /** Q, a locked tool stays armed after each use (Excalidraw's tool lock). */
   get toolLocked(): boolean {
     return this.locked
   }
@@ -239,7 +239,7 @@ export class EditorController {
 
   /**
    * Called when a tool finishes one use: reverts to selection unless the
-   * tool is locked. Freedraw never calls it — the pen stays armed.
+   * tool is locked. Freedraw never calls it, the pen stays armed.
    */
   finishToolUse(): void {
     if (!this.locked) {
@@ -251,7 +251,7 @@ export class EditorController {
    * Excalidraw parity: switching themes swaps the DEFAULT canvas background
    * with it (light keeps #ffffff, dark gets #121212). The dark theme
    * dark-filters element strokes, so a dark theme left over the white
-   * default renders near-white strokes on a white canvas — invisible. A
+   * default renders near-white strokes on a white canvas, invisible. A
    * background the user customized is kept untouched.
    */
   setTheme(theme: ThemeName): void {
@@ -272,7 +272,7 @@ export class EditorController {
     this.doc.setAppState({ gridSize: size })
   }
 
-  /** The canvas background — user data, never dark-filtered (main menu picks). */
+  /** The canvas background, user data, never dark-filtered (main menu picks). */
   setViewBackgroundColor(color: string): void {
     this.doc.setAppState({ viewBackgroundColor: color })
   }
@@ -344,7 +344,7 @@ export class EditorController {
   }
 
   // -------------------------------------------------------------------------
-  // Clipboard — labels travel with their shapes
+  // Clipboard, labels travel with their shapes
   // -------------------------------------------------------------------------
 
   private selectionWithLabels(): OpenDrawElement[] {
@@ -368,7 +368,7 @@ export class EditorController {
   /**
    * Pastes the clipboard (centered on `at`, else offset a little). Pasted
    * groups are new groups, and the paste lands selected (Excalidraw's
-   * actionPaste) — outside any group being edited.
+   * actionPaste), outside any group being edited.
    */
   paste(at?: Point): void {
     if (this.clipboard.length === 0) {
@@ -400,8 +400,8 @@ export class EditorController {
     this.doc.changeRoundness(roundness)
   }
 
-  /** Curved or straight arrows — the selected ones, else the next arrow. */
-  /** Sharp, round or elbow — the selected arrows, or the next arrow's type. */
+  /** Curved or straight arrows, the selected ones, else the next arrow. */
+  /** Sharp, round or elbow, the selected arrows, or the next arrow's type. */
   changeArrowType(type: ArrowType): void {
     this.doc.changeArrowType(type)
   }
@@ -416,12 +416,12 @@ export class EditorController {
     this.doc.changeArrowhead(position, arrowhead)
   }
 
-  /** Mod+Shift+> / Mod+Shift+< — steps selected text 10% bigger/smaller. */
+  /** Mod+Shift+> / Mod+Shift+<, steps selected text 10% bigger/smaller. */
   stepFontSize(direction: 1 | -1): void {
     this.doc.stepFontSize(direction)
   }
 
-  /** Mod+Alt+C — remembers the first selected element's style. */
+  /** Mod+Alt+C, remembers the first selected element's style. */
   copyStyles(): void {
     const first = this.doc.getSelectedElements()[0]
     if (first) {
@@ -430,7 +430,7 @@ export class EditorController {
     }
   }
 
-  /** Mod+Alt+V — applies the remembered style to the selection. */
+  /** Mod+Alt+V, applies the remembered style to the selection. */
   pasteStyles(): void {
     if (this.copiedStyle) {
       this.doc.pasteStyle(this.copiedStyle)
@@ -500,7 +500,7 @@ export class EditorController {
     this.doc.setViewport({ ...DEFAULT_VIEWPORT })
   }
 
-  /** Shift+1 — fits every element, never zooming past 100%. */
+  /** Shift+1, fits every element, never zooming past 100%. */
   zoomToFitAll(): void {
     this.fitTo(this.elements, 'scale-down')
   }
@@ -562,12 +562,12 @@ export class EditorController {
     downloadText(svg, `${filename}.svg`, 'image/svg+xml')
   }
 
-  /** Mod+S — downloads the scene as a .json file. */
+  /** Mod+S, downloads the scene as a .json file. */
   saveToFile(filename = 'opendraw'): void {
     downloadText(this.toJSON(), `${filename}.json`, 'application/json')
   }
 
-  /** Mod+O — opens a .json scene file, replacing the current scene. */
+  /** Mod+O, opens a .json scene file, replacing the current scene. */
   async openFile(): Promise<void> {
     const [file] = await pickFiles('application/json,.json')
     if (!file) {
@@ -650,7 +650,7 @@ function centerOffsetFor(clipboard: readonly OpenDrawElement[], at: Point): Poin
 }
 
 /**
- * Scene point at the center of the visible canvas — where insertions with
+ * Scene point at the center of the visible canvas, where insertions with
  * no pointer position (picker, clipboard) land.
  */
 function centerOfViewport(viewport: Viewport, size: ViewportSize): Point {

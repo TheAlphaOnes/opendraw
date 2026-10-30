@@ -95,22 +95,22 @@ export function Board({ editor }: { editor: EditorController }) {
   )
 }
 
-// const editor = createEditor()  — create once, outside render`
+// const editor = createEditor() , create once, outside render`
 </script>
 
 <template>
   <section id="adapters" class="doc-section">
     <h2>Build an adapter for your framework</h2>
     <p>
-      The Vue, React and Svelte packages are thin layers over <code>@opendrawjs/editor</code> — read
-      <code>packages/react</code> or <code>packages/svelte</code> for complete references — and you can write the same
-      layer for Solid, Angular, Lit or plain JavaScript. The editor does all the work — gestures, keyboard, text
+      The Vue, React and Svelte packages are thin layers over <code>@opendrawjs/editor</code>, read
+      <code>packages/react</code> or <code>packages/svelte</code> for complete references, and you can write the same
+      layer for Solid, Angular, Lit or plain JavaScript. The editor does all the work, gestures, keyboard, text
       editing, rendering, persistence. An adapter only has to do three things:
     </p>
     <ol>
-      <li><strong>Render the surface</strong> — a focusable host with two stacked canvases.</li>
-      <li><strong>Mount and dispose</strong> — call <code>mountCanvas()</code> when the host exists and <code>dispose()</code> when it goes away.</li>
-      <li><strong>Mirror state</strong> — subscribe to the controller and re-render your UI from its getters.</li>
+      <li><strong>Render the surface</strong>, a focusable host with two stacked canvases.</li>
+      <li><strong>Mount and dispose</strong>, call <code>mountCanvas()</code> when the host exists and <code>dispose()</code> when it goes away.</li>
+      <li><strong>Mirror state</strong>, subscribe to the controller and re-render your UI from its getters.</li>
     </ol>
 
     <h3 id="adapter-surface">1. The surface</h3>
@@ -137,7 +137,7 @@ export function Board({ editor }: { editor: EditorController }) {
     <ul>
       <li>Build the toolbar from <code>TOOLS</code> (icon name, label, keys) and use <code>toolKeyHint()</code> for the corner key.</li>
       <li>Build menus from <code>ACTIONS</code>: each entry has a label, icon name and key combo; <code>isActionEnabled()</code> greys items out and <code>runAction()</code> runs them.</li>
-      <li>Shortcuts are already handled by <code>mountCanvas()</code> — your buttons and the keyboard call the same actions.</li>
+      <li>Shortcuts are already handled by <code>mountCanvas()</code>, your buttons and the keyboard call the same actions.</li>
       <li>Map every <code>IconName</code> to your icon set once; opendraw never ships icons in the editor.</li>
       <li>Show the context menu from the <code>onContextMenu</code> callback; the clicked element is already selected.</li>
     </ul>

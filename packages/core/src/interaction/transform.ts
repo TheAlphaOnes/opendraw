@@ -4,7 +4,7 @@
  * Every function here is pure: callers pass the immutable ORIGINAL element
  * snapshots captured at pointerdown plus the current scene pointer, and get
  * patches back. Reading originals (not live elements) is what makes drags
- * stable — accumulated floating point never compounds mid-drag.
+ * stable, accumulated floating point never compounds mid-drag.
  */
 
 import { STICKY_NOTE_MIN_SIZE } from '../elements/stickyNote.js'
@@ -117,7 +117,7 @@ const MIN_SIZE = 1
 
 /**
  * Text-only no-flip policy: its size clamps to a positive minimum. Every
- * other element flips through zero, keeping the drag's sign — Excalidraw's
+ * other element flips through zero, keeping the drag's sign, Excalidraw's
  * `flipFactorX/Y = nextWidth < 0 ? -1 : 1` semantics.
  */
 function withMinSize(size: number): number {
@@ -193,7 +193,7 @@ export function resizeSingleElement(
     x = right - width
   }
 
-  // Shift keeps the aspect ratio — on magnitudes, so a corner dragged
+  // Shift keeps the aspect ratio, on magnitudes, so a corner dragged
   // through the opposite edge keeps its flip direction.
   // A note's corners keep its proportions unless Shift frees them
   // (Excalidraw's "hold Shift to resize freely").
@@ -240,7 +240,7 @@ export function resizeSingleElement(
   }
 
   // Polylines and strokes rescale by the SIGNED ratios around the original
-  // origin, then shift by the flip offset so the anchored edge stays put —
+  // origin, then shift by the flip offset so the anchored edge stays put,
   // mirroring Excalidraw's `rescalePointsInElement(..., true)`. Zero-extent
   // axes (a flat line) don't scale.
   const flipX = Math.max(-width, 0)
@@ -422,7 +422,7 @@ export function rotateElements(
   })
 }
 
-/** The pointer angle at drag start — pass to `rotateElements` as startAngle. */
+/** The pointer angle at drag start, pass to `rotateElements` as startAngle. */
 export function startRotationAngle(frame: SelectionFrame, pointer: Point): number {
   const center = boundsCenter({
     x1: frame.x,

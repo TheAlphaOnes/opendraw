@@ -1,5 +1,5 @@
 /**
- * Image service — the browser-side half of image support.
+ * Image service, the browser-side half of image support.
  *
  * Core renders images through an injected resolver but never decodes them
  * (it must stay environment-agnostic). This module owns that browser half:
@@ -9,13 +9,13 @@
  *
  * Decoding happens once per distinct data URL; afterwards the cache answers
  * synchronously, so panning and zooming replay the same bitmap instead of
- * re-decoding per frame. Cache misses are never fatal — the renderer draws
+ * re-decoding per frame. Cache misses are never fatal, the renderer draws
  * its placeholder until the decode lands.
  */
 
 import { newImageElement, type Point, type OpenDrawElement, type OpenDrawImageElement } from '@opendrawjs/core'
 
-/** Decoded bitmaps keyed by data URL — shared across editor instances. */
+/** Decoded bitmaps keyed by data URL, shared across editor instances. */
 const bitmapCache = new Map<string, HTMLImageElement>()
 
 /** Sizes of decoded images keyed by data URL (intrinsic pixel dimensions). */
@@ -39,7 +39,7 @@ export function imageFilesOf(files: FileList | null | undefined): File[] {
 
 /**
  * The resolver handed to core's renderer and PNG exporter: synchronous cache
- * lookup only — a bitmap that is not decoded yet yields null (placeholder).
+ * lookup only, a bitmap that is not decoded yet yields null (placeholder).
  */
 export function imageResolver(element: OpenDrawImageElement): CanvasImageSource | null {
   const bitmap = bitmapCache.get(element.dataUrl)
@@ -48,7 +48,7 @@ export function imageResolver(element: OpenDrawImageElement): CanvasImageSource 
 
 /**
  * Requests a decode for the data URL; `onDecoded` fires once it is available
- * (immediately when already cached). Failures are surfaced, never swallowed —
+ * (immediately when already cached). Failures are surfaced, never swallowed,
  * the placeholder simply stays.
  */
 export function requestImageDecode(dataUrl: string, onDecoded: () => void): void {
@@ -73,7 +73,7 @@ export function requestImageDecode(dataUrl: string, onDecoded: () => void): void
   image.src = dataUrl
 }
 
-/** Reads a file as a data URL — one promise per insertion path. */
+/** Reads a file as a data URL, one promise per insertion path. */
 export function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -91,7 +91,7 @@ export function readFileAsDataUrl(file: File): Promise<string> {
 
 /**
  * Scales intrinsic dimensions down to the insertion cap, keeping the aspect
- * ratio — mirrors Excalidraw's "fit the image into a sensible box" behavior.
+ * ratio, mirrors Excalidraw's "fit the image into a sensible box" behavior.
  */
 export function fitImageSize(width: number, height: number): { width: number; height: number } {
   if (width <= 0 || height <= 0) {
@@ -116,7 +116,7 @@ export async function prepareImageFile(file: File, onDecoded?: () => void): Prom
   const size = await new Promise<{ width: number; height: number }>((resolve, reject) => {
     requestImageDecode(dataUrl, () => resolve(sizeCache.get(dataUrl) ?? { width: 0, height: 0 }))
     if (typeof window !== 'undefined') {
-      // A decode that never lands must not wedge the insertion — race it
+      // A decode that never lands must not wedge the insertion, race it
       // with a timeout and fall back to the placeholder-cap size.
       window.setTimeout(() => resolve(sizeCache.get(dataUrl) ?? { width: 0, height: 0 }), 5000)
     } else {

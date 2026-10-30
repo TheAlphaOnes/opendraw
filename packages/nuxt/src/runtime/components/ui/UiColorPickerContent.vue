@@ -21,7 +21,7 @@ import {
 import UiIcon from './UiIcon.vue'
 
 /**
- * The color picker popover body — Excalidraw's <Picker>: most used custom
+ * The color picker popover body, Excalidraw's <Picker>: most used custom
  * colors (1–5), the 5×3 base grid (q…b, shown at the active shade), the
  * current color's shades (⇧1–⇧5) and a hex field with an eyedropper (I).
  * Tab moves between sections and the arrows move inside one; picking
@@ -128,7 +128,7 @@ async function sampleColor(): Promise<void> {
     const { sRGBHex } = await new EyeDropperCtor().open()
     pick(sRGBHex.toLowerCase(), 'hex')
   } catch {
-    // Dismissed with Escape — nothing to pick.
+    // Dismissed with Escape, nothing to pick.
   } finally {
     sampling.value = false
     rootRef.value?.focus({ preventScroll: true })
@@ -280,8 +280,8 @@ onMounted(() => rootRef.value?.focus({ preventScroll: true }))
             'has-outline': outlined(cell.color),
           }"
           :style="{ '--swatch': display(cell.color) }"
-          :title="`${colorLabel(cell.name)}${cell.color.startsWith('#') ? ` ${cell.color}` : ''} — ${cell.hotkey}`"
-          :aria-label="`${colorLabel(cell.name)} — ${cell.hotkey}`"
+          :title="`${colorLabel(cell.name)}${cell.color.startsWith('#') ? ` ${cell.color}` : ''}, ${cell.hotkey}`"
+          :aria-label="`${colorLabel(cell.name)}, ${cell.hotkey}`"
           @click="pick(cell.color, 'baseColors')"
         >
           <span class="cp__hotkey" :style="{ color: ink(cell.color) }">{{ cell.hotkey }}</span>
@@ -332,7 +332,7 @@ onMounted(() => rootRef.value?.focus({ preventScroll: true }))
             type="button"
             class="cp__dropper"
             :class="{ 'is-active': sampling }"
-            title="Pick color from screen — I"
+            title="Pick color from screen, I"
             aria-label="Pick color from screen"
             @click="sampleColor"
           >

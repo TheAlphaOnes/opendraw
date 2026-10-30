@@ -45,8 +45,8 @@ declare global {
  * Specs work in a "stage" space: canvas-local pixels shifted right by this
  * much, so the scenes they draw sit clear of the left properties island
  * (Excalidraw's layout covers the canvas's left edge whenever a tool is
- * armed). Every helper converts — `at()` and the pixel probes add it, the
- * scene mirror subtracts it — so a spec's numbers stay self-consistent.
+ * armed). Every helper converts, `at()` and the pixel probes add it, the
+ * scene mirror subtracts it, so a spec's numbers stay self-consistent.
  */
 export const STAGE_X = 260
 
@@ -100,7 +100,7 @@ export async function openEditor(page: Page): Promise<void> {
  * The server-rendered DOM is complete before Vue attaches its event
  * handlers, so tool clicks that land earlier are silently swallowed.
  * The mounted app sizes its canvases (SSR ships them at the 300x150
- * canvas default) — that is the hydration signal we wait for.
+ * canvas default), that is the hydration signal we wait for.
  */
 export async function openApp(page: Page, path: string): Promise<void> {
   await page.goto(path)
@@ -150,12 +150,12 @@ export async function runMenuItem(page: Page, label: RegExp | string): Promise<v
 
 /**
  * Give newly drawn shapes an opaque fill. Unfilled shapes only hit-test on
- * their outline, and the binding/grab specs press the interior — the fill
+ * their outline, and the binding/grab specs press the interior, the fill
  * makes shapes behave like the filled ones binding demos use.
  */
 export async function pickFill(page: Page): Promise<void> {
   // The properties island only shows for a selection or an armed drawing
-  // tool (Excalidraw parity) — arm one so the swatch is on screen.
+  // tool (Excalidraw parity), arm one so the swatch is on screen.
   const swatch = page.getByRole('radio', { name: '#ffc9c9' })
   if (!(await swatch.isVisible())) {
     await pickTool(page, 'Rectangle (2)')
@@ -239,7 +239,7 @@ export async function pixelAt(
 }
 
 // ---------------------------------------------------------------------------
-// Positional ink probes — for asserting WHERE the canvases drew, not just
+// Positional ink probes, for asserting WHERE the canvases drew, not just
 // that they drew (binding highlight, selection frame, corner geometry).
 // ---------------------------------------------------------------------------
 
@@ -341,7 +341,7 @@ export async function staticInkPixels(
 /** Centroid of the ink in a canvas-local window of the static canvas.
  *
  * Same ink definition as `staticInkPixels`, but returns the CSS-space
- * center of mass and the ink count — viewport specs use it to assert
+ * center of mass and the ink count, viewport specs use it to assert
  * WHERE content ended up after a zoom or pan, not just that it exists.
  * Null when the window holds no ink.
  */

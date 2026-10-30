@@ -2,7 +2,7 @@ import { inject, provide, ref, type InjectionKey, type Ref } from 'vue'
 
 /**
  * The editor's help dialog ("?") state, shared by every surface that opens
- * it — the "?" key, the help button and the main menu's Help item.
+ * it, the "?" key, the help button and the main menu's Help item.
  */
 const HELP_DIALOG_KEY: InjectionKey<Ref<boolean>> = Symbol('opendraw-help-dialog')
 

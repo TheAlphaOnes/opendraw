@@ -1,5 +1,5 @@
 /**
- * @opendrawjs/nuxt/vue — the same components for plain Vue 3 apps (Vite,
+ * @opendrawjs/nuxt/vue, the same components for plain Vue 3 apps (Vite,
  * no Nuxt). Nuxt users get them auto-imported by the module instead.
  *
  *   import { OpenDraw } from '@opendrawjs/nuxt/vue'

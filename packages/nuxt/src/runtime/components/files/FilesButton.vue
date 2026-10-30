@@ -26,7 +26,7 @@ onMounted(() => {
   root.value = buttonRef.value?.closest<HTMLElement>('.opendraw-root') ?? null
 })
 
-// Focus goes back to whatever opened the sidebar — this button, or the
+// Focus goes back to whatever opened the sidebar, this button, or the
 // main menu's trigger on phones, where this button is hidden.
 let opener: HTMLElement | null = null
 watch(open, (isOpen) => {
@@ -63,7 +63,7 @@ function close(): void {
     class="files-button"
     :class="{ 'is-open': open }"
     data-files-trigger
-    :aria-label="`Drawings — ${name}`"
+    :aria-label="`Drawings, ${name}`"
     :title="name"
     aria-haspopup="dialog"
     :aria-expanded="open"

@@ -28,7 +28,7 @@ import ShortcutsDialog from './ui/ShortcutsDialog.vue'
 import WelcomeScreen from './ui/WelcomeScreen.vue'
 
 /**
- * OpenDraw — the full editor, ready to drop into any page:
+ * OpenDraw, the full editor, ready to drop into any page:
  *
  *   <OpenDraw theme="dark" ui="full" />
  *
@@ -81,7 +81,7 @@ const emit = defineEmits<{
 
 // The context always holds a concrete theme: an explicit prop maps straight
 // onto it. `'system'` starts as light on the server AND the hydration
-// render (both must agree — the media query only exists after mount), then
+// render (both must agree, the media query only exists after mount), then
 // the persisted restore runs first and, when a theme was saved, wins; a
 // fresh scene resolves the system scheme on mount.
 const ctx = createOpenDrawContext({
@@ -92,7 +92,7 @@ provideOpenDraw(ctx)
 provideHelpDialog()
 
 // Prop → context sync. `'system'` is a first-load default, not a live state
-// to push — after mount the editor owns the theme (and persists it).
+// to push, after mount the editor owns the theme (and persists it).
 watch(
   () => props.theme,
   (theme) => {

@@ -4,7 +4,7 @@
  * The persisted envelope wraps the core file format: core's `OpenDrawFile`
  * carries the elements and the canvas background, and the nuxt side adds the
  * editor chrome state (theme, viewport, grid) that core deliberately does
- * not model in its file format. All parsing is defensive — a corrupted or
+ * not model in its file format. All parsing is defensive, a corrupted or
  * foreign payload yields `null`, never a throw, so the editor always
  * degrades to a fresh scene.
  */

@@ -28,7 +28,7 @@ export function rotatePoint(p: Point, origin: Point, angle: number): Point {
   }
 }
 
-/** Inverse of {@link rotatePoint} — un-rotate `p` around `origin`. */
+/** Inverse of {@link rotatePoint}, un-rotate `p` around `origin`. */
 export function unrotatePoint(p: Point, origin: Point, angle: number): Point {
   return rotatePoint(p, origin, -angle)
 }
@@ -37,7 +37,7 @@ export function distance(a: Point, b: Point): number {
   return Math.hypot(a.x - b.x, a.y - b.y)
 }
 
-/** Squared distance — for comparisons without the sqrt. */
+/** Squared distance, for comparisons without the sqrt. */
 export function distanceSq(a: Point, b: Point): number {
   const dx = a.x - b.x
   const dy = a.y - b.y

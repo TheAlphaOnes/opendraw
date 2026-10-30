@@ -7,7 +7,7 @@ import UiIconButton from '../ui/UiIconButton.vue'
 import FileListItem from './FileListItem.vue'
 
 /**
- * The drawings sidebar — Excalidraw's right-docked Sidebar, holding the
+ * The drawings sidebar, Excalidraw's right-docked Sidebar, holding the
  * browser's drawings: search, a new-drawing button and the list, most
  * recently edited first. Opening a drawing swaps the canvas in place.
  *

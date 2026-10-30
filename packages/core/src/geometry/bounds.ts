@@ -2,7 +2,7 @@
  * Bounds geometry: axis-aligned boxes in scene space.
  *
  * Rotation-aware helpers exist because elements carry an `angle` around
- * their center — the AABB of a rotated element is the AABB of its rotated
+ * their center, the AABB of a rotated element is the AABB of its rotated
  * corner points.
  */
 
@@ -96,7 +96,7 @@ export function getCommonBounds(elements: readonly OpenDrawElement[]): Bounds {
   return { x1, y1, x2, y2 }
 }
 
-/** Union of raw bounds — for marquee/selection math without re-measuring. */
+/** Union of raw bounds, for marquee/selection math without re-measuring. */
 export function unionBounds(bounds: readonly Bounds[]): Bounds {
   let x1 = Number.POSITIVE_INFINITY
   let y1 = Number.POSITIVE_INFINITY
@@ -159,7 +159,7 @@ export function inflateBounds(bounds: Bounds, amount: number): Bounds {
   }
 }
 
-/** Scale a box around its top-left by (sx, sy) — used by group resize. */
+/** Scale a box around its top-left by (sx, sy), used by group resize. */
 export function scaleBounds(bounds: Bounds, sx: number, sy: number): Bounds {
   return {
     x1: bounds.x1 * sx,

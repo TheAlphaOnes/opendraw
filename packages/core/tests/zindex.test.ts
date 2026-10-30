@@ -10,7 +10,7 @@ function rect(id: string, groupIds: string[] = []): OpenDrawElement {
 
 const order = (els: OpenDrawElement[] | null) => els?.map((el) => el.id)
 
-describe('z-order — excalidraw unit stepping', () => {
+describe('z-order, excalidraw unit stepping', () => {
   it('steps forward past a whole group, never into it', () => {
     const scene = [rect('a'), rect('g1', ['g']), rect('g2', ['g']), rect('b')]
     expect(order(reorderElements(scene, new Set(['a']), 'forward'))).toEqual(['g1', 'g2', 'a', 'b'])

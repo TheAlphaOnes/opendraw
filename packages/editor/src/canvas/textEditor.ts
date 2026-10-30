@@ -14,20 +14,20 @@ import type { EditorController } from '../controller.js'
 
 /**
  * Wysiwyg text editing: a font-matched textarea floating exactly over the
- * text element being edited. Mirrors Excalidraw's flow — creation and
+ * text element being edited. Mirrors Excalidraw's flow, creation and
  * edits land inside ONE open history step which the session closes (or
  * cancels) on commit.
  *
  * One session per edit: `attachTextEditing` creates a session when the
  * editor's `editingId` is set and disposes it when it clears, so every
  * edit starts with a fresh `committed` flag and fresh listeners. The
- * textarea is seeded from state ONCE and then stays uncontrolled — the
+ * textarea is seeded from state ONCE and then stays uncontrolled, the
  * browser owns caret, selection and composition. Writing its value back
  * per keystroke resets Chromium's IME/insertText caret, which reverses
  * typed text character by character.
  */
 
-/** Floors for the session box — the editor stays usable near the edges. */
+/** Floors for the session box, the editor stays usable near the edges. */
 const MIN_SESSION_WIDTH = 200
 const MIN_SESSION_HEIGHT = 50
 
@@ -114,7 +114,7 @@ class TextEditingSession {
     const height = Math.max(MIN_SESSION_HEIGHT, this.host.clientHeight - topLeft.y)
     this.textarea.style.width = `${width}px`
     this.textarea.style.minHeight = `${height}px`
-    // preventScroll keeps the screen-anchored box honest — a focus scroll
+    // preventScroll keeps the screen-anchored box honest, a focus scroll
     // would drift the editor against the canvas mid-session.
     this.textarea.focus({ preventScroll: true })
     // Cursor at the end, like Excalidraw's editor.
@@ -188,7 +188,7 @@ class TextEditingSession {
     if (event.key === 'Escape' || (event.key === 'Enter' && (event.metaKey || event.ctrlKey))) {
       event.preventDefault()
       // The textarea is about to go: hand focus back to the canvas so the
-      // very next shortcut still reaches the editor instead of <body> —
+      // very next shortcut still reaches the editor instead of <body>,
       // Excalidraw refocuses its container after text editing too.
       this.commit()
       this.host.focus({ preventScroll: true })
@@ -218,7 +218,7 @@ class TextEditingSession {
     const el = this.element
     if (!el) {
       // No live element (removed mid-edit, stray event): nothing to
-      // finalize and no flag to poison — just stop editing it.
+      // finalize and no flag to poison, just stop editing it.
       this.stopEditing()
       return
     }
@@ -235,7 +235,7 @@ class TextEditingSession {
     this.stopEditing()
   }
 
-  /** Clears the edit — unless another session already took over. */
+  /** Clears the edit, unless another session already took over. */
   private stopEditing(): void {
     if (this.editor.editingId === this.id) {
       this.editor.setEditing(null)
@@ -252,7 +252,7 @@ class TextEditingSession {
 
 /**
  * Runs one editing session per `editingId`, created on the microtask after
- * the edit opens — the same beat a component framework would mount it on,
+ * the edit opens, the same beat a component framework would mount it on,
  * after the pointer event that opened the edit has finished. Returns the
  * cleanup.
  */

@@ -75,7 +75,7 @@ describe('ellipse', () => {
       style: { backgroundColor: '#a5d8ff' },
     })
     expect(hitTestElement(el, { x: 60, y: 35 }, T)).toBe(true)
-    // 10px right of the right vertex (x=110) — outside the threshold.
+    // 10px right of the right vertex (x=110), outside the threshold.
     expect(hitTestElement(el, { x: 120, y: 35 }, T)).toBe(false)
   })
 
@@ -178,7 +178,7 @@ describe('eraser sweep', () => {
 
   it('erases an element crossed between two distant samples', () => {
     // A fast drag: neither endpoint is anywhere near the rectangle, but the
-    // segment between them passes straight through it. Excalidraw parity —
+    // segment between them passes straight through it. Excalidraw parity,
     // the whole segment is the eraser stroke, not the sampled endpoints.
     const hits = elementsUnderEraser([rect], { x: 0, y: 130 }, { x: 300, y: 130 }, 1)
     expect(hits.map((el) => el.id)).toEqual([rect.id])
@@ -200,7 +200,7 @@ describe('eraser sweep', () => {
     const far = elementsUnderEraser([rect], { x: 0, y: 0 }, { x: 300, y: 0 }, 1)
     expect(far).toEqual([])
     const nearMiss = elementsUnderEraser([rect], { x: 0, y: 60 }, { x: 300, y: 60 }, 1)
-    // y=60 is 40px above the top edge (y=100) — well outside the threshold.
+    // y=60 is 40px above the top edge (y=100), well outside the threshold.
     expect(nearMiss).toEqual([])
   })
 })

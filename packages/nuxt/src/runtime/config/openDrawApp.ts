@@ -5,7 +5,7 @@ import type { IconName } from '../constants/icons.js'
 import type { OpenDrawChangeDetail } from '../composables/useOpenDraw.js'
 
 /**
- * The one-object configuration for <OpenDrawApp> — the demo site's whole
+ * The one-object configuration for <OpenDrawApp>, the demo site's whole
  * layout (top-right buttons, the glowing install command, share, menu
  * links) plus the editor options and lifecycle hooks:
  *

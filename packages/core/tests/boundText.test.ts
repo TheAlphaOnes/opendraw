@@ -44,7 +44,7 @@ describe('wrapText', () => {
   })
 })
 
-describe('bound text — container math (Excalidraw textElement.ts)', () => {
+describe('bound text, container math (Excalidraw textElement.ts)', () => {
   it('inscribes the text area in ellipses and diamonds', () => {
     const ellipse = newEllipseElement({ x: 0, y: 0, width: 200, height: 100 })
     expect(boundTextMaxWidth(ellipse)).toBe(Math.round(100 * Math.SQRT2) - BOUND_TEXT_PADDING * 2)
@@ -61,7 +61,7 @@ describe('bound text — container math (Excalidraw textElement.ts)', () => {
   })
 })
 
-describe('bound text — document invariants', () => {
+describe('bound text, document invariants', () => {
   it('lays the label out when added and follows the container as it moves', () => {
     const { box, label: text } = boxWithLabel('hello')
     const doc = new OpenDrawDocument({ elements: [box] })

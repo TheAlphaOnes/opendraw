@@ -35,8 +35,8 @@ function isActivatable(target: EventTarget | null): boolean {
 }
 
 /**
- * Keys are handled on the whole editor — `keyRoot`, the adapter's shell
- * around the canvas (or the canvas itself when mounted headless) —
+ * Keys are handled on the whole editor, `keyRoot`, the adapter's shell
+ * around the canvas (or the canvas itself when mounted headless),
  * Excalidraw's container-level onKeyDown, so a shortcut still works right
  * after a toolbar click moved focus onto a button. Returns the cleanup.
  */

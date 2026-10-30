@@ -1,7 +1,7 @@
 import { expect, openEditor, test } from './helpers'
 
 /**
- * <OpenDrawApp> — the demo site as one configured component: the copyable
+ * <OpenDrawApp>, the demo site as one configured component: the copyable
  * command and the docs link top-right, all sharing the 40px island bar.
  */
 test.describe('<OpenDrawApp>', () => {

@@ -1,5 +1,5 @@
 /**
- * Fonts e2e — "Hand-drawn" text draws in Excalifont on every machine: the
+ * Fonts e2e, "Hand-drawn" text draws in Excalifont on every machine: the
  * font ships with the package (no reliance on a cursive font the device may
  * or may not have), loads for canvas text, and text measured before it
  * arrived is re-measured.

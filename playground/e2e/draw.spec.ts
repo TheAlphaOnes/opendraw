@@ -166,7 +166,7 @@ test('outlines the shape an in-flight arrow tip would dock onto', async ({ page 
   await pickTool(page, 'Selection (1)')
   await page.mouse.click(at(box, 550, 100).x, at(box, 550, 100).y)
   await settleFrames(page)
-  // The rect's top edge, far above the drag path — empty before the drag.
+  // The rect's top edge, far above the drag path, empty before the drag.
   expect((await overlayPixelAt(page, 390, 150))[3]).toBe(0)
 
   // Hold the drag mid-flight with the drafted tip inside the shape.
@@ -218,7 +218,7 @@ test('frames a line drawn up-left around its true bounds', async ({ page }) => {
   const box = await canvasBox(page)
 
   // Drawn up-left: the last point lands negative of the origin. The gesture
-  // stays in the upper strip of the canvas — the live style panel occupies
+  // stays in the upper strip of the canvas, the live style panel occupies
   // the bottom-center (client y > 400 in the 720px-tall e2e viewport), and
   // a press there hits the panel, not the canvas.
   await pickTool(page, 'Line (6)')
@@ -251,7 +251,7 @@ test('narrows a multi-selection with a plain click on one shape', async ({ page 
   await pickTool(page, 'Rectangle (2)')
   await drag(page, at(box, 220, 140), at(box, 300, 220))
   const firstId = (await scene(page)).elements[0]!.id
-  // The app returns to the selection tool after each draw — re-pick it.
+  // The app returns to the selection tool after each draw, re-pick it.
   await pickTool(page, 'Rectangle (2)')
   await drag(page, at(box, 340, 140), at(box, 420, 220))
   const secondId = (await scene(page)).elements.find((el) => el.id !== firstId)!.id
@@ -288,7 +288,7 @@ test('captures a freedraw stroke as a pointer-move pressure path', async ({ page
   const start = at(box, 220, 140)
   await page.mouse.move(start.x, start.y)
   await page.mouse.down()
-  // A zig-zag of intermediate points — each pointermove appends exactly
+  // A zig-zag of intermediate points, each pointermove appends exactly
   // one path point.
   for (let i = 1; i <= 12; i++) {
     const point = at(box, 220 + i * 12, 140 + Math.round(Math.sin(i / 1.9) * 50))
@@ -308,7 +308,7 @@ test('captures a freedraw stroke as a pointer-move pressure path', async ({ page
   expect(stroke.y).toBe(140)
   expect(points[0]!.slice(0, 2)).toEqual([0, 0])
   expect(points[points.length - 1]!.slice(0, 2)).toEqual([144, Math.round(Math.sin(12 / 1.9) * 50)])
-  // Mouse input simulates pressure at a flat 0.5 — the third channel.
+  // Mouse input simulates pressure at a flat 0.5, the third channel.
   expect(points[0]![2]).toBe(0.5)
 
   // Excalidraw parity: a finished freedraw stroke is NOT auto-selected

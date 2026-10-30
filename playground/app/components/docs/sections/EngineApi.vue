@@ -51,7 +51,7 @@ persistence.dispose()  // flushes the last save`
     <p>
       The engine has no framework or DOM requirement. <code>OpenDrawDocument</code> holds the elements, the app state
       and history; every change goes through it, so undo, redo and change events always agree. Elements are plain,
-      immutable objects — the shapes of the whiteboard (rectangle, diamond, ellipse, arrow, line, freedraw, text,
+      immutable objects, the shapes of the whiteboard (rectangle, diamond, ellipse, arrow, line, freedraw, text,
       image, frame, sticky note).
     </p>
     <DocsCode title="core.ts" :code="CORE" />
@@ -68,12 +68,12 @@ persistence.dispose()  // flushes the last save`
     <p>
       The whole interactive editor without a UI framework: <code>createEditor()</code> returns a controller (state
       getters plus commands), and <code>mountCanvas()</code> wires every gesture, shortcut, the text editor and
-      rendering onto three DOM elements. <code>subscribe()</code> announces each change — that is all a UI layer needs.
+      rendering onto three DOM elements. <code>subscribe()</code> announces each change, that is all a UI layer needs.
     </p>
     <DocsCode title="editor.ts" :code="EDITOR" />
     <ul>
-      <li><strong>Tools:</strong> <code>TOOLS</code> lists every tool with its icon name, label and keys — render your toolbar from it.</li>
-      <li><strong>Actions:</strong> <code>ACTIONS</code> / <code>runAction</code> / <code>isActionEnabled</code> — the commands behind menus and shortcuts, with labels and key hints.</li>
+      <li><strong>Tools:</strong> <code>TOOLS</code> lists every tool with its icon name, label and keys, render your toolbar from it.</li>
+      <li><strong>Actions:</strong> <code>ACTIONS</code> / <code>runAction</code> / <code>isActionEnabled</code>, the commands behind menus and shortcuts, with labels and key hints.</li>
       <li><strong>Icons:</strong> actions and tools name a semantic <code>IconName</code>; your adapter maps each name to any icon set.</li>
     </ul>
     <h3 id="persistence">Persistence</h3>

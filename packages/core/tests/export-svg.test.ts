@@ -1,5 +1,5 @@
 /**
- * SVG export tests — `exportToSvg` is pure string building, so these run
+ * SVG export tests, `exportToSvg` is pure string building, so these run
  * without a DOM. The assertions pin the structural contract an SVG consumer
  * (browser, design tool, file preview) depends on: a standalone document,
  * viewBox sized to content, vector paths for rough shapes, filled paths for
@@ -27,7 +27,7 @@ describe('exportToSvg', () => {
 
     expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg"')).toBe(true)
     expect(svg.endsWith('</svg>')).toBe(true)
-    // Content spans x:100..300, y:50..150 — padding extends each side by 20.
+    // Content spans x:100..300, y:50..150, padding extends each side by 20.
     expect(svg).toContain('viewBox="80 30 240 140"')
     expect(svg).toContain('width="240"')
     expect(svg).toContain('height="140"')

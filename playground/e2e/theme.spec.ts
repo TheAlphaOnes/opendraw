@@ -31,7 +31,7 @@ test('the wysiwyg editor types in the dark theme ink', async ({ page }) => {
   const editor = page.getByRole('textbox', { name: 'Text editor' })
   await expect(editor).toBeFocused()
 
-  // The editor paints the same near-white the committed render will —
+  // The editor paints the same near-white the committed render will,
   // never the raw dark ink that disappears on the dark canvas.
   const color = await editor.evaluate((node) => getComputedStyle(node).color)
   expect(color).toBe('rgb(211, 211, 211)')

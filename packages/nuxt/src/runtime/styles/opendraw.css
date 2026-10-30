@@ -1,5 +1,5 @@
 /**
- * opendraw — global design tokens for the editor chrome.
+ * opendraw, global design tokens for the editor chrome.
  *
  * Every chrome component consumes these custom properties. Themes switch by
  * setting `data-theme="dark"` on the `.opendraw-root` container.
@@ -8,7 +8,7 @@
  * islands with the three-layer --shadow-island, 8px radii and the Assistant
  * UI font. The accent is opendraw's own orange, in Excalidraw's roles
  * (hover tint, selected fill, pressed ring).
- * No backdrop blur — Excalidraw's islands are opaque.
+ * No backdrop blur, Excalidraw's islands are opaque.
  */
 
 /* Excalifont, the hand-drawn text font (shipped by @opendrawjs/editor). */
@@ -43,21 +43,21 @@
 }
 
 .opendraw-root {
-  /* Surfaces — --island-bg-color, --color-surface-low/-high */
+  /* Surfaces, --island-bg-color, --color-surface-low/-high */
   --od-surface: #ffffff;
   --od-surface-raised: #ffffff;
   --od-surface-float: #ffffff;
   --od-surface-low: #ececf4;
   --od-surface-high: #fff4ec;
 
-  /* Ink — --color-on-surface, --color-gray-50, --keybinding-color */
+  /* Ink, --color-on-surface, --color-gray-50, --keybinding-color */
   --od-ink: #1b1b1f;
   --od-ink-soft: #707070;
   --od-keybinding: #b8b8b8;
   --od-border: #fbe8dc;
   --od-divider: #e9ecef;
 
-  /* Accents & intents — opendraw's own orange (Excalidraw's roles, not its violet) */
+  /* Accents & intents, opendraw's own orange (Excalidraw's roles, not its violet) */
   --od-accent: #ea580c;
   --od-accent-soft: #ffe2cf;
   --od-on-accent-soft: #7c2d12;
@@ -66,17 +66,17 @@
   --od-danger-soft: rgba(224, 49, 49, 0.1);
   --od-hover: #fff4ec;
 
-  /* Elevation — Excalidraw's --shadow-island, split in two layers */
+  /* Elevation, Excalidraw's --shadow-island, split in two layers */
   --od-shadow-1: 0 0 1px 0 rgba(0, 0, 0, 0.17), 0 0 3px 0 rgba(0, 0, 0, 0.08);
   --od-shadow-2: 0 7px 14px 0 rgba(0, 0, 0, 0.05);
 
-  /* Radii — --border-radius-md / -lg */
+  /* Radii, --border-radius-md / -lg */
   --od-radius-s: 4px;
   --od-radius-m: 6px;
   --od-radius-l: 8px;
   --od-radius-xl: 12px;
 
-  /* Sizes — --default-button-size, --lg-button-size, --editor-container-padding */
+  /* Sizes, --default-button-size, --lg-button-size, --editor-container-padding */
   --od-button: 32px;
   --od-button-lg: 36px;
   /* Every on-canvas island and standalone control is this tall, so the top

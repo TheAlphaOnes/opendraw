@@ -7,7 +7,7 @@ import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import UiPopoverSelect, { type UiPopoverOption } from '../ui/UiPopoverSelect.vue'
 
 /**
- * Start / end arrowhead pickers — Excalidraw's "Arrowheads" property. The
+ * Start / end arrowhead pickers, Excalidraw's "Arrowheads" property. The
  * start options are mirrored so every glyph points the way its head will.
  */
 const ctx = useOpenDraw()

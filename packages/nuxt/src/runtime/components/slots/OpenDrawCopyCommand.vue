@@ -4,7 +4,7 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import UiIcon from '../ui/UiIcon.vue'
 
 /**
- * OpenDrawCopyCommand — a copyable command pill for <OpenDraw>'s slots,
+ * OpenDrawCopyCommand, a copyable command pill for <OpenDraw>'s slots,
  * e.g. `<OpenDrawCopyCommand command="npm install @opendrawjs/nuxt" />` in
  * the top-right slot.
  *
@@ -13,7 +13,7 @@ import UiIcon from '../ui/UiIcon.vue'
  * toolbar it gives way as the screen narrows: the full command on wide
  * screens, `shortCommand` on laptops, and on tablets and phones a labelled
  * button ("Install") that opens a card showing the full command with its
- * copy button — so it is always clear what gets copied, and the top row
+ * copy button, so it is always clear what gets copied, and the top row
  * never overlaps the tools.
  */
 const props = withDefaults(

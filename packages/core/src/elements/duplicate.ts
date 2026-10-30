@@ -1,13 +1,13 @@
 /**
- * Batch duplication — the one path for duplicate (Mod+D), paste and
+ * Batch duplication, the one path for duplicate (Mod+D), paste and
  * alt-drag, mirroring Excalidraw's `duplicateElements`:
- *   — every copy gets a fresh id (same seed, so it looks identical);
- *   — groups wholly copied become new groups (`remapGroupIdsForCopies`);
- *   — a line/arrow binding to a shape copied alongside it follows the
+ *  - every copy gets a fresh id (same seed, so it looks identical);
+ *  - groups wholly copied become new groups (`remapGroupIdsForCopies`);
+ *  - a line/arrow binding to a shape copied alongside it follows the
  *     copy; a binding to a shape left behind is dropped, so a copy never
  *     drags someone else's tip around;
- *   — bound text copied with its container binds to the copy;
- *   — frame children copied with their frame join the copied frame.
+ *  - bound text copied with its container binds to the copy;
+ *  - frame children copied with their frame join the copied frame.
  */
 
 import type { Point, OpenDrawBinding, OpenDrawElement } from '../types.js'

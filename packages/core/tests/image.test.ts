@@ -1,5 +1,5 @@
 /**
- * Image & frame element tests — the pure halves of image support: factories,
+ * Image & frame element tests, the pure halves of image support: factories,
  * defensive serialization, box-like geometry (bounds + hit testing) and the
  * self-contained SVG embedding. Decoding is browser-side and lives in the
  * nuxt layer; everything here must run without a DOM.
@@ -63,7 +63,7 @@ describe('image serialization', () => {
       dataUrl: 'https://example.com/not-embeddable.png',
     }) as OpenDrawImageElement | null
     expect(coerced).not.toBeNull()
-    // An empty dataUrl renders the placeholder — never a broken canvas.
+    // An empty dataUrl renders the placeholder, never a broken canvas.
     expect(coerced?.dataUrl).toBe('')
   })
 

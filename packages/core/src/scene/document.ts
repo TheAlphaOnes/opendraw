@@ -1,5 +1,5 @@
 /**
- * OpenDrawDocument — the single source of truth for a drawing.
+ * OpenDrawDocument, the single source of truth for a drawing.
  *
  * Framework-agnostic: a plain observable store with a copy-on-write element
  * array and immutable app state. The Vue layer subscribes and mirrors state
@@ -9,7 +9,7 @@
  * - every write funnels through `replaceElements` / `commitAppState`
  * - a write inside an open step (drag, text edit) is coalesced into that
  *   step's single history entry; outside a step each element write is its
- *   own entry — appState-only writes record nothing (parity law)
+ *   own entry, appState-only writes record nothing (parity law)
  * - no-op patches keep the same element reference and record nothing
  */
 
@@ -187,7 +187,7 @@ export class OpenDrawDocument {
   }
 
   // -------------------------------------------------------------------------
-  // History — steps group a burst of writes into one undo entry
+  // History, steps group a burst of writes into one undo entry
   // -------------------------------------------------------------------------
 
   beginStep(): void {
@@ -224,7 +224,7 @@ export class OpenDrawDocument {
 
   /**
    * Records a completed change. Parity law: undo entries are scene changes
-   * only — a write that touched nothing but appState (tool switch,
+   * only, a write that touched nothing but appState (tool switch,
    * selection, style) is user intent, never history.
    */
   private record(before: HistorySnapshot, after: HistorySnapshot): void {
@@ -260,7 +260,7 @@ export class OpenDrawDocument {
 
   /**
    * Restores a snapshot: elements come back wholesale; from appState only the
-   * document-semantic parts return — tool, theme and viewport stay as the
+   * document-semantic parts return, tool, theme and viewport stay as the
    * user's current intent (you can't undo yourself into another tool).
    */
   private restore(snapshot: HistorySnapshot): void {
@@ -343,7 +343,7 @@ export class OpenDrawDocument {
   }
 
   /**
-   * Re-measures every text against the fonts now loaded — Excalidraw's
+   * Re-measures every text against the fonts now loaded, Excalidraw's
    * refreshTextDimensions after its fonts arrive. Text measured while a
    * web font was still downloading got the fallback font's size; this
    * corrects free text (keeping its alignment edge) and refits every
@@ -434,7 +434,7 @@ export class OpenDrawDocument {
         if (!idSet.has(element.id)) {
           return element
         }
-        // Ids are trusted to name T-shaped elements — the runtime contract
+        // Ids are trusted to name T-shaped elements, the runtime contract
         // the pre-generic signature already relied on.
         const target = element as T
         const resolved = typeof patch === 'function' ? patch(target) : patch
@@ -472,7 +472,7 @@ export class OpenDrawDocument {
     // children (Excalidraw: a deleted frame takes its children with it).
     const withChildren = withFrameChildren(this.elements, ids).map((el) => el.id)
     const idSet = new Set(withBoundTexts(this.elements, withChildren).map((el) => el.id))
-    // Deleting an element and cleaning its selection is ONE undo step —
+    // Deleting an element and cleaning its selection is ONE undo step,
     // undo must resurrect the element with its selection intact.
     const topLevel = this.openStep === null
     if (topLevel) {
@@ -482,7 +482,7 @@ export class OpenDrawDocument {
       const next = current.filter((el) => !idSet.has(el.id))
       return next.length === current.length ? null : next
     })
-    // Lines and arrows bound to deleted shapes lose those bindings — inside
+    // Lines and arrows bound to deleted shapes lose those bindings, inside
     // the same undo step, so undo resurrects shape and binding together.
     for (const [id, patch] of orphanBindingPatches(idSet, this.elements)) {
       this.updateElement<OpenDrawLinearElement>(id, patch)
@@ -551,7 +551,7 @@ export class OpenDrawDocument {
   }
 
   /**
-   * Puts elements into a frame (or, with null, out of any) — labels follow
+   * Puts elements into a frame (or, with null, out of any), labels follow
    * their shapes, frames never nest. Records nothing on its own outside a
    * step; callers fold it into the gesture that changed membership.
    */
@@ -603,7 +603,7 @@ export class OpenDrawDocument {
 
   /**
    * Writes a frame-membership layout: takes its order, and re-stamps every
-   * element whose frame changed (version bump) — one mutation, folded into
+   * element whose frame changed (version bump), one mutation, folded into
    * the open step.
    */
   private applyFrameLayout(layout: (current: readonly OpenDrawElement[]) => readonly OpenDrawElement[]): void {
@@ -625,7 +625,7 @@ export class OpenDrawDocument {
 
   /**
    * Applies geometry patches as ONE undo step, then re-docks every line or
-   * arrow bound to a moved element — so undo restores both together.
+   * arrow bound to a moved element, so undo restores both together.
    */
   private applyArrange(entries: readonly ElementPatchEntry[]): void {
     if (entries.length === 0) {
@@ -698,7 +698,7 @@ export class OpenDrawDocument {
   }
 
   setViewport(viewport: Viewport): void {
-    // Viewport is transient navigation — no history entry.
+    // Viewport is transient navigation, no history entry.
     this.appState = { ...this.appState, viewport }
     this.emit()
   }
@@ -732,7 +732,7 @@ export class OpenDrawDocument {
   }
 
   /**
-   * Group-aware selection — what a click or marquee does: every id pulls in
+   * Group-aware selection, what a click or marquee does: every id pulls in
    * the rest of its outermost visible group. In toggle mode a group that is
    * wholly selected leaves as a unit; otherwise it joins as a unit.
    */
@@ -764,7 +764,7 @@ export class OpenDrawDocument {
   }
 
   /**
-   * Selects every unlocked element and leaves any edited group —
+   * Selects every unlocked element and leaves any edited group,
    * Excalidraw's actionSelectAll.
    */
   selectAll(): void {
@@ -804,7 +804,7 @@ export class OpenDrawDocument {
     }
   }
 
-  /** Style of new elements — set when nothing is selected. */
+  /** Style of new elements, set when nothing is selected. */
   setStyle(style: Partial<ElementStyle>): void {
     // With the note tool armed, colors set the next note's ink and paper.
     if (this.appState.activeTool === 'stickynote') {
@@ -913,7 +913,7 @@ export class OpenDrawDocument {
 
   /**
    * Steps the font size of every selected text element by Excalidraw's
-   * relative step (10%, rounded — actionIncrease/DecreaseFontSize),
+   * relative step (10%, rounded, actionIncrease/DecreaseFontSize),
    * re-measuring each box. One undo step; a no-op without text selected.
    */
   stepFontSize(direction: 1 | -1): void {
@@ -941,7 +941,7 @@ export class OpenDrawDocument {
   }
 
   /**
-   * Pastes a copied style onto the selection in ONE undo step — the
+   * Pastes a copied style onto the selection in ONE undo step, the
    * element style everywhere, text style on text (re-measured), corners
    * on rectangles and diamonds (Excalidraw's actionPasteStyles). Unlike
    * `changeStyle`, an empty selection is a no-op: pasting never rewrites
@@ -1054,7 +1054,7 @@ export class OpenDrawDocument {
   }
 
   /**
-   * Replaces the scene wholesale. Resets history — a loaded scene is a new
+   * Replaces the scene wholesale. Resets history, a loaded scene is a new
    * timeline (Excalidraw behaves the same on scene load).
    */
   loadFile(input: OpenDrawFile): void {

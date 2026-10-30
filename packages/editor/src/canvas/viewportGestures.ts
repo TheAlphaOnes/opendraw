@@ -11,7 +11,7 @@ import { imageFilesOf } from '../services/image.service.js'
 import type { CanvasRuntime } from './runtime.js'
 
 /**
- * One ctrl/cmd+wheel zoom step, in zoom units — Excalidraw's ZOOM_STEP
+ * One ctrl/cmd+wheel zoom step, in zoom units, Excalidraw's ZOOM_STEP
  * (packages/common/src/constants.ts). Wheel ticks clamp their delta to
  * this step so a single mouse notch moves one step, while a trackpad
  * pinch's small ticks land per-tick.
@@ -28,7 +28,7 @@ export function onCanvasWheel(rt: CanvasRuntime, event: WheelEvent): void {
   if (event.ctrlKey || event.metaKey) {
     // Excalidraw parity (App.wheel.ts `zoomBy`): the delta clamps to one
     // step, the zoom moves linearly by it, and a small trackpad delta gets
-    // amplified by how far past 100% the canvas already is — so a wheel
+    // amplified by how far past 100% the canvas already is, so a wheel
     // notch is a fixed step and a pinch accelerates smoothly. zoomAt
     // anchors the new zoom at the cursor and clamps to [MIN_ZOOM, MAX_ZOOM].
     const sign = Math.sign(event.deltaY)
@@ -57,7 +57,7 @@ export function onCanvasDrop(rt: CanvasRuntime, event: DragEvent): void {
 }
 
 /**
- * Pasted image files land at the visible canvas center — a paste has no
+ * Pasted image files land at the visible canvas center, a paste has no
  * pointer position.
  */
 export function onWindowPaste(rt: CanvasRuntime, event: ClipboardEvent): void {
@@ -85,7 +85,7 @@ export interface CanvasContextMenuRequest {
 /**
  * Right-click: an element under the pointer joins the selection first (its
  * whole group, as a left click would), so the element menu acts on what
- * the user pointed at — Excalidraw's contextmenu handler.
+ * the user pointed at, Excalidraw's contextmenu handler.
  */
 export function resolveContextMenu(rt: CanvasRuntime, event: MouseEvent): CanvasContextMenuRequest {
   const { ctx } = rt

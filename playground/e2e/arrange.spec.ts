@@ -1,5 +1,5 @@
 /**
- * Arrange e2e — groups, align, flip, alt-drag duplication, style copy and
+ * Arrange e2e, groups, align, flip, alt-drag duplication, style copy and
  * the context menu, each pinned to the Excalidraw behavior it ports.
  */
 import type { Page } from '@playwright/test'

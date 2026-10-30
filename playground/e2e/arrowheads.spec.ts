@@ -1,5 +1,5 @@
 /**
- * Arrowheads e2e — Excalidraw's start/end arrowhead property: pickers in
+ * Arrowheads e2e, Excalidraw's start/end arrowhead property: pickers in
  * the properties island restyle the selected arrow, and with nothing
  * selected they set the heads of the next arrow drawn.
  */

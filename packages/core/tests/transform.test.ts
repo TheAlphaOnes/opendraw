@@ -121,7 +121,7 @@ describe('single-element resize', () => {
       points: Array<{ x: number; y: number }>
     }
     expect(patch).toMatchObject({ x: 50, y: 65, width: 50, height: 35 })
-    // The start parks on the anchor and the tip lands on the pointer —
+    // The start parks on the anchor and the tip lands on the pointer,
     // the arrow reads flipped, not jammed at a minimum.
     expect(patch.points[0]).toEqual({ x: 50, y: 0 })
     expect(patch.points[1]).toEqual({ x: 0, y: 35 })

@@ -39,7 +39,7 @@ test('drags an unfilled rectangle from its middle', async ({ page }) => {
   const rect = (await scene(page)).elements[0]!
   expect((await scene(page)).selection).toEqual([rect.id])
 
-  // Drag from the interior — no stroke, no fill under the pointer.
+  // Drag from the interior, no stroke, no fill under the pointer.
   await drag(page, at(box, 390, 210), at(box, 510, 270))
   await settleFrames(page)
 
@@ -127,7 +127,7 @@ test('outlines only the shape under the dragged tip, like excalidraw', async ({ 
   await drag(page, at(box, 100, 150), at(box, 280, 270))
   await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
   const startId = (await scene(page)).elements[0]!.id
-  // The app returns to the selection tool after each draw — re-pick it.
+  // The app returns to the selection tool after each draw, re-pick it.
   await pickTool(page, 'Rectangle (2)')
   await drag(page, at(box, 380, 150), at(box, 560, 270))
   await expect.poll(async () => (await scene(page)).elements.length).toBe(2)
@@ -150,7 +150,7 @@ test('outlines only the shape under the dragged tip, like excalidraw', async ({ 
   await settleFrames(page)
 
   // Excalidraw's suggestedBinding is the one shape the dragged tip would
-  // bind to — outlined in BINDING_HIGHLIGHT_RGB; the start shape is not.
+  // bind to, outlined in BINDING_HIGHLIGHT_RGB; the start shape is not.
   const startEdge = await overlayPixelAt(page, 190, 150)
   const endEdge = await overlayPixelAt(page, 470, 150)
   expect(startEdge[3]).toBe(0)
@@ -184,7 +184,7 @@ test('outlines a hoverable shape before the drag even starts', async ({ page }) 
   await settleFrames(page)
   expect((await overlayPixelAt(page, 390, 150))[3]).toBe(0)
 
-  // Hover — no press — with the arrow tool over the shape.
+  // Hover, no press, with the arrow tool over the shape.
   await pickTool(page, 'Arrow (5)')
   await page.mouse.move(at(box, 390, 210).x, at(box, 390, 210).y)
   await settleFrames(page)
@@ -213,7 +213,7 @@ test('docks a diagonal arrow on the diamond\'s own edge, not its bounds box', as
   await drag(page, at(box, 240, 90), at(box, 425, 140))
   await expect.poll(async () => (await scene(page)).elements.length).toBe(2)
 
-  // The tip orbits the slanted edge itself — well inside the bounds box
+  // The tip orbits the slanted edge itself, well inside the bounds box
   // (400..560 × 120..220), where a box dock would have put it.
   const arrow = (await scene(page)).elements.find((el) => el.type === 'arrow')!
   expect(arrow.endBinding).toMatchObject({ elementId: diamondId, mode: 'orbit' })

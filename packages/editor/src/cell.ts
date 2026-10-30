@@ -1,5 +1,5 @@
 /**
- * Cell — the smallest observable value: read and write `.value`, subscribe
+ * Cell, the smallest observable value: read and write `.value`, subscribe
  * to changes. The editor's transient session state (the live gesture, the
  * marquee, the hover point) lives in cells so the framework-free canvas can
  * react to it, and adapters can mirror it into their own reactivity.

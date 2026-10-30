@@ -1,5 +1,5 @@
 /**
- * PNG export — renders a scene to an offscreen canvas by pointing the
+ * PNG export, renders a scene to an offscreen canvas by pointing the
  * viewport at the content bounds. Browser-only by design; callers in SSR
  * contexts must guard (the component only exposes this on user action).
  */
@@ -16,7 +16,7 @@ export interface ExportOptions {
   /** Background color; defaults to the app background. 'transparent' supported. */
   background?: string
   theme?: ThemeName
-  /** Decoded-bitmap supply for image elements — required to composite them. */
+  /** Decoded-bitmap supply for image elements, required to composite them. */
   resolveImage?: SceneImageResolver
 }
 

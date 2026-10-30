@@ -118,9 +118,9 @@ export function createCanvasSurface(
   decodeImages()
 
   // Any document or editor change can change a pixel. The marquee and the
-  // binding highlight are pure overlay ink — no document change flows while
+  // binding highlight are pure overlay ink, no document change flows while
   // they update (`select` short-circuits once the dragged rect covers
-  // everything under it) — so each schedules its own repaint.
+  // everything under it), so each schedules its own repaint.
   const unsubscribers = [
     ctx.subscribe(() => {
       decodeImages()

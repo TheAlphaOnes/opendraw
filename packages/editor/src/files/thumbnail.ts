@@ -1,7 +1,7 @@
 /**
  * Drawing previews for the files list: the scene rendered by core's PNG
  * export, scaled to fit a small card and encoded compactly (WebP where the
- * browser supports it — Safari falls back to PNG).
+ * browser supports it, Safari falls back to PNG).
  *
  * Browser-only: callers schedule it off the interaction path (idle time,
  * after a debounce), since it re-renders the whole scene.
@@ -40,7 +40,7 @@ export function renderThumbnail(scene: ThumbnailScene): string | null {
     return null
   }
   const bounds = inflateBounds(getCommonBounds(scene.elements), THUMBNAIL_PADDING)
-  // Fit, but never upscale a small sketch past 1:1 — it would only blur.
+  // Fit, but never upscale a small sketch past 1:1, it would only blur.
   const scale = Math.min(1, THUMBNAIL_WIDTH / boundsWidth(bounds), THUMBNAIL_HEIGHT / boundsHeight(bounds))
   const canvas = exportToCanvas(scene.elements, scene.viewBackgroundColor, {
     padding: THUMBNAIL_PADDING,

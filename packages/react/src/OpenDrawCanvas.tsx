@@ -12,7 +12,7 @@ export interface OpenDrawCanvasProps {
 
 /**
  * The canvas on its own: a focusable host with the scene and overlay
- * canvases, mounted onto the editor — every gesture, shortcut, the text
+ * canvases, mounted onto the editor, every gesture, shortcut, the text
  * editor and rendering come from @opendrawjs/editor. No chrome.
  */
 export function OpenDrawCanvas({ editor, onContextMenu, className, style }: OpenDrawCanvasProps) {

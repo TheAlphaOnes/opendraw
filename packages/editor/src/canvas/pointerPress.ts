@@ -100,7 +100,7 @@ function draftElement(rt: CanvasRuntime, tool: string, at: Point): OpenDrawEleme
 }
 
 /**
- * pointerdown: decides which gesture starts. Order matters — pan beats
+ * pointerdown: decides which gesture starts. Order matters, pan beats
  * every tool, a live multi-point draft beats a fresh press, and with the
  * selection tool handles outrank borders, which outrank element hits,
  * which outrank the selection box, which outranks the marquee.
@@ -114,7 +114,7 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
   // preventScroll: a focus-induced scroll would move the host rect between
   // this call and toScene(), silently offsetting every scene coordinate by
   // the scroll delta. Bites on any page where the canvas is partly
-  // offscreen — the host is focused on every gesture start.
+  // offscreen, the host is focused on every gesture start.
   host.focus({ preventScroll: true })
   // Untrusted/synthetic pointer events carry no active pointer entry, so
   // capture is best-effort: an automation or test event stream must not
@@ -122,10 +122,10 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
   try {
     host.setPointerCapture(event.pointerId)
   } catch {
-    // No active pointer with this id — continue without capture.
+    // No active pointer with this id, continue without capture.
   }
   setModifiers(rt, event)
-  // A new gesture starts from a clean slate — a stale highlight must not
+  // A new gesture starts from a clean slate, a stale highlight must not
   // survive into the next interaction.
   rt.suggestedBinding.value = null
 
@@ -151,7 +151,7 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
     finishLinearDraft(rt)
   }
 
-  // Text tool: Excalidraw parity — a click on an existing text element
+  // Text tool: Excalidraw parity, a click on an existing text element
   // re-opens ITS editor (App.textTool resolves a "text" target before
   // falling through to free creation); anywhere else creates a new one.
   if (tool === 'text') {
@@ -183,7 +183,7 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
     return
   }
 
-  // Image tool: a press opens the file picker (Excalidraw parity — inserting
+  // Image tool: a press opens the file picker (Excalidraw parity, inserting
   // is a gesture, not a persistent mode).
   if (tool === 'image') {
     ctx.openImagePicker()
@@ -200,7 +200,7 @@ export function onCanvasPointerDown(rt: CanvasRuntime, laser: LaserTrail, event:
   if (SHAPE_TOOLS.has(tool)) {
     const element = draftElement(rt, tool, scenePoint)
     ctx.doc.beginStep()
-    // Starting a new element drops the current selection (Excalidraw) — its
+    // Starting a new element drops the current selection (Excalidraw), its
     // chrome would otherwise sit over the binding affordances.
     ctx.setEditingGroup(null)
     ctx.select(null)
@@ -245,7 +245,7 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
   const { ctx } = rt
   const zoom = ctx.viewport.zoom
 
-  // Point handles of a lone selected line/arrow outrank the box chrome —
+  // Point handles of a lone selected line/arrow outrank the box chrome,
   // Excalidraw grabs endpoints by their circles, never the corner boxes.
   const loneLinear = loneSelectedLinear(rt)
   if (loneLinear) {
@@ -267,7 +267,7 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
     }
     const mid = linearMidpointHandle(loneLinear)
     if (mid && linearHandleAt([mid], scenePoint, zoom)) {
-      // Pressing the segment midpoint inserts a point there and drags it —
+      // Pressing the segment midpoint inserts a point there and drags it,
       // the two-point line grows to three.
       ctx.doc.beginStep()
       const points = loneLinear.points.map((point) => ({ ...point }))
@@ -314,7 +314,7 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
   if (hit) {
     const wasSelected = ctx.isIdSelected(hit.id)
     if (event.shiftKey) {
-      // Shift toggles the hit's whole (visible) group in or out — and a
+      // Shift toggles the hit's whole (visible) group in or out, and a
       // frame and its children are never selected together: adding a child
       // drops its selected frame.
       if (!wasSelected && hit.frameId !== null && ctx.isIdSelected(hit.frameId)) {
@@ -351,7 +351,7 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
   }
 
   // Pressing inside the current selection's frame grabs the whole
-  // selection — Excalidraw's common-bounding-box grab, extended to lone
+  // selection, Excalidraw's common-bounding-box grab, extended to lone
   // selections so an unfilled shape drags from its middle, not just its
   // outline. Shift keeps the add-to-selection gesture instead.
   if (

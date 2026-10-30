@@ -1,5 +1,5 @@
 /**
- * Groups — Excalidraw's `groupIds` model.
+ * Groups, Excalidraw's `groupIds` model.
  *
  * Every element carries `groupIds`, ordered innermost → outermost. A group
  * has no record of its own: it exists while two or more elements share its
@@ -91,7 +91,7 @@ export function expandIdsToGroups(
 }
 
 /**
- * Groups currently selected as a unit (derived — see the module note).
+ * Groups currently selected as a unit (derived, see the module note).
  * A one-member "group" never counts, matching `selectGroup`'s `< 2` guard.
  */
 export function selectedGroupIds(
@@ -119,7 +119,7 @@ export function selectedGroupIds(
 }
 
 /**
- * True when every element already shares one visible group — grouping
+ * True when every element already shares one visible group, grouping
  * them again would add nothing (Excalidraw's `allElementsInSameGroup`).
  */
 export function allInSameGroup(
@@ -135,7 +135,7 @@ export function allInSameGroup(
 
 /**
  * Inserts `groupId` just below the editing group (or as the new outermost
- * level) — Excalidraw's `addToGroup`.
+ * level), Excalidraw's `addToGroup`.
  */
 export function addToGroup(
   groupIds: readonly GroupId[],
@@ -158,7 +158,7 @@ export interface GroupResult {
 /**
  * Groups the `ids` elements under a fresh group id. Members become
  * contiguous in z-order at the position of the topmost one, keeping their
- * relative order — Excalidraw's actionGroup reorder. `retag` produces the
+ * relative order, Excalidraw's actionGroup reorder. `retag` produces the
  * new element (callers pass their copy-on-write patcher).
  */
 export function groupElements(
@@ -192,7 +192,7 @@ export function groupElements(
 }
 
 /**
- * Removes the selected groups from their members — Excalidraw's
+ * Removes the selected groups from their members, Excalidraw's
  * actionUngroup. Returns null when no group is selected.
  */
 export function ungroupElements(
@@ -219,7 +219,7 @@ export function ungroupElements(
 /**
  * Fresh group ids for a batch of copies: groups wholly inside the batch get
  * one consistent new id each, so a duplicated group is a new group, while
- * the editing group (and anything outside it) is kept — a copy made inside
+ * the editing group (and anything outside it) is kept, a copy made inside
  * a group stays in it (Excalidraw's `getNewGroupIdsForDuplication`).
  */
 export function remapGroupIdsForCopies<T extends OpenDrawElement>(
@@ -248,7 +248,7 @@ export function remapGroupIdsForCopies<T extends OpenDrawElement>(
 
 /**
  * The editing group one level up from `editingGroupId`, judged from the
- * given elements — where Escape steps out to (actionDeselect's
+ * given elements, where Escape steps out to (actionDeselect's
  * `getParentEditingGroupId`).
  */
 export function parentEditingGroupId(
@@ -284,7 +284,7 @@ export interface GroupSelectionChrome {
   groupBounds: Bounds[]
   /** Dashed box around the group being edited, or null. */
   editingBounds: Bounds | null
-  /** Selected elements NOT selected via a group — each gets its own outline. */
+  /** Selected elements NOT selected via a group, each gets its own outline. */
   individualIds: ReadonlySet<string>
 }
 

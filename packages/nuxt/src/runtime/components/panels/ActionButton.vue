@@ -11,7 +11,7 @@ import UiIconButton from '../ui/UiIconButton.vue'
 /**
  * An icon button bound to a registry action: its label and shortcut become
  * the accessible name and tooltip ("Undo (⌘Z)"), its predicate drives the
- * disabled state, and a click runs it — one definition, every surface.
+ * disabled state, and a click runs it, one definition, every surface.
  */
 const props = withDefaults(
   defineProps<{

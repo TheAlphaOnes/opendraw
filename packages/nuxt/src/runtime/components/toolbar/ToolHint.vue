@@ -7,7 +7,7 @@ import { useKeyDisplay } from '../../composables/useKeyDisplay.js'
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
 
 /**
- * The hint line under the toolbar — Excalidraw's HintViewer, with its
+ * The hint line under the toolbar, Excalidraw's HintViewer, with its
  * copy (locales/en.json "hints") and its key chips. Only hints for behavior
  * opendraw has are listed; a hint never advertises a gesture that does
  * nothing. With nothing selected it falls back to the canvas-panning hint.

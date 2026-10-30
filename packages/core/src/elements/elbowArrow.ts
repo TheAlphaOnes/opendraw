@@ -1,9 +1,9 @@
 /**
- * Elbow arrows — a port of Excalidraw's element/src/elbowArrow.ts and
+ * Elbow arrows, a port of Excalidraw's element/src/elbowArrow.ts and
  * heading.ts (routing without user-fixed segments).
  *
  * An elbow arrow runs in horizontal and vertical legs only. Each tip has a
- * heading — the side of its shape it leaves through, or toward the other
+ * heading, the side of its shape it leaves through, or toward the other
  * tip when loose. The shapes are padded into "dongle" boxes that always
  * touch, a sparse grid is built from their edges, and A* walks it with a
  * heavy penalty for every bend and no reversing, so the route is the
@@ -57,7 +57,7 @@ export function vectorToHeading(x: number, y: number): Heading {
   return HEADING_UP
 }
 
-/** [x1, y1, x2, y2] — the tuple form the router's math is written in. */
+/** [x1, y1, x2, y2], the tuple form the router's math is written in. */
 type Box = [number, number, number, number]
 
 function boxOf(element: OpenDrawElement, offset?: [number, number, number, number]): Box {
@@ -121,8 +121,8 @@ function headingForPointFromDiamond(shape: OpenDrawBindableShape, mid: Point, p:
 /**
  * Where an elbow tip dropped near `shape` lands: on the outline (one
  * binding gap out), straight across from the shape's center axis on the
- * side the pointer is on — or at a side midpoint when the pointer is near
- * one — so the arrow always meets the shape square.
+ * side the pointer is on, or at a side midpoint when the pointer is near
+ * one, so the arrow always meets the shape square.
  */
 export function elbowSnapPoint(shape: OpenDrawBindableShape, pointer: Point, zoom: number): Point {
   const box = boxOf(shape)
@@ -596,7 +596,7 @@ function trimUTurn(points: Point[], i: number): Point[] | null {
  * Moves leg i-1 (the one before jog i) by `by` along the jog's axis, or
  * returns null when that leg is the start tip's, or when the leg behind it
  * (which the move stretches or shrinks) would reverse or turn into a new
- * jog — a fold must never create the kink it removes.
+ * jog, a fold must never create the kink it removes.
  */
 function slideLead(points: Point[], i: number, unit: Point, by: number): Point[] | null {
   if (i - 1 === 0) {

@@ -14,7 +14,7 @@ test('drags a selected arrow tip onto a shape and docks it', async ({ page }) =>
   await pickTool(page, 'Arrow (5)')
   await drag(page, at(box, 380, 210), at(box, 480, 210))
   await expect.poll(async () => (await scene(page)).elements.length).toBe(2)
-  // The arrow stays selected after its draw — its tips show point handles.
+  // The arrow stays selected after its draw, its tips show point handles.
   const arrow = (await scene(page)).elements[1]!
   expect(tipOf(arrow, 'end').x).toBeCloseTo(480, 0)
 
@@ -51,7 +51,7 @@ test('inserts a point by dragging the segment midpoint of a selected line', asyn
   await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
   const line = (await scene(page)).elements[0]!
 
-  // The midpoint handle sits at (290, 210) — press it and drag down.
+  // The midpoint handle sits at (290, 210), press it and drag down.
   await drag(page, at(box, 290, 210), at(box, 290, 300))
   await settleFrames(page)
 

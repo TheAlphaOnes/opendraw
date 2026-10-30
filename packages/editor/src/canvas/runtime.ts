@@ -48,7 +48,7 @@ export type Interaction =
       kind: 'movingPoint'
       elementId: string
       index: number
-      /** Which tip the moved point is — start, end — or a midpoint (null). */
+      /** Which tip the moved point is, start, end, or a midpoint (null). */
       end: 'start' | 'end' | null
     }
   | {
@@ -72,7 +72,7 @@ export interface CanvasModifiers {
 /**
  * Everything the canvas gesture modules share: the editor, the host
  * element, the live gesture and the transient overlay inputs. None of this
- * is document state — it lives and dies with the mounted canvas. The
+ * is document state, it lives and dies with the mounted canvas. The
  * transient values are cells so the surface (repaint) and the cursor can
  * react to them.
  */
@@ -85,7 +85,7 @@ export interface CanvasRuntime {
   marquee: Cell<Bounds | null>
   /**
    * The shape a dragged line/arrow tip would bind to and the pointer over
-   * it — Excalidraw's suggestedBinding, highlighted on the overlay with its
+   * it, Excalidraw's suggestedBinding, highlighted on the overlay with its
    * side-midpoint snap dots.
    */
   suggestedBinding: Cell<SuggestedBinding | null>
@@ -95,7 +95,7 @@ export interface CanvasRuntime {
   elementsToHighlight: Cell<readonly OpenDrawElement[] | null>
   /** The frame whose name is being edited in place, or null. */
   editingFrameNameId: Cell<string | null>
-  /** Scene point under an idle pointer — drives the hover cursor + probes. */
+  /** Scene point under an idle pointer, drives the hover cursor + probes. */
   hoverScene: Cell<Point | null>
   /** Space bar held → temporary pan mode. */
   spaceDown: Cell<boolean>
@@ -103,7 +103,7 @@ export interface CanvasRuntime {
   toScene: (event: { clientX: number; clientY: number }) => Point
   /** Client-space event position → host-local screen coordinates. */
   toHost: (event: { clientX: number; clientY: number }) => Point
-  /** Repaints both canvases on the next frame — installed by the surface. */
+  /** Repaints both canvases on the next frame, installed by the surface. */
   scheduleRender: () => void
 }
 

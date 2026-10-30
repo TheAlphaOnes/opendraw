@@ -6,7 +6,7 @@ import { mountCanvas, type CanvasContextMenuRequest, type CanvasSession } from '
 import { useOpenDraw } from '../composables/useOpenDraw.js'
 
 /**
- * OpenDrawCanvas — the headless editor core for Vue.
+ * OpenDrawCanvas, the headless editor core for Vue.
  *
  * Renders the host and its two stacked canvases (static scene + interactive
  * chrome) and mounts the framework-free editor onto them: every gesture,

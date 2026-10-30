@@ -20,7 +20,7 @@ import type { CanvasRuntime } from './runtime.js'
 
 /**
  * Text creation and re-entry. Every path opens ONE history step that the
- * mounted <TextEditor> closes on commit — create + type + commit undo as
+ * mounted <TextEditor> closes on commit, create + type + commit undo as
  * a single gesture.
  */
 
@@ -45,7 +45,7 @@ export function createTextAt(rt: CanvasRuntime, point: Point): void {
 }
 
 /**
- * Edits the label inside a shape — Excalidraw's container text. An
+ * Edits the label inside a shape, Excalidraw's container text. An
  * existing label re-opens; otherwise an empty centered label is created
  * directly above the shape in z-order. The shape stays the selection.
  */
@@ -109,7 +109,7 @@ export function onCanvasDoubleClick(rt: CanvasRuntime, event: MouseEvent): void 
   if (ctx.activeTool !== 'selection') {
     return
   }
-  // A pointerdown may have opened a "moving" step; discard it — the click
+  // A pointerdown may have opened a "moving" step; discard it, the click
   // was really a double-click.
   if (rt.interaction.value.kind === 'moving') {
     ctx.doc.cancelStep()
@@ -125,7 +125,7 @@ export function onCanvasDoubleClick(rt: CanvasRuntime, event: MouseEvent): void 
   const raw = findElementAt(ctx.elements, scenePoint, hitThreshold(ctx.viewport.zoom))
   const hit = raw ? selectableTarget(raw, ctx.elements) : null
   // Double-clicking a selected group enters it: the hit becomes the
-  // selection (or its next inner group) — Excalidraw's editingGroupId.
+  // selection (or its next inner group), Excalidraw's editingGroupId.
   const groupId = hit ? outermostGroupId(hit, ctx.editingGroupId) : null
   if (hit && groupId && ctx.selectedGroupIds.includes(groupId)) {
     ctx.setEditingGroup(groupId)
@@ -137,7 +137,7 @@ export function onCanvasDoubleClick(rt: CanvasRuntime, event: MouseEvent): void 
     return
   }
   // Inside an unfilled shape the press hits nothing, yet the shape still
-  // takes the text — the area counts, not just the stroke.
+  // takes the text, the area counts, not just the stroke.
   const container = textContainerAt(ctx.elements, scenePoint)
   if (container) {
     editContainerText(rt, container)

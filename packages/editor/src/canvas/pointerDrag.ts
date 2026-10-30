@@ -42,7 +42,7 @@ export function followBindings(rt: CanvasRuntime, originals: readonly OpenDrawEl
 /**
  * Alt-drag (Excalidraw's duplicateDraggedSelection): the originals stay
  * where the drag began and the drag continues on fresh duplicates, added
- * on top and selected — all inside the drag's own undo step.
+ * on top and selected, all inside the drag's own undo step.
  */
 function duplicateDraggedSelection(
   rt: CanvasRuntime,
@@ -131,7 +131,7 @@ export function onCanvasPointerMove(rt: CanvasRuntime, laser: LaserTrail, event:
       }
       if (isLinearElement(el)) {
         // Shift locks the angle; the end tip then binds (or not) and every
-        // bound tip snaps live — the draft is never rotated, so the scene
+        // bound tip snaps live, the draft is never rotated, so the scene
         // tip is origin + point.
         const points = draftLinePoints(current.originScene, scenePoint, modifiers)
         // Lay the draft's two points down first (a fresh draft holds only

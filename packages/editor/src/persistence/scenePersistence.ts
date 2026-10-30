@@ -12,13 +12,13 @@ import { resolveThemeDefault, type ThemeDefault } from './systemTheme.js'
 
 /**
  * Automatic scene persistence: every change is debounced into localStorage,
- * and a persisted scene is restored on demand — so the editor comes back
+ * and a persisted scene is restored on demand, so the editor comes back
  * exactly as the user left it after a reload (Excalidraw parity).
  *
  * Restore semantics:
  * - a persisted scene wins over the initial elements (it is the user's
  *   latest saved work);
- * - restore goes through `loadFile`, which resets history — a freshly
+ * - restore goes through `loadFile`, which resets history, a freshly
  *   loaded page can never undo into an empty scene;
  * - a corrupted or foreign payload logs and degrades to a fresh scene.
  *
@@ -32,7 +32,7 @@ export interface ScenePersistenceOptions {
   debounceMs?: number
   /**
    * Theme to apply when nothing usable is persisted (first visit, corrupted
-   * payload). `'system'` follows the browser color scheme — Excalidraw's
+   * payload). `'system'` follows the browser color scheme, Excalidraw's
    * first-load default. A persisted theme always wins over it.
    */
   themeDefault?: ThemeDefault
@@ -48,8 +48,8 @@ export interface ScenePersistence {
   /** Writes any pending save now. */
   flush: () => void
   /**
-   * Points persistence at another scene key and loads that scene in place
-   * — how a drawing-files host opens a drawing. Unsaved edits are written
+   * Points persistence at another scene key and loads that scene in place,
+   * how a drawing-files host opens a drawing. Unsaved edits are written
    * to the key being left first. The theme is the user's, not the
    * drawing's: it carries over, and the opened scene's default background
    * follows it. A key with nothing saved opens an empty drawing.
@@ -109,13 +109,13 @@ export function attachScenePersistence(
     }, debounceMs)
   })
 
-  // A reload can land inside the debounce window — flush before unload so
+  // A reload can land inside the debounce window, flush before unload so
   // nothing drawn is ever lost.
   window.addEventListener('beforeunload', flush)
 
   /**
    * First load (or an unreadable payload): no persisted theme exists, so the
-   * configured default decides — `'system'` follows the browser color
+   * configured default decides, `'system'` follows the browser color
    * scheme, Excalidraw's behavior on a fresh visit.
    */
   function applyThemeDefault(): void {

@@ -4,7 +4,7 @@ import { FRAME_NAME_STYLE, frameTitle, isFrameElement, sceneToScreen } from '@op
 import type { CanvasRuntime } from './runtime.js'
 
 /**
- * Renaming a frame in place — Excalidraw's `editingFrame` input: a
+ * Renaming a frame in place, Excalidraw's `editingFrame` input: a
  * double-click on the name swaps the painted label for an input sitting
  * exactly over it. Typing renames live; Enter, Escape or a blur commits,
  * trimming the name (an empty one falls back to "Frame"). The whole rename

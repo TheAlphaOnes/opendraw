@@ -1,15 +1,15 @@
 /**
- * @opendrawjs/core — public API.
+ * @opendrawjs/core, public API.
  *
  * Layers, in dependency order:
- *   types          — the element model & app state contracts
- *   geometry       — points, bounds, text metrics
- *   elements       — factories, copy-on-write mutation, hit-testing
- *   viewport       — scene ↔ screen transforms
- *   interaction    — handles + pure transform math
- *   scene          — OpenDrawDocument store + history
- *   render         — rough.js scene renderer + interactive overlay
- *   export         — JSON files + PNG and SVG export
+ *   types         , the element model & app state contracts
+ *   geometry      , points, bounds, text metrics
+ *   elements      , factories, copy-on-write mutation, hit-testing
+ *   viewport      , scene ↔ screen transforms
+ *   interaction   , handles + pure transform math
+ *   scene         , OpenDrawDocument store + history
+ *   render        , rough.js scene renderer + interactive overlay
+ *   export        , JSON files + PNG and SVG export
  */
 
 export * from './types.js'

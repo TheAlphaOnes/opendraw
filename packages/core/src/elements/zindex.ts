@@ -1,5 +1,5 @@
 /**
- * Z-order — Excalidraw's element/src/zindex.ts semantics on a plain array.
+ * Z-order, Excalidraw's element/src/zindex.ts semantics on a plain array.
  *
  * Forward/backward move each contiguous run of selected elements past the
  * next UNIT in that direction: a whole group (outermost below the edited

@@ -5,7 +5,7 @@ test('one undo press reverts exactly one drawn shape', async ({ page }) => {
   await openEditor(page)
   const box = await canvasBox(page)
 
-  // The app returns to the selection tool after each draw — re-pick it.
+  // The app returns to the selection tool after each draw, re-pick it.
   const drawRectangleAt = async (x: number): Promise<void> => {
     await pickTool(page, 'Rectangle (2)')
     await drag(page, at(box, x, 120), at(box, x + 60, 180))
@@ -15,7 +15,7 @@ test('one undo press reverts exactly one drawn shape', async ({ page }) => {
   await drawRectangleAt(440)
   await expect.poll(async () => (await scene(page)).elements.length).toBe(3)
 
-  // Three draws, three undo presses — selection and tool switches in
+  // Three draws, three undo presses, selection and tool switches in
   // between must not have recorded anything.
   const undo = page.getByRole('button', { name: /^Undo \(/ })
   await undo.click()

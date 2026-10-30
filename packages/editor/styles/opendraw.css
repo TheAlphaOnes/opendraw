@@ -1,5 +1,5 @@
 /**
- * opendraw — the shared stylesheet for framework adapters built on
+ * opendraw, the shared stylesheet for framework adapters built on
  * @opendrawjs/editor (React, Svelte, plain JS). It styles the canvas surface
  * mountCanvas() expects and a compact Excalidraw-style chrome: opaque
  * islands, 8px radii, the island shadow and opendraw's orange accent.

@@ -16,7 +16,7 @@ import {
 /**
  * Automatic scene persistence: the debounced localStorage save under the
  * stable key, and the restore that brings the scene (elements, bindings,
- * theme) back after a reload — without a spurious undo entry.
+ * theme) back after a reload, without a spurious undo entry.
  */
 
 const STORAGE_KEY = 'opendraw:scene'
@@ -44,7 +44,7 @@ test('restores a shape and its bound arrow across a page reload', async ({ page 
   // Theme rides along in the persisted chrome state.
   await runMenuItem(page, /^Dark mode/)
 
-  // The debounced save lands under the stable key — wait until it reflects
+  // The debounced save lands under the stable key, wait until it reflects
   // everything drawn above (the first save may predate the theme switch).
   await expect
     .poll(async () =>

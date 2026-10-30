@@ -11,7 +11,7 @@ import UiMenuItem from '../ui/UiMenuItem.vue'
 import ToolHint from './ToolHint.vue'
 
 /**
- * The top-center toolbar — Excalidraw's shapes section: the tool lock, a
+ * The top-center toolbar, Excalidraw's shapes section: the tool lock, a
  * divider, every tool with its key hint, another divider and the "More
  * tools" dropdown (frame, laser). An extra tool in use takes over the
  * dropdown trigger's glyph, as in Excalidraw. The contextual hint sits
@@ -19,7 +19,7 @@ import ToolHint from './ToolHint.vue'
  *
  * Phones (Excalidraw's mobile toolbar): the bar must fit without
  * scrolling, so it keeps the core tools and moves the tool lock, diamond,
- * sticky note and image — and the line on the narrowest screens — into
+ * sticky note and image, and the line on the narrowest screens, into
  * "More tools".
  */
 const ctx = useOpenDraw()
@@ -123,7 +123,7 @@ function activate(entry: ToolDefinition): void {
   pointer-events: none;
 }
 
-/* The toolbar island: 36px tools in 2px of padding — the shared 40px bar. */
+/* The toolbar island: 36px tools in 2px of padding, the shared 40px bar. */
 .tool-dock {
   display: flex;
   flex-wrap: wrap;
@@ -153,7 +153,7 @@ function activate(entry: ToolDefinition): void {
   background: var(--od-divider);
 }
 
-/* Phones (Excalidraw's mobile layout): the toolbar becomes the bottom bar —
+/* Phones (Excalidraw's mobile layout): the toolbar becomes the bottom bar,
    one row that scrolls sideways, no key hints, no hint line. */
 @media (max-width: 640px) {
   .tool-dock-stack {

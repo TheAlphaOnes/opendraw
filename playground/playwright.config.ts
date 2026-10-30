@@ -4,11 +4,11 @@ import { defineConfig, devices } from '@playwright/test'
  * E2E suite for the playground app.
  *
  * The webServer boots the documented dev entrypoint (`pnpm dev` at the repo
- * root — it builds the workspace packages first, then serves the playground),
+ * root, it builds the workspace packages first, then serves the playground),
  * so a fresh clone runs the suite with no manual setup. Specs drive the real
  * UI: tool clicks, pointer drags, undo, theme, the wysiwyg text editor.
  *
- * Pixel probes must run after a frame settles — renders are rAF-coalesced
+ * Pixel probes must run after a frame settles, renders are rAF-coalesced
  * (see helpers.settleFrames).
  */
 

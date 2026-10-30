@@ -17,7 +17,7 @@ export type { DrawingFile }
  * state, for <OpenDrawApp>'s files sidebar.
  *
  * Hydration: the server has no storage, so the list and names stay empty
- * until mount — the server-rendered markup and the hydration render agree,
+ * until mount, the server-rendered markup and the hydration render agree,
  * then the real drawings appear. Only the scene key is read before mount:
  * persistence needs it to restore, and it is never rendered.
  */
@@ -71,7 +71,7 @@ export function createDrawingFilesContext(options: DrawingFilesContextOptions = 
     files,
     active,
     // Before mount the snapshot is withheld from the template, but the
-    // library already knows the key — persistence restores from it.
+    // library already knows the key, persistence restores from it.
     storageKey: computed(() => active.value?.storageKey ?? library?.active.storageKey ?? DEFAULT_SCENE_STORAGE_KEY),
     create: () => void library?.create(),
     open: (id) => library?.open(id),

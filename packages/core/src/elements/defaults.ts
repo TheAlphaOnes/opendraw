@@ -43,7 +43,7 @@ export const DEFAULT_TEXT_STYLE: TextStyle = {
 }
 
 // ---------------------------------------------------------------------------
-// Palette — the swatches shipped with the default UI
+// Palette, the swatches shipped with the default UI
 // ---------------------------------------------------------------------------
 
 /**
@@ -66,7 +66,7 @@ export const CANVAS_BACKGROUND = {
 // ---------------------------------------------------------------------------
 
 /**
- * Font stacks per family. No font files ship with the library — stacks
+ * Font stacks per family. No font files ship with the library, stacks
  * degrade gracefully and users can register their own (e.g. Virgil for the
  * hand-drawn feel Excalidraw ships as Excalifont).
  */

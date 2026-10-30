@@ -1,20 +1,20 @@
 /**
- * Frame membership — a port of Excalidraw's element/src/frame.ts:
- *   — a new element joins the top-layer frame under the pointer, and is
+ * Frame membership, a port of Excalidraw's element/src/frame.ts:
+ *  - a new element joins the top-layer frame under the pointer, and is
  *     inserted among that frame's children (just below the frame);
- *   — a new frame adopts the elements completely inside it (a group only
- *     joins whole — `omitPartialGroups`);
- *   — dragged elements join the frame they are dropped over, or leave
+ *  - a new frame adopts the elements completely inside it (a group only
+ *     joins whole, `omitPartialGroups`);
+ *  - dragged elements join the frame they are dropped over, or leave
  *     their frame once they no longer overlap the frame they end up in;
- *   — a resized frame re-adopts what it now covers;
- *   — children move with their frame and render clipped to it;
- *   — deleting a frame deletes its children.
+ *  - a resized frame re-adopts what it now covers;
+ *  - children move with their frame and render clipped to it;
+ *  - deleting a frame deletes its children.
  *
  * Frames never nest, groups containing a frame never join one, and bound
  * text always shares its container's frame.
  *
  * "Overlap" is measured on bounding boxes where Excalidraw intersects the
- * outlines' segments — the cases that differ (a shape's empty bbox corner
+ * outlines' segments, the cases that differ (a shape's empty bbox corner
  * grazing the frame) cannot be told apart by the user mid-drag.
  */
 
@@ -119,7 +119,7 @@ export function elementsInNewFrame(
 
 /**
  * A resized frame's children (Excalidraw's getElementsInResizingFrame):
- * children it still overlaps stay — a grouped child keeps its whole group —
+ * children it still overlaps stay, a grouped child keeps its whole group,
  * and whatever now lies completely inside joins, groups only whole.
  */
 export function elementsInResizingFrame(
@@ -172,7 +172,7 @@ export function elementsInResizingFrame(
 }
 
 /**
- * The ids plus every child of the frames among them, in scene order — what
+ * The ids plus every child of the frames among them, in scene order, what
  * move, nudge, duplicate and delete carry along with a frame.
  */
 export function withFrameChildren(
@@ -230,7 +230,7 @@ export function frameMembershipPatches(
 
 /**
  * Excalidraw's addElementsToFrame: members (and their labels) join the
- * frame and move just below it — or above its topmost child — unless they
+ * frame and move just below it, or above its topmost child, unless they
  * all belonged to it already. Returns the next element list.
  */
 export function addElementsToFrame(
@@ -302,7 +302,7 @@ export function frameAt(
 export interface TopLayerFrameOptions {
   /** Elements to look through (the dragged selection). */
   excludeIds?: ReadonlySet<string>
-  /** The dragged elements' common frame — kept while they stay over it. */
+  /** The dragged elements' common frame, kept while they stay over it. */
   currentFrameId?: string | null
   /** Topmost element under the point, as the caller's hit test finds it. */
   hit?: OpenDrawElement | null
@@ -353,7 +353,7 @@ export function commonFrameId(elements: readonly OpenDrawElement[]): string | nu
 /**
  * Excalidraw's isElementInFrame while the selection is dragged over
  * `frame`: a lone element must overlap it, a grouped one needs any member
- * of its group overlapping — and a group holding a frame never joins.
+ * of its group overlapping, and a group holding a frame never joins.
  */
 function draggedElementInFrame(
   elements: readonly OpenDrawElement[],
@@ -374,8 +374,8 @@ function draggedElementInFrame(
  * Frame membership after the selection is dragged and dropped
  * (handleSelectionDragOnPointerUp + updateFrameMembershipOfSelectedElements):
  * dropped over an unselected frame, what overlaps it joins; any selected
- * child that no longer overlaps its target frame — the drop frame, or its
- * own when that frame was dragged along — leaves.
+ * child that no longer overlaps its target frame, the drop frame, or its
+ * own when that frame was dragged along, leaves.
  */
 export function frameMembershipAfterDrag(
   elements: readonly OpenDrawElement[],
@@ -418,7 +418,7 @@ export function frameMembershipAfterResize(
 // ---------------------------------------------------------------------------
 
 export const FRAME_NAME_STYLE = {
-  /** Screen px — the label never scales with zoom. */
+  /** Screen px, the label never scales with zoom. */
   fontSize: 14,
   lineHeight: 1.25,
   /** Screen px between the label's bottom and the frame's top edge. */

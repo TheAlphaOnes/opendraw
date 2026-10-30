@@ -2,7 +2,7 @@ import type { ArrowType } from '@opendrawjs/core'
 
 /**
  * Excalidraw's "Arrow type" options with their icons (components/icons.tsx:
- * sharpArrowIcon, roundArrowIcon, elbowArrowIcon — MIT), as plain SVG path
+ * sharpArrowIcon, roundArrowIcon, elbowArrowIcon, MIT), as plain SVG path
  * data on a 24×24, 2px-stroke grid, so every adapter draws the same glyphs.
  */
 export interface ArrowTypeOption {

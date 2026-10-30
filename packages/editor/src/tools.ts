@@ -3,7 +3,7 @@ import type { ToolId } from '@opendrawjs/core'
 import type { IconName } from './icons.js'
 
 /**
- * The tool table — Excalidraw's components/Tools.tsx: each tool's icon,
+ * The tool table, Excalidraw's components/Tools.tsx: each tool's icon,
  * name and keys (letter and number). The dock, the keyboard handler and
  * the shortcuts dialog all read it, so they can never disagree.
  */
@@ -55,7 +55,7 @@ export const TOOL_BY_KEY: ReadonlyMap<string, ToolDefinition> = new Map(
   TOOLS.flatMap((def) => def.keys.map((key) => [key, def] as const)),
 )
 
-/** "Selection (1)" — the accessible name and tooltip of a dock button. */
+/** "Selection (1)", the accessible name and tooltip of a dock button. */
 export function toolLabel(def: ToolDefinition): string {
   return `${def.name} (${def.keys[0]!.toUpperCase()})`
 }

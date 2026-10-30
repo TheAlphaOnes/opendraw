@@ -4,7 +4,7 @@ import type { IconName } from '../../constants/icons.js'
 import UiIcon from './UiIcon.vue'
 
 /**
- * UiIconButton — Excalidraw's ToolIcon: a square icon button (32px, or
+ * UiIconButton, Excalidraw's ToolIcon: a square icon button (32px, or
  * 36px for the toolbar and on-canvas buttons) with the lavender hover,
  * the accent-soft checked state and an optional key hint in its corner.
  */
@@ -12,13 +12,13 @@ const props = withDefaults(
   defineProps<{
     /** Semantic icon name rendered inside the button. */
     icon: IconName
-    /** Accessible name — used as aria-label and title tooltip. */
+    /** Accessible name, used as aria-label and title tooltip. */
     label: string
     /** Marks the control as engaged (active tool, grid on). */
     active?: boolean
     /** Dimmed, with all interaction blocked. */
     disabled?: boolean
-    /** Destructive tint — hover turns danger red. */
+    /** Destructive tint, hover turns danger red. */
     danger?: boolean
     /** md: 32px (panels); lg: 36px (toolbar, on-canvas buttons). */
     size?: 'md' | 'lg'

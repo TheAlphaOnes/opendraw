@@ -12,7 +12,7 @@ import UiMenuSeparator from '../ui/UiMenuSeparator.vue'
 
 /**
  * One drawing in the files sidebar: its preview, name and last edit, with
- * rename, duplicate and delete. Presentational — every change is an event;
+ * rename, duplicate and delete. Presentational, every change is an event;
  * the only state here is which inline mode the row is in (renaming, or
  * asking before a delete). F2 renames and Delete asks, as in a file list.
  */

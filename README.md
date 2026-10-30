@@ -7,7 +7,7 @@
 
 <p align="center">
   <strong>Hand-drawn diagrams for Vue, Nuxt, React &amp; Svelte.</strong><br>
-  A hand-drawn whiteboard as one component — sketch, connect and share ideas right inside your app.
+  A hand-drawn whiteboard as one component, sketch, connect and share ideas right inside your app.
 </p>
 
 <p align="center">
@@ -37,18 +37,18 @@
 
 ## Why opendraw
 
-opendraw is a hand-drawn whiteboard that lives inside your app as a native component for Vue, Nuxt, React and Svelte — no iframe, no foreign runtime. Drawing, selecting, connecting and undoing work the way people expect from a modern whiteboard, with a keyboard shortcut for everything.
+opendraw is a hand-drawn whiteboard that lives inside your app as a native component for Vue, Nuxt, React and Svelte, no iframe, no foreign runtime. Drawing, selecting, connecting and undoing work the way people expect from a modern whiteboard, with a keyboard shortcut for everything.
 
-- **Drop-in** — `<OpenDraw />` is the whole editor: canvas, toolbar, properties panel, menus, help and autosave.
-- **Familiar** — the tools, shortcuts and sketchy rough.js look people know from modern whiteboards, so there is nothing to learn.
-- **Headless when you need it** — render only the canvas and build your own chrome on the same reactive API.
-- **Framework-free core** — the engine and the interactive editor run without any UI framework; the Vue, React and Svelte packages are thin adapters over it.
+- **Drop-in**: `<OpenDraw />` is the whole editor: canvas, toolbar, properties panel, menus, help and autosave.
+- **Familiar**: the tools, shortcuts and sketchy rough.js look people know from modern whiteboards, so there is nothing to learn.
+- **Headless when you need it**: render only the canvas and build your own chrome on the same reactive API.
+- **Framework-free core**: the engine and the interactive editor run without any UI framework; the Vue, React and Svelte packages are thin adapters over it.
 
 ## Features
 
 | | |
 | --- | --- |
-| **Tools** | Selection, hand, rectangle, diamond, ellipse, arrow, line, freedraw, text, sticky note, image, eraser, frame and laser pointer — with letter and number shortcuts and the tool lock (<kbd>Q</kbd>). |
+| **Tools** | Selection, hand, rectangle, diamond, ellipse, arrow, line, freedraw, text, sticky note, image, eraser, frame and laser pointer, with letter and number shortcuts and the tool lock (<kbd>Q</kbd>). |
 | **Arrows that connect** | Lines and arrows bind to shapes and follow them, with midpoint snapping and inside/outside binding. Arrows come sharp, curved or elbowed: elbow arrows route in right angles around the shapes they connect, and <kbd>A</kbd> cycles the type while the arrow tool is armed. |
 | **Text everywhere** | Free text and labels inside shapes, edited in place; sticky notes fit their text by shrinking the font before growing. |
 | **Frames** | Group content into frames that carry and clip their children; drop elements in or out. |
@@ -81,11 +81,11 @@ export default defineNuxtConfig({
 </template>
 ```
 
-That's it — the editor fills its container and saves to `localStorage` as you draw. Press <kbd>?</kbd> for every shortcut.
+That's it, the editor fills its container and saves to `localStorage` as you draw. Press <kbd>?</kbd> for every shortcut.
 
 ### The whole demo in one component
 
-`<OpenDrawApp>` is the demo site as a single component — the editor filling the page, your buttons, a glowing copyable command and a Share button top-right — configured with one typed object and hooks:
+`<OpenDrawApp>` is the demo site as a single component, the editor filling the page, your buttons, a glowing copyable command and a Share button top-right, configured with one typed object and hooks:
 
 ```vue
 <script setup lang="ts">
@@ -132,12 +132,12 @@ import { OpenDraw, OpenDrawApp, useOpenDraw } from '@opendrawjs/nuxt/vue'
 | --- | --- | --- |
 | `@change` | `{ elements, appState }` | Every document or editor-state change. |
 | `@select` | `string[]` | The selected element ids. |
-| `@ready` | `EditorController` | Mounted — drive the editor from outside. |
+| `@ready` | `EditorController` | Mounted, drive the editor from outside. |
 
 | Slot | Placement |
 | --- | --- |
-| `#top-left` | After the main menu — the open document's name. |
-| `#top-right` | Beside the toolbar — a Share or Docs button. |
+| `#top-left` | After the main menu, the open document's name. |
+| `#top-right` | Beside the toolbar, a Share or Docs button. |
 | `#footer` | Bottom-right, next to the help button. |
 
 ```vue
@@ -199,11 +199,11 @@ provideOpenDraw(ctx)
 </template>
 ```
 
-The canvas keeps every gesture, shortcut and the text editor — you only draw the buttons.
+The canvas keeps every gesture, shortcut and the text editor, you only draw the buttons.
 
 ## React & Svelte
 
-The same editor ships as React and Svelte 5 components: a ready-made `<OpenDraw>` (canvas, toolbar, zoom, history, theme and autosave) and a bare `<OpenDrawCanvas>` for your own UI. All three — Vue, React and Svelte — are covered by one shared end-to-end suite.
+The same editor ships as React and Svelte 5 components: a ready-made `<OpenDraw>` (canvas, toolbar, zoom, history, theme and autosave) and a bare `<OpenDrawCanvas>` for your own UI. All three, Vue, React and Svelte, are covered by one shared end-to-end suite.
 
 ```bash
 npm install @opendrawjs/react    # or: npm install @opendrawjs/svelte
@@ -262,7 +262,7 @@ const svg = exportToSvg(doc.getElements(), '#ffffff')
 
 ## Build your own adapter
 
-Vue, React and Svelte are thin layers over `@opendrawjs/editor`, and the same layer can be written for Solid, Angular, Lit or plain JavaScript — `packages/react` and `packages/svelte` are complete references in a few hundred lines each:
+Vue, React and Svelte are thin layers over `@opendrawjs/editor`, and the same layer can be written for Solid, Angular, Lit or plain JavaScript, `packages/react` and `packages/svelte` are complete references in a few hundred lines each:
 
 ```ts
 import { createEditor, mountCanvas } from '@opendrawjs/editor'
@@ -274,9 +274,9 @@ editor.subscribe((ed) => render(ed.activeTool, ed.selectedElements, ed.canUndo))
 // session.dispose() when the host goes away
 ```
 
-1. **Render the surface** — a focusable host holding two stacked canvases.
-2. **Mount and dispose** — `mountCanvas()` wires every gesture, shortcut, the text editor and rendering.
-3. **Mirror state** — subscribe and re-render your UI from the controller's getters; build toolbars from `TOOLS` and menus from `ACTIONS`.
+1. **Render the surface**: a focusable host holding two stacked canvases.
+2. **Mount and dispose**: `mountCanvas()` wires every gesture, shortcut, the text editor and rendering.
+3. **Mirror state**: subscribe and re-render your UI from the controller's getters; build toolbars from `TOOLS` and menus from `ACTIONS`.
 
 The full guide, with plain-JS and React examples, is in the docs (`/docs` in the demo app).
 
@@ -304,12 +304,12 @@ pnpm build        # build the publishable packages
 pnpm build:site   # the demo + docs as a static site (playground/.output/public)
 ```
 
-**Deploying the site:** the repo includes a `vercel.json` — import it on Vercel with the default settings and it builds the packages, generates the demo and docs statically, and serves `playground/.output/public`. Any static host works the same way after `pnpm build:site`.
+**Deploying the site:** the repo includes a `vercel.json`: import it on Vercel with the default settings and it builds the packages, generates the demo and docs statically, and serves `playground/.output/public`. Any static host works the same way after `pnpm build:site`.
 
 ```
 packages/
-  core/     @opendrawjs/core    engine — no framework, no DOM requirement
-  editor/   @opendrawjs/editor  interactive editor — no UI framework
+  core/     @opendrawjs/core    engine, no framework, no DOM requirement
+  editor/   @opendrawjs/editor  interactive editor, no UI framework
   nuxt/     @opendrawjs/nuxt    Vue/Nuxt adapter and UI
   react/    @opendrawjs/react   React adapter
   svelte/   @opendrawjs/svelte  Svelte 5 adapter
@@ -327,12 +327,12 @@ Contributions are welcome. Please run `pnpm test`, `pnpm typecheck` and `pnpm e2
 
 opendraw is an independent project. It stands on:
 
-- [Excalidraw](https://github.com/excalidraw/excalidraw) — inspiration, and the style previews in the properties panel (MIT); opendraw is not affiliated with it
-- [rough.js](https://github.com/rough-stuff/rough) — hand-drawn geometry (MIT)
-- [perfect-freehand](https://github.com/steveruizok/perfect-freehand) — pressure-aware strokes (MIT)
-- [Lucide](https://lucide.dev) — icons (ISC)
-- [Assistant](https://fonts.google.com/specimen/Assistant) — UI typeface (OFL)
-- [Excalifont](https://github.com/excalidraw/excalifont) — the hand-drawn logo wordmark, converted to outlines (OFL)
+- [Excalidraw](https://github.com/excalidraw/excalidraw): inspiration, and the style previews in the properties panel (MIT); opendraw is not affiliated with it
+- [rough.js](https://github.com/rough-stuff/rough): hand-drawn geometry (MIT)
+- [perfect-freehand](https://github.com/steveruizok/perfect-freehand): pressure-aware strokes (MIT)
+- [Lucide](https://lucide.dev): icons (ISC)
+- [Assistant](https://fonts.google.com/specimen/Assistant): UI typeface (OFL)
+- [Excalifont](https://github.com/excalidraw/excalifont): the hand-drawn logo wordmark, converted to outlines (OFL)
 
 ## License
 

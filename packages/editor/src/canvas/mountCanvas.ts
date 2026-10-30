@@ -21,11 +21,11 @@ import {
 } from './viewportGestures.js'
 
 /**
- * Mounting the editor onto the DOM — the whole canvas behavior with no
+ * Mounting the editor onto the DOM, the whole canvas behavior with no
  * framework underneath. An adapter renders three elements (a host and two
- * stacked canvases inside it) and hands them over; everything else —
+ * stacked canvases inside it) and hands them over; everything else,
  * pointer gestures, keyboard, wheel, drop/paste, rendering, the cursor,
- * the laser and text editing — is wired here, and `dispose()` unwires it.
+ * the laser and text editing, is wired here, and `dispose()` unwires it.
  */
 
 export interface MountCanvasOptions {
@@ -36,7 +36,7 @@ export interface MountCanvasOptions {
   /** Interactive chrome canvas, stacked above the static one. */
   overlayCanvas: HTMLCanvasElement
   /**
-   * Element whose keydown events drive shortcuts — the adapter's editor
+   * Element whose keydown events drive shortcuts, the adapter's editor
    * shell, so shortcuts survive focus moving onto its toolbar. Defaults to
    * the nearest `[data-opendraw-root]` ancestor, else the host.
    */
@@ -78,7 +78,7 @@ export function mountCanvas(editor: EditorController, options: MountCanvasOption
    * itself. Focus is managed explicitly on pointerdown, and the default
    * steals focus from a text editor mounted mid-press: pointerdown creates
    * the element, the editor mounts and focuses on the next microtask, and
-   * the trailing mousedown would then blur it — committing the empty draft
+   * the trailing mousedown would then blur it, committing the empty draft
    * and rolling the whole step back. Presses on child elements (the text
    * editor's textarea) keep their native behavior.
    */

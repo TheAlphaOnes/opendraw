@@ -19,7 +19,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import UiIcon from './UiIcon.vue'
 
 /**
- * UiPopoverSelect — a compact trigger showing the current choice that opens
+ * UiPopoverSelect, a compact trigger showing the current choice that opens
  * a grid of icon options (Excalidraw's arrowhead / font pickers).
  *
  * The popover teleports to the editor root: panels scroll and carry a

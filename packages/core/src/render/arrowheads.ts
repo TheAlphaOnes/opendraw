@@ -1,5 +1,5 @@
 /**
- * Arrowheads — Excalidraw's element/src/bounds.ts `getArrowheadPoints`
+ * Arrowheads, Excalidraw's element/src/bounds.ts `getArrowheadPoints`
  * geometry and element/src/shape.ts `getArrowheadShapes` drawing, for the
  * straight polylines opendraw renders.
  *
@@ -47,9 +47,9 @@ function rotate(x: number, y: number, cx: number, cy: number, angle: number): [n
 
 /**
  * The head's construction points in element-local space:
- *   — circles: `[cx, cy, diameter]`;
- *   — diamonds: `[tipX, tipY, x3, y3, oppositeX, oppositeY, x4, y4]`;
- *   — everything else: `[tipX, tipY, x3, y3, x4, y4]` (the two wings).
+ *  - circles: `[cx, cy, diameter]`;
+ *  - diamonds: `[tipX, tipY, x3, y3, oppositeX, oppositeY, x4, y4]`;
+ *  - everything else: `[tipX, tipY, x3, y3, x4, y4]` (the two wings).
  * Null when the end segment has no length to point along.
  */
 export function arrowheadPoints(
@@ -68,7 +68,7 @@ export function arrowheadPoints(
   if (length === 0) {
     return null
   }
-  // The head points along the rendered stroke where it meets the tip — for
+  // The head points along the rendered stroke where it meets the tip, for
   // a curve, its tangent there, not the straight last segment.
   const direction = (body && strokeDirection(body, position)) ?? {
     x: (tip.x - previous.x) / length,
@@ -101,7 +101,7 @@ export function arrowheadPoints(
 }
 
 /**
- * Direction of the rendered stroke arriving at a tip — Excalidraw's
+ * Direction of the rendered stroke arriving at a tip, Excalidraw's
  * getArrowheadPoints: take the stroke's first (start) or last (end) cubic
  * bezier, evaluate it at t = 0.3 and point from there to the tip.
  */

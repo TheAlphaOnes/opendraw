@@ -50,7 +50,7 @@ defineProps<{
   transform: translateY(-50%);
 }
 
-/* Centered with auto margins, not left:50% + translate — a box at left:50%
+/* Centered with auto margins, not left:50% + translate, a box at left:50%
    can only shrink-to-fit into HALF the viewport. */
 .ui-panel--bottom {
   bottom: var(--od-gutter);

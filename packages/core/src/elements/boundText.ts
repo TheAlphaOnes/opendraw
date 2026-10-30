@@ -1,5 +1,5 @@
 /**
- * Bound text — text that lives inside a shape (Excalidraw's text
+ * Bound text, text that lives inside a shape (Excalidraw's text
  * containers, element/src/textElement.ts).
  *
  * A text element with a `containerId` is laid out by its container: its
@@ -103,8 +103,8 @@ export function containerTextOrigin(container: TextContainer): Point {
 }
 
 /**
- * The topmost unlocked shape whose AREA contains the point, filled or not
- * — where a double-click writes text (Excalidraw's
+ * The topmost unlocked shape whose AREA contains the point, filled or not,
+ * where a double-click writes text (Excalidraw's
  * getTextBindableContainerAtPosition).
  */
 export function textContainerAt(
@@ -132,7 +132,7 @@ export function boundTextOf(
 
 /**
  * What a pointer on `element` acts on: bound text resolves to its
- * container — in Excalidraw the label is part of the shape, never picked
+ * container, in Excalidraw the label is part of the shape, never picked
  * on its own.
  */
 export function selectableTarget(
@@ -146,7 +146,7 @@ export function selectableTarget(
 }
 
 /**
- * The ids plus every text bound inside them, in scene order — what
+ * The ids plus every text bound inside them, in scene order, what
  * delete, duplicate, copy and z-order act on for a selection.
  */
 export function withBoundTexts(

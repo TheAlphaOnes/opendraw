@@ -11,7 +11,7 @@ import {
 
 /**
  * React bindings for the framework-free editor. The controller owns all
- * behavior; React only subscribes to it — `subscribe()` fires on every
+ * behavior; React only subscribes to it, `subscribe()` fires on every
  * document or editor-state change and the getters are memoized per change,
  * which makes the controller a natural external store.
  */

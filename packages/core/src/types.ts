@@ -1,5 +1,5 @@
 /**
- * @opendrawjs/core — public type surface.
+ * @opendrawjs/core, public type surface.
  *
  * The element model follows Excalidraw's proven shape (x/y anchored to the
  * un-rotated top-left, `angle` rotating around the center, style props on
@@ -90,7 +90,7 @@ export interface OpenDrawElementBase {
   strokeStyle: StrokeStyle
   roughness: Roughness
   opacity: Opacity
-  /** Deterministic seed for rough.js — keeps hand-drawn strokes stable. */
+  /** Deterministic seed for rough.js, keeps hand-drawn strokes stable. */
   seed: number
   version: number
   /** Regenerated whenever a mutation is applied (last writer wins marker). */
@@ -146,7 +146,7 @@ export interface OpenDrawLinearElement extends OpenDrawElementBase {
 
 /**
  * Where inside a shape a bound tip aims, as ratios of the shape's
- * (unrotated) width and height — [0.5, 0.5] is the center. Survives the
+ * (unrotated) width and height, [0.5, 0.5] is the center. Survives the
  * shape moving, resizing and rotating (Excalidraw's FixedPoint).
  */
 export type FixedPoint = readonly [number, number]
@@ -159,7 +159,7 @@ export type FixedPoint = readonly [number, number]
 export type BindMode = 'orbit' | 'inside'
 
 /**
- * A bound linear tip (Excalidraw's FixedPointBinding) — lines and arrows
+ * A bound linear tip (Excalidraw's FixedPointBinding), lines and arrows
  * bind alike through `startBinding` / `endBinding`.
  */
 export interface OpenDrawBinding {
@@ -187,7 +187,7 @@ export interface OpenDrawFreedrawElement extends OpenDrawElementBase {
 
 export interface OpenDrawTextElement extends OpenDrawElementBase {
   type: 'text'
-  /** The text as rendered — wrapped to the container when bound. */
+  /** The text as rendered, wrapped to the container when bound. */
   text: string
   /** The text as typed, before any wrapping (Excalidraw's originalText). */
   originalText: string
@@ -202,7 +202,7 @@ export interface OpenDrawTextElement extends OpenDrawElementBase {
   verticalAlign: VerticalAlign
   lineHeight: number
   /**
-   * A sticky note label's font ceiling — the size the user picked; the
+   * A sticky note label's font ceiling, the size the user picked; the
    * note fits `fontSize` at or below it (Excalidraw's baseFontSize). Absent
    * for every other text.
    */
@@ -234,7 +234,7 @@ export interface OpenDrawEllipseElement extends OpenDrawElementBase {
  */
 export interface OpenDrawImageElement extends OpenDrawElementBase {
   type: 'image'
-  /** Self-contained `data:image/...;base64,` payload — survives export as-is. */
+  /** Self-contained `data:image/...;base64,` payload, survives export as-is. */
   dataUrl: string
 }
 
@@ -277,7 +277,7 @@ export type OpenDrawElement =
 export type ElementOf<T extends ElementType> = Extract<OpenDrawElement, { type: T }>
 
 // ---------------------------------------------------------------------------
-// Style payload — the subset of props style panels mutate on a selection
+// Style payload, the subset of props style panels mutate on a selection
 // ---------------------------------------------------------------------------
 
 export interface ElementStyle {
@@ -342,7 +342,7 @@ export interface OpenDrawAppState {
   theme: ThemeName
   viewBackgroundColor: string
   viewport: Viewport
-  /** Selection as an id set — record form makes add/remove O(1) and JSON friendly. */
+  /** Selection as an id set, record form makes add/remove O(1) and JSON friendly. */
   selectedIds: Readonly<Record<string, true>>
   /** The element currently being text-edited, if any. */
   editingId: string | null
@@ -363,7 +363,7 @@ export interface OpenDrawAppState {
   /** Shape of newly drawn arrows: curved through their points, or sharp. */
   arrowType: ArrowType
   /**
-   * Ink and paper of newly placed sticky notes — their own color domain
+   * Ink and paper of newly placed sticky notes, their own color domain
    * (Excalidraw's currentItemStickynoteStrokeColor / BackgroundColor).
    */
   stickyNoteStyle: { strokeColor: string; backgroundColor: string }
@@ -377,7 +377,7 @@ export interface OpenDrawState {
   /** Ordered back-to-front. */
   elements: readonly OpenDrawElement[]
   appState: Readonly<OpenDrawAppState>
-  /** Monotonic revision counter — bumped on every committed change. */
+  /** Monotonic revision counter, bumped on every committed change. */
   rev: number
 }
 

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 /**
- * ShortcutsDialog — the "?" keyboard shortcuts modal (Excalidraw help-dialog
+ * ShortcutsDialog, the "?" keyboard shortcuts modal (Excalidraw help-dialog
  * parity). Owns its own window key listener: "?" toggles it, Escape and a
  * backdrop press close it. Entries are generated from the tool table and
- * the action registry — the same definitions the keyboard handler
- * dispatches — so the dialog can never advertise a shortcut that does
+ * the action registry, the same definitions the keyboard handler
+ * dispatches, so the dialog can never advertise a shortcut that does
  * nothing.
  */
 import { onBeforeUnmount, onMounted } from 'vue'

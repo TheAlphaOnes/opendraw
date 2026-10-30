@@ -6,7 +6,7 @@ import { COLOR_OUTLINE_CONTRAST_THRESHOLD, isColorDark, themeColor } from '@open
 import UiColorPickerContent from './UiColorPickerContent.vue'
 
 /**
- * UiColorPicker — Excalidraw's color row: five top picks, a divider and
+ * UiColorPicker, Excalidraw's color row: five top picks, a divider and
  * the active-color swatch, which opens the full picker beside the panel.
  * Swatches show colors as the canvas paints them (dark-filtered in the
  * dark theme); the value stays the stored color.

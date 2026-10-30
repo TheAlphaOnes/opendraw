@@ -8,7 +8,7 @@ import ActionButton from './ActionButton.vue'
 import UiIconButton from '../ui/UiIconButton.vue'
 
 /**
- * The bottom-left footer — Excalidraw's zoom island (zoom out, the live
+ * The bottom-left footer, Excalidraw's zoom island (zoom out, the live
  * percentage that resets on click, zoom in) and, beside it, the undo/redo
  * island. Button zoom anchors at the canvas center.
  */

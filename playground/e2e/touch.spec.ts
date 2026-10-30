@@ -1,5 +1,5 @@
 /**
- * Touch e2e — two-finger pinch zoom and pan on a touch screen, driven
+ * Touch e2e, two-finger pinch zoom and pan on a touch screen, driven
  * through Chrome's real touch input (CDP Input.dispatchTouchEvent), so the
  * page receives genuine multi-pointer events exactly as on a phone.
  */

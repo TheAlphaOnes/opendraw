@@ -1,5 +1,5 @@
 /**
- * Arrange — align, distribute and flip a selection.
+ * Arrange, align, distribute and flip a selection.
  *
  * Pure geometry over the selection's "units": a group selected as a whole
  * moves as one rigid block, everything else moves alone. Ports of
@@ -27,7 +27,7 @@ export interface ElementPatchEntry {
 }
 
 /**
- * Buckets the selection into move units — Excalidraw's
+ * Buckets the selection into move units, Excalidraw's
  * `getSelectedElementsByGroup`. When the selection is exactly one group,
  * its inner level decides the units, so aligning inside a lone group still
  * does something useful.

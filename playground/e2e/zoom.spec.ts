@@ -13,7 +13,7 @@ import {
 } from './helpers'
 import { expect } from './helpers'
 
-/** The zoom readout button — its text is the live zoom percentage. */
+/** The zoom readout button, its text is the live zoom percentage. */
 function readout(page: Page) {
   return page.locator('.zoom-controls').getByRole('button', { name: /reset zoom/i })
 }
@@ -133,7 +133,7 @@ test('trackpad pinch-zoom surfaces as ctrl+wheel and zooms toward the cursor', a
   expect(before?.count, 'rectangle rendered').toBeGreaterThan(400)
 
   // Honesty note: Playwright's input API cannot express a two-finger
-  // pinch. A trackpad pinch never reaches the page as a gesture anyway —
+  // pinch. A trackpad pinch never reaches the page as a gesture anyway,
   // the browser translates it into a stream of wheel events carrying the
   // ctrl modifier (the documented pinch-zoom mechanism in Chrome and
   // Safari). This spec drives exactly that event stream: ctrlKey wheel

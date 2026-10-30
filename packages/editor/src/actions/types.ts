@@ -2,7 +2,7 @@ import type { IconName } from '../icons.js'
 import type { EditorController } from '../controller.js'
 
 /**
- * A user command — Excalidraw's `Action`. One definition feeds every
+ * A user command, Excalidraw's `Action`. One definition feeds every
  * surface: the keyboard dispatcher, the context menu, the panels and the
  * shortcuts dialog, so a shortcut can never be advertised without working.
  */

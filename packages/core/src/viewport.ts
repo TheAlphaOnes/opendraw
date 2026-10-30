@@ -81,7 +81,7 @@ export interface FitViewportOptions {
   size: { width: number; height: number }
   /**
    * `scale-down` never zooms past 100% (fit-all, Shift+1 / Shift+2);
-   * `contain` fills the canvas at any zoom (Shift+3) — Excalidraw's
+   * `contain` fills the canvas at any zoom (Shift+3), Excalidraw's
    * zoomToFitBounds fit modes.
    */
   fit: 'scale-down' | 'contain'

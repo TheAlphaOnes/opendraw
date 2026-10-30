@@ -8,7 +8,7 @@
 
 const UID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
-/** Fast, seedable PRNG (mulberry32) — deterministic per seed. */
+/** Fast, seedable PRNG (mulberry32), deterministic per seed. */
 export function mulberry32(seed: number): () => number {
   let a = seed >>> 0
   return () => {

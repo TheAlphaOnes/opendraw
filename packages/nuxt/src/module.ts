@@ -1,9 +1,9 @@
 import { addComponent, addImports, createResolver, defineNuxtModule } from '@nuxt/kit'
-// @nuxt/kit consumes this type but does not re-export it — it lives in schema.
+// @nuxt/kit consumes this type but does not re-export it, it lives in schema.
 import type { NuxtModule } from '@nuxt/schema'
 
 /**
- * opendraw — Excalidraw-style hand-drawn canvas for Nuxt 4.
+ * opendraw, Excalidraw-style hand-drawn canvas for Nuxt 4.
  *
  * Registers the editor components and the useOpenDraw() composable with
  * auto-import. Everything ships as ESM; no transpile config needed.

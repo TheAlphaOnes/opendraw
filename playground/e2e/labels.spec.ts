@@ -1,5 +1,5 @@
 /**
- * Labels e2e — Excalidraw's text containers: text typed into a shape wraps
+ * Labels e2e, Excalidraw's text containers: text typed into a shape wraps
  * and centers inside it, follows it, and goes where it goes.
  */
 import type { Page } from '@playwright/test'

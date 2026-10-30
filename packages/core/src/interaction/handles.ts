@@ -38,7 +38,7 @@ export interface HandleBox {
   bounds: Bounds
 }
 
-/** The frame handles are laid out around — an un-rotated box plus rotation. */
+/** The frame handles are laid out around, an un-rotated box plus rotation. */
 export interface SelectionFrame {
   x: number
   y: number
@@ -58,7 +58,7 @@ export function selectionFrameOf(elements: readonly OpenDrawElement[]): Selectio
   if (elements.length === 1) {
     const el = elements[0]!
     // Linear and freedraw geometry lives in `points` relative to (x, y), and
-    // points go negative when drawn up-left — so (x, y, width, height) is the
+    // points go negative when drawn up-left, so (x, y, width, height) is the
     // drag origin plus extents, NOT the shape's box. Unrotated elements frame
     // their true AABB; rotated ones keep (x, y, width, height) because that
     // box is the rotation pivot the renderer and transforms already share.
@@ -73,7 +73,7 @@ export function selectionFrameOf(elements: readonly OpenDrawElement[]): Selectio
 }
 
 /**
- * Whether a selection shows its box and transform handles — Excalidraw's
+ * Whether a selection shows its box and transform handles, Excalidraw's
  * hasBoundingBox: always for several elements, never for a lone line or
  * arrow of two points (only its point handles show), and for longer
  * polylines yes.
@@ -83,7 +83,7 @@ export function hasBoundingBox(elements: readonly OpenDrawElement[]): boolean {
     return elements.length > 1
   }
   const only = elements[0]!
-  // An elbow arrow is edited by its tips alone — no box (Excalidraw).
+  // An elbow arrow is edited by its tips alone, no box (Excalidraw).
   if (only.type === 'arrow' && only.elbowed) {
     return false
   }
@@ -95,7 +95,7 @@ export interface HandleLayoutOptions {
   pointer: PointerKind
   /** Hide cardinal (n/s/e/w) handles on tiny selections. */
   showSides?: boolean
-  /** False drops the rotation handle — frames never rotate (Excalidraw). */
+  /** False drops the rotation handle, frames never rotate (Excalidraw). */
   showRotation?: boolean
 }
 
@@ -227,7 +227,7 @@ export function pointInSelectionFrame(
 
 /**
  * The side a press within {@link SIDE_GRAB_THRESHOLD} of the frame border
- * grabs for a resize, in Excalidraw's border priority (n, e, s, w) — or
+ * grabs for a resize, in Excalidraw's border priority (n, e, s, w), or
  * null when the point is not near a border. Corner presses land on the
  * handle boxes before this runs, so exact corners never reach it.
  */
@@ -272,7 +272,7 @@ export function sideHandleAt(
 const RESIZE_CURSOR_BASES = ['ns', 'nesw', 'ew', 'nwse'] as const
 
 /**
- * The CSS cursor for a transform handle — Excalidraw's
+ * The CSS cursor for a transform handle, Excalidraw's
  * `getCursorForResizingElement`: bidirectional resize cursors per side,
  * walked in 45° steps for rotated selections, `grab` for rotation.
  */
@@ -299,16 +299,16 @@ export function resizeCursorFor(handle: ResizeHandle, angle = 0): string {
 // Linear point handles
 // ---------------------------------------------------------------------------
 
-/** Visual radius of a linear point handle (screen px) — Excalidraw's
+/** Visual radius of a linear point handle (screen px), Excalidraw's
  * POINT_HANDLE_SIZE / 2. */
 export const POINT_HANDLE_RADIUS = 5
 
-/** Grab radius around a point handle (screen px) — Excalidraw's
+/** Grab radius around a point handle (screen px), Excalidraw's
  * POINT_HANDLE_SIZE + 1, which adds slack for the outline stroke. */
 export const POINT_HANDLE_HIT_RADIUS = 11
 
 export interface LinearHandle {
-  /** Point index — for the midpoint handle, the insertion index. */
+  /** Point index, for the midpoint handle, the insertion index. */
   index: number
   /** Handle center in scene space. */
   at: Point
@@ -322,7 +322,7 @@ export function linearPointHandles(element: OpenDrawLinearElement): LinearHandle
 }
 
 /**
- * The segment-midpoint handle of a two-point linear — the small circle
+ * The segment-midpoint handle of a two-point linear, the small circle
  * Excalidraw renders on a selected two-point line, whose press inserts a
  * point there and drags it. Longer polylines only grow midpoints in the
  * point editor, which opendraw does not have.
@@ -337,7 +337,7 @@ export function linearMidpointHandle(element: OpenDrawLinearElement): LinearHand
 }
 
 /**
- * The handle under `point`, or null. Later handles win on overlap — they
+ * The handle under `point`, or null. Later handles win on overlap, they
  * render on top, matching Excalidraw's right-to-left scan in
  * `getPointIndexUnderCursor`.
  */

@@ -9,13 +9,13 @@ import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import UiIcon from './UiIcon.vue'
 
 /**
- * WelcomeScreen — Excalidraw's empty-canvas welcome (components/
+ * WelcomeScreen, Excalidraw's empty-canvas welcome (components/
  * welcome-screen): the wordmark, a line about local storage and two quick
  * actions in the center, plus hand-drawn hints pointing at the main menu,
  * the toolbar and the help button. It leaves with the first element.
  *
- * Each piece enters on its own clock — center first, then the toolbar
- * hint, then the corner hints — so the screen settles in stages.
+ * Each piece enters on its own clock, center first, then the toolbar
+ * hint, then the corner hints, so the screen settles in stages.
  */
 const ctx = useOpenDraw()
 const help = useHelpDialog()
@@ -269,7 +269,7 @@ function openHelp(): void {
   }
 }
 
-/* Leaves as one motion on the first stroke — and goes inert at once, so
+/* Leaves as one motion on the first stroke, and goes inert at once, so
    its fading buttons never catch the next gesture. */
 .welcome-leave-active {
   transition: opacity 220ms ease-out;

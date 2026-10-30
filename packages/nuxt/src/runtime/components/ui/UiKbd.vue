@@ -4,7 +4,7 @@ import { computed } from 'vue'
 import { useKeyDisplay } from '../../composables/useKeyDisplay.js'
 
 /**
- * UiKbd — a key combo rendered as keycaps, platform-aware (`Mod` shows ⌘
+ * UiKbd, a key combo rendered as keycaps, platform-aware (`Mod` shows ⌘
  * on Apple platforms, Ctrl elsewhere). `inline` drops the caps for dense
  * rows like menu hints.
  */

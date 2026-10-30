@@ -16,7 +16,7 @@
   import { editorState } from './editorState.js'
 
   /**
-   * The editor, ready to drop on a page — the canvas with an
+   * The editor, ready to drop on a page, the canvas with an
    * Excalidraw-style toolbar, zoom and history islands and a theme toggle.
    * Import the styles once: `import '@opendrawjs/svelte/styles.css'`.
    */
