@@ -58,9 +58,19 @@ onBeforeUnmount(() => observer?.disconnect())
         <span class="docs__badge">docs</span>
       </NuxtLink>
       <nav class="docs__top-links" aria-label="Site">
-        <NuxtLink to="/" class="docs__top-link"><PenLine :size="16" :stroke-width="1.75" /> Open editor</NuxtLink>
-        <a href="https://github.com/TheAlphaOnes/opendraw" class="docs__top-link" target="_blank" rel="noopener noreferrer">
-          <Github :size="16" :stroke-width="1.75" /> GitHub
+        <NuxtLink to="/" class="docs__top-link" aria-label="Open editor">
+          <PenLine :size="16" :stroke-width="1.75" aria-hidden="true" />
+          <span class="docs__top-label">Open editor</span>
+        </NuxtLink>
+        <a
+          href="https://github.com/TheAlphaOnes/opendraw"
+          class="docs__top-link"
+          aria-label="GitHub"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Github :size="16" :stroke-width="1.75" aria-hidden="true" />
+          <span class="docs__top-label">GitHub</span>
         </a>
       </nav>
     </header>
@@ -122,6 +132,8 @@ onBeforeUnmount(() => observer?.disconnect())
 
 .docs__brand {
   display: inline-flex;
+  flex-shrink: 0;
+  min-width: 0;
   align-items: center;
   gap: 8px;
   color: inherit;
@@ -151,8 +163,10 @@ onBeforeUnmount(() => observer?.disconnect())
 
 .docs__top-link {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
   height: 36px;
   padding: 0 12px;
   border-radius: 8px;
@@ -279,6 +293,38 @@ button:focus-visible {
 
   .docs__top-link {
     padding: 0 8px;
+  }
+}
+
+/* Phones: icon-only links (named by aria-label), a smaller logo. */
+@media (max-width: 640px) {
+  .docs__header {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .docs__top-links {
+    gap: 0;
+  }
+
+  .docs__top-link {
+    width: 36px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .docs__top-label {
+    display: none;
+  }
+
+  .docs__logo {
+    height: 28px;
+  }
+}
+
+@media (max-width: 400px) {
+  .docs__badge {
+    display: none;
   }
 }
 </style>

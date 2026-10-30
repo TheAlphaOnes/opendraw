@@ -49,4 +49,18 @@ test.describe('<OpenDrawApp>', () => {
     await page.keyboard.press('Escape')
     await expect(card).toBeHidden()
   })
+
+  for (const width of [320, 390]) {
+    test(`the phone toolbar fits ${width}px without scrolling`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 760 })
+      await openEditor(page)
+      const fit = await page.locator('.tool-dock').evaluate((el) => el.scrollWidth - el.clientWidth)
+      expect(fit).toBe(0)
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0)
+      // The tools that step aside on phones are one tap away in "More tools".
+      await page.getByRole('button', { name: 'More tools' }).click()
+      await page.getByRole('menuitem', { name: /^Diamond/ }).click()
+      await expect(page.getByRole('button', { name: 'More tools' })).toHaveAttribute('aria-pressed', 'true')
+    })
+  }
 })

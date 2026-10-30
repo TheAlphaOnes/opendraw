@@ -30,3 +30,6 @@ playwright-report/
 # local agent instructions — kept on disk, never published
 AGENTS.md
 .agents/
+
+# nuxt generate links playground/dist to .output/public
+playground/dist

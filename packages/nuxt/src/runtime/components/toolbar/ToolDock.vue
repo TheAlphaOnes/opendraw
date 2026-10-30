@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import { TOOLS, toolKeyHint, toolLabel, type ToolDefinition } from '@opendraw/editor'
 
+import { useMediaQuery } from '../../composables/useMediaQuery.js'
 import { useOpenDraw } from '../../composables/useOpenDraw.js'
 import UiDropdown from '../ui/UiDropdown.vue'
 import UiIconButton from '../ui/UiIconButton.vue'
@@ -15,12 +16,27 @@ import ToolHint from './ToolHint.vue'
  * tools" dropdown (frame, laser). An extra tool in use takes over the
  * dropdown trigger's glyph, as in Excalidraw. The contextual hint sits
  * under the island.
+ *
+ * Phones (Excalidraw's mobile toolbar): the bar must fit without
+ * scrolling, so it keeps the core tools and moves the tool lock, diamond,
+ * sticky note and image — and the line on the narrowest screens — into
+ * "More tools".
  */
 const ctx = useOpenDraw()
 
-const mainTools = TOOLS.filter((def) => !def.more)
-const moreTools = TOOLS.filter((def) => def.more)
-const activeMore = computed(() => moreTools.find((def) => def.tool === ctx.activeTool.value) ?? null)
+const phone = useMediaQuery('(max-width: 640px)')
+const narrow = useMediaQuery('(max-width: 360px)')
+
+/** Tools that live in "More tools" on phones. */
+const PHONE_MORE = new Set(['diamond', 'stickynote', 'image'])
+
+function inMoreMenu(def: ToolDefinition): boolean {
+  return !!def.more || (phone.value && PHONE_MORE.has(def.tool)) || (narrow.value && def.tool === 'line')
+}
+
+const mainTools = computed(() => TOOLS.filter((def) => !inMoreMenu(def)))
+const moreTools = computed(() => TOOLS.filter(inMoreMenu))
+const activeMore = computed(() => moreTools.value.find((def) => def.tool === ctx.activeTool.value && !def.opensPicker) ?? null)
 
 function activate(entry: ToolDefinition): void {
   if (entry.opensPicker) {
@@ -34,14 +50,16 @@ function activate(entry: ToolDefinition): void {
 <template>
   <div class="tool-dock-stack">
     <div class="tool-dock" role="toolbar" aria-label="Drawing tools">
-      <UiIconButton
-        size="lg"
-        :icon="ctx.toolLocked.value ? 'lock' : 'unlock'"
-        label="Keep selected tool active after drawing (Q)"
-        :active="ctx.toolLocked.value"
-        @click="ctx.toggleToolLock()"
-      />
-      <span class="tool-dock__divider" aria-hidden="true" />
+      <template v-if="!phone">
+        <UiIconButton
+          size="lg"
+          :icon="ctx.toolLocked.value ? 'lock' : 'unlock'"
+          label="Keep selected tool active after drawing (Q)"
+          :active="ctx.toolLocked.value"
+          @click="ctx.toggleToolLock()"
+        />
+        <span class="tool-dock__divider" aria-hidden="true" />
+      </template>
       <UiIconButton
         v-for="entry in mainTools"
         :key="entry.tool"
@@ -70,8 +88,16 @@ function activate(entry: ToolDefinition): void {
             :icon="entry.icon"
             :label="entry.name"
             :keys="[entry.keys[0]!.toUpperCase()]"
-            :selected="ctx.activeTool.value === entry.tool"
+            :selected="!entry.opensPicker && ctx.activeTool.value === entry.tool"
             @select="() => { activate(entry); close() }"
+          />
+          <UiMenuItem
+            v-if="phone"
+            :icon="ctx.toolLocked.value ? 'lock' : 'unlock'"
+            label="Keep tool active"
+            :keys="['Q']"
+            :selected="ctx.toolLocked.value"
+            @select="() => { ctx.toggleToolLock(); close() }"
           />
         </template>
       </UiDropdown>
@@ -139,22 +165,26 @@ function activate(entry: ToolDefinition): void {
     max-width: none;
   }
 
+  /* Sized to fit: 32px tools, no gaps, no sideways scrolling. */
   .tool-dock {
     flex-wrap: nowrap;
-    justify-content: flex-start;
-    gap: 2px;
+    justify-content: center;
+    gap: 0;
     max-width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
-    overscroll-behavior-x: contain;
-  }
-
-  .tool-dock::-webkit-scrollbar {
-    display: none;
+    overflow: hidden;
   }
 
   .tool-dock > * {
     flex-shrink: 0;
+  }
+
+  .tool-dock :deep(.ui-icon-button--lg) {
+    width: var(--od-button);
+    height: var(--od-button);
+  }
+
+  .tool-dock {
+    padding: 4px;
   }
 
   .tool-dock :deep(.ui-icon-button__key) {
@@ -162,6 +192,13 @@ function activate(entry: ToolDefinition): void {
   }
 
   .tool-dock-stack :deep(.tool-hint) {
+    display: none;
+  }
+}
+
+/* The narrowest phones need the divider's few pixels for the tools. */
+@media (max-width: 360px) {
+  .tool-dock__divider {
     display: none;
   }
 }
