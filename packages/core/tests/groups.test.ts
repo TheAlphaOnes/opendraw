@@ -175,3 +175,20 @@ describe('duplicateElements', async () => {
     }
   })
 })
+
+describe('frames — document behaviors', async () => {
+  const { newFrameElement } = await import('../src/elements/factories.js')
+  it('deletes, moves and duplicates children with their frame', () => {
+    const frame = newFrameElement({ x: 0, y: 0, width: 100, height: 100 })
+    const child = newRectangleElement({ x: 10, y: 10, width: 10, height: 10, frameId: frame.id })
+    const doc = new OpenDrawDocument({ elements: [frame, child] })
+    doc.select(frame.id)
+    doc.alignSelection({ axis: 'x', position: 'start' })
+    doc.duplicateSelection()
+    const copies = doc.getElements().slice(2)
+    expect(copies).toHaveLength(2)
+    expect(copies[1]!.frameId).toBe(copies[0]!.id)
+    doc.deleteElements([frame.id])
+    expect(doc.getElement(child.id)).toBeUndefined()
+  })
+})

@@ -6,7 +6,8 @@
  *   — a line/arrow binding to a shape copied alongside it follows the
  *     copy; a binding to a shape left behind is dropped, so a copy never
  *     drags someone else's tip around;
- *   — bound text copied with its container binds to the copy.
+ *   — bound text copied with its container binds to the copy;
+ *   — frame children copied with their frame join the copied frame.
  */
 
 import type { Point, OpenDrawBinding, OpenDrawElement } from '../types.js'
@@ -35,7 +36,11 @@ export function duplicateElements(
     const target = binding ? idMap.get(binding.elementId) : undefined
     return target ? { elementId: target } : null
   }
-  const rebound = copies.map((copy): OpenDrawElement => {
+  const rebound = copies.map((original): OpenDrawElement => {
+    // A child copied with its frame moves into the copied frame; copied
+    // alone it stays in the original frame (Excalidraw).
+    const frameId = original.frameId !== null ? (idMap.get(original.frameId) ?? original.frameId) : null
+    const copy = frameId === original.frameId ? original : { ...original, frameId }
     if (isLinearElement(copy)) {
       return { ...copy, startBinding: remapBinding(copy.startBinding), endBinding: remapBinding(copy.endBinding) }
     }

@@ -17,6 +17,7 @@ import { isTextElement } from '../elements/factories.js'
 import { duplicateElements } from '../elements/duplicate.js'
 import { isBoundText, syncBoundTexts, withBoundTexts } from '../elements/boundText.js'
 import { reorderElements as reorderElementsInScene } from '../elements/zindex.js'
+import { frameMembershipPatches, withFrameChildren } from '../elements/frames.js'
 import { bindingFollowPatches, orphanBindingPatches } from '../elements/binding.js'
 import {
   type Alignment,
@@ -400,8 +401,10 @@ export class OpenDrawDocument {
     if (ids.length === 0) {
       return
     }
-    // A container takes the text bound inside it along.
-    const idSet = new Set(withBoundTexts(this.elements, ids).map((el) => el.id))
+    // A container takes the text bound inside it along, and a frame its
+    // children (Excalidraw: a deleted frame takes its children with it).
+    const withChildren = withFrameChildren(this.elements, ids).map((el) => el.id)
+    const idSet = new Set(withBoundTexts(this.elements, withChildren).map((el) => el.id))
     // Deleting an element and cleaning its selection is ONE undo step —
     // undo must resurrect the element with its selection intact.
     const topLevel = this.openStep === null
@@ -447,13 +450,14 @@ export class OpenDrawDocument {
       return
     }
     this.beginStep()
-    const clones = duplicateElements(withBoundTexts(this.elements, selected.map((el) => el.id)), {
-      offset,
-      editingGroupId: this.appState.editingGroupId,
-    })
+    // Labels ride along with their shapes, children with their frames.
+    const withChildren = withFrameChildren(this.elements, selected.map((el) => el.id)).map((el) => el.id)
+    const sources = withBoundTexts(this.elements, withChildren)
+    const clones = duplicateElements(sources, { offset, editingGroupId: this.appState.editingGroupId })
     this.addElements(clones)
-    // Labels ride along with their containers; only the shapes are selected.
-    this.select(clones.filter((el) => !isBoundText(el)).map((el) => el.id))
+    // Only the copies of what was selected end up selected.
+    const selectedIds = new Set(selected.map((el) => el.id))
+    this.select(clones.filter((_, i) => selectedIds.has(sources[i]!.id)).map((el) => el.id))
     this.endStep()
   }
 
@@ -473,8 +477,26 @@ export class OpenDrawDocument {
 
   /** Mirrors the selection across its center (Shift+H / Shift+V). */
   flipSelection(axis: FlipAxis): void {
-    const selected = this.getSelectedElements().filter((el) => !el.locked)
+    // A flipped frame mirrors its contents with it.
+    const ids = this.getSelectedElements().map((el) => el.id)
+    const selected = withFrameChildren(this.elements, ids).filter((el) => !el.locked)
     this.applyArrange(flipElements(selected, axis))
+  }
+
+  /**
+   * Puts elements into a frame (or, with null, out of any) — labels follow
+   * their shapes, frames never nest. Records nothing on its own outside a
+   * step; callers fold it into the gesture that changed membership.
+   */
+  setFrameMembership(ids: readonly string[], frameId: string | null): void {
+    const members = this.elements.filter((el) => ids.includes(el.id))
+    const patches = frameMembershipPatches(this.elements, members, frameId)
+    if (patches.size === 0) {
+      return
+    }
+    this.mutate((current) =>
+      current.map((el) => (patches.has(el.id) ? patchElement(el, { frameId: patches.get(el.id)! }) : el)),
+    )
   }
 
   private selectionUnits(): OpenDrawElement[][] {
@@ -491,6 +513,21 @@ export class OpenDrawDocument {
       return
     }
     const byId = new Map(entries.map((entry) => [entry.id, entry.patch]))
+    // A moved frame carries the children that were not moved themselves.
+    for (const el of this.elements) {
+      if (el.frameId === null || byId.has(el.id)) {
+        continue
+      }
+      const frame = this.elementsMap.get(el.frameId)
+      const framePatch = frame ? byId.get(frame.id) : undefined
+      if (frame && framePatch) {
+        const dx = (framePatch.x ?? frame.x) - frame.x
+        const dy = (framePatch.y ?? frame.y) - frame.y
+        if (dx !== 0 || dy !== 0) {
+          byId.set(el.id, { x: el.x + dx, y: el.y + dy })
+        }
+      }
+    }
     const topLevel = this.openStep === null
     if (topLevel) {
       this.beginStep()

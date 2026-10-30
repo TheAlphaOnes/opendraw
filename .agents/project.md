@@ -110,7 +110,8 @@ windows deliver the initial size normally.
 - additive edits only when the user asks for something new; never
   restructure content they did not name.
 - commit automatically after each coherent change (lowercase imperative
-  subject, why in the body, selective staging, never push unless asked).
+  subject, why in the body, selective staging) and push to origin/master
+  right after (user instruction, 2026-10-30). never force-push.
 - free tiers only; no paid platforms.
 - all icons lucide, through the central registry.
 - one central reusable component set; never remake the same ui piece.

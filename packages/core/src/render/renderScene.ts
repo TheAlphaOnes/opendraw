@@ -689,6 +689,36 @@ function drawGrid(
   ctx.restore()
 }
 
+/** Clips the context to a frame's (possibly rotated) box. */
+function clipToFrame(ctx: CanvasRenderingContext2D, frame: OpenDrawFrameElement): void {
+  ctx.beginPath()
+  if (frame.angle === 0) {
+    ctx.rect(frame.x, frame.y, frame.width, frame.height)
+  } else {
+    const cx = frame.x + frame.width / 2
+    const cy = frame.y + frame.height / 2
+    const cos = Math.cos(frame.angle)
+    const sin = Math.sin(frame.angle)
+    const corners: Array<[number, number]> = [
+      [frame.x, frame.y],
+      [frame.x + frame.width, frame.y],
+      [frame.x + frame.width, frame.y + frame.height],
+      [frame.x, frame.y + frame.height],
+    ]
+    corners.forEach(([x, y], i) => {
+      const rx = cx + (x - cx) * cos - (y - cy) * sin
+      const ry = cy + (x - cx) * sin + (y - cy) * cos
+      if (i === 0) {
+        ctx.moveTo(rx, ry)
+      } else {
+        ctx.lineTo(rx, ry)
+      }
+    })
+    ctx.closePath()
+  }
+  ctx.clip()
+}
+
 export function renderScene(ctx: CanvasRenderingContext2D, input: SceneRenderInput): void {
   const { elements, appState, canvasSize, dpr } = input
   const { theme, viewBackgroundColor, viewport, gridSize, editingId } = appState
@@ -704,8 +734,20 @@ export function renderScene(ctx: CanvasRenderingContext2D, input: SceneRenderInp
   }
   // One RoughCanvas per render call; drawables come from the shared generator.
   const rc = rough.canvas(ctx.canvas)
+  const frames = new Map(
+    elements.filter((el): el is OpenDrawFrameElement => el.type === 'frame').map((frame) => [frame.id, frame]),
+  )
   for (const element of renderableElements(elements, editingId)) {
-    drawElement(ctx, rc, element, dark, input.resolveImage, viewBackgroundColor)
+    const frame = element.frameId !== null ? frames.get(element.frameId) : undefined
+    if (frame) {
+      // Frame children render clipped to their frame (Excalidraw's frame clip).
+      ctx.save()
+      clipToFrame(ctx, frame)
+      drawElement(ctx, rc, element, dark, input.resolveImage, viewBackgroundColor)
+      ctx.restore()
+    } else {
+      drawElement(ctx, rc, element, dark, input.resolveImage, viewBackgroundColor)
+    }
   }
   ctx.restore()
 }
