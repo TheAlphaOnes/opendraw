@@ -27,6 +27,12 @@ import {
   ClipboardPaste,
   Copy,
   CopyPlus,
+  Ellipsis,
+  FilePlus2,
+  Files,
+  PencilLine,
+  Search,
+  Shapes,
   Diamond,
   Eraser,
   FileDown,
@@ -185,4 +191,12 @@ export const iconRegistry: Record<IconName, Component> = {
   fontHand: Pencil,
   fontNormal: Type,
   fontCode: Code,
+
+  // drawing files
+  files: Files,
+  newFile: FilePlus2,
+  rename: PencilLine,
+  moreActions: Ellipsis,
+  search: Search,
+  drawing: Shapes,
 }

@@ -36,7 +36,8 @@ import WelcomeScreen from './ui/WelcomeScreen.vue'
  * "minimal" keeps only the tool dock, "none" is a pure canvas for
  * building your own UI with useOpenDraw().
  *
- * Slots place host content in Excalidraw's layout: `top-right` (beside the
+ * Slots place host content in Excalidraw's layout: `top-left` (after the
+ * main menu, e.g. the open document's name), `top-right` (beside the
  * toolbar, e.g. a Docs link) and `footer` (bottom-right, before the help
  * button). `menuLinks` adds the host's links to the main menu.
  */
@@ -53,7 +54,9 @@ export interface OpenDrawProps {
   /**
    * Automatic localStorage persistence (Excalidraw parity). `true` (default)
    * saves the scene under the shared key; a string saves under that key;
-   * `false` disables persistence.
+   * `false` disables persistence. Changing the key while mounted opens the
+   * scene saved under the new one in place (how drawing files switch);
+   * turning persistence on or off takes effect on the next mount.
    */
   persist?: boolean | string
   /** The host's own links in the main menu (docs, repository, ...). */
@@ -115,11 +118,19 @@ watch(
 
 // Automatic save/restore. Registered after the change-event wiring above so
 // the restored scene is announced to consumers through the public event.
-if (props.persist !== false) {
-  useScenePersistence(ctx, {
-    storageKey: props.persist === true ? DEFAULT_SCENE_STORAGE_KEY : props.persist,
-    themeDefault: props.theme,
-  })
+const storageKeyOf = (persist: boolean | string): string | null =>
+  persist === false ? null : persist === true ? DEFAULT_SCENE_STORAGE_KEY : persist
+const initialKey = storageKeyOf(props.persist)
+const persistence = initialKey === null ? null : useScenePersistence(ctx, { storageKey: initialKey, themeDefault: props.theme })
+if (persistence) {
+  watch(
+    () => storageKeyOf(props.persist),
+    (key) => {
+      if (key !== null) {
+        persistence.switchTo(key)
+      }
+    },
+  )
 } else if (props.theme === 'system') {
   // Without persistence there is no saved theme to prefer, so the system
   // color scheme decides the first-load theme (Excalidraw parity).
@@ -132,7 +143,12 @@ onBeforeUnmount(() => {
   unsubscribe()
 })
 
-defineExpose({ editor: ctx.editor, context: ctx })
+defineExpose({
+  editor: ctx.editor,
+  context: ctx,
+  /** Writes a pending autosave now (before reading the scene from storage). */
+  flush: () => persistence?.flush(),
+})
 
 // Context menu (full UI only).
 const menu = reactive<CanvasContextMenuRequest & { visible: boolean }>({
@@ -156,6 +172,7 @@ const themeAttr = computed(() => ctx.theme.value)
     <OpenDrawCanvas @contextmenu="openMenu" />
     <div v-if="ui === 'full'" class="opendraw-root__top-left">
       <MainMenu :links="menuLinks" />
+      <slot name="top-left" />
     </div>
     <ToolDock v-if="ui !== 'none'" />
     <div v-if="ui === 'full' && $slots['top-right']" class="opendraw-root__top-right">
@@ -187,6 +204,9 @@ const themeAttr = computed(() => ctx.theme.value)
   z-index: 11;
   top: var(--od-gutter);
   left: var(--od-gutter);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .opendraw-root__top-right {

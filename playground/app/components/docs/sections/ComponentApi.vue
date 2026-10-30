@@ -5,8 +5,8 @@ const PROPS = [
   ['ui', "'full' | 'minimal' | 'none'", "'full'", 'full: every island. minimal: toolbar and zoom only. none: a bare canvas for your own UI.'],
   ['grid', 'boolean | number', 'false', 'Show the grid; a number sets its size in px (true is 20).'],
   ['initialElements', 'OpenDrawElement[]', '[]', 'Elements to start with when nothing is persisted.'],
-  ['persist', 'boolean | string', 'true', 'Save to localStorage. A string is the storage key; false disables it.'],
-  ['menuLinks', '{ label, href, icon? }[]', '[]', 'Your own links in the main menu (docs, repository, …).'],
+  ['persist', 'boolean | string', 'true', 'Save to localStorage. A string is the storage key; false disables it. Changing the key while mounted opens the scene saved under it.'],
+  ['menuLinks', '{ label, href?, onSelect?, icon? }[]', '[]', 'Your own links or actions in the main menu (docs, repository, …).'],
 ] as const
 
 const EVENTS = [
@@ -15,6 +15,7 @@ const EVENTS = [
 ] as const
 
 const SLOTS = [
+  ['top-left', 'After the main menu — the open document\'s name.'],
   ['top-right', 'Beside the toolbar, top-right — a Share or Docs button.'],
   ['footer', 'Bottom-right, before the help button — status or install hints.'],
 ] as const

@@ -55,7 +55,7 @@ Excalidraw set the bar for how a whiteboard should feel. opendraw brings that fe
 | **Editing** | Groups, align &amp; distribute, flip, layers, copy/paste styles, Alt-drag duplicate, lock, a context menu and gesture-level undo/redo. |
 | **Styling** | Excalidraw's color picker with shades, hex input and eyedropper; fill, stroke, sloppiness, edges, arrowheads, fonts and opacity. |
 | **Themes** | Light and dark; dark mode inverts element ink while your canvas background stays exactly as chosen. |
-| **Files** | Autosave to `localStorage`, open/save `.opendraw` files, export PNG and SVG. |
+| **Files** | Autosave to `localStorage`, many named drawings in one browser (a drawings sidebar to create, open, rename, duplicate, delete and search them), open/save `.opendraw` files, export PNG and SVG. |
 | **Responsive** | Desktop layout like excalidraw.com; on phones the toolbar moves to the bottom and the properties panel becomes a sheet. |
 | **Accessible** | Real buttons and menus, labelled controls, keyboard navigation in every popover, reduced-motion support. |
 
@@ -93,6 +93,7 @@ const config = defineOpenDrawConfig({
   command: { text: 'npm install my-lib', short: 'npm i my-lib' },
   links: [{ label: 'Docs', icon: 'docs', to: '/docs' }],
   share: true,
+  files: true,
   onChange: ({ elements }) => save(elements),
 })
 </script>
@@ -101,6 +102,8 @@ const config = defineOpenDrawConfig({
   <OpenDrawApp :config="config" />
 </template>
 ```
+
+`files: true` turns the editor into a small drawings app. A Drawings button beside the main menu, or the menu itself on phones, opens a sidebar to create, open, rename, duplicate, delete and search drawings. Each drawing autosaves on its own and keeps a preview, and the open drawing comes back after a reload. A scene saved before `files` was turned on becomes the first drawing. The store is framework-free (`createDrawingFiles()` in `@opendraw/editor`), and `useDrawingFiles()` mirrors it in Vue.
 
 The pieces also come separately for `<OpenDraw>`'s slots: `<OpenDrawButton>`, `<OpenDrawCopyCommand>` and `<OpenDrawShareButton>`.
 
@@ -122,8 +125,8 @@ import { OpenDraw, OpenDrawApp, useOpenDraw } from '@opendraw/nuxt/vue'
 | `ui` | `'full' \| 'minimal' \| 'none'` | `'full'` | `full`: every island · `minimal`: toolbar and zoom · `none`: bare canvas. |
 | `grid` | `boolean \| number` | `false` | Show the grid; a number sets the cell size. |
 | `initialElements` | `OpenDrawElement[]` | `[]` | Scene to open with when nothing is persisted. |
-| `persist` | `boolean \| string` | `true` | Autosave; a string is the storage key, `false` turns it off. |
-| `menuLinks` | `{ label, href, icon? }[]` | `[]` | Your links in the main menu. |
+| `persist` | `boolean \| string` | `true` | Autosave; a string is the storage key, `false` turns it off. Changing the key while mounted opens the scene saved under it. |
+| `menuLinks` | `{ label, href?, onSelect?, icon? }[]` | `[]` | Your links (or actions) in the main menu. |
 
 | Event | Payload | |
 | --- | --- | --- |
@@ -133,6 +136,7 @@ import { OpenDraw, OpenDrawApp, useOpenDraw } from '@opendraw/nuxt/vue'
 
 | Slot | Placement |
 | --- | --- |
+| `#top-left` | After the main menu — the open document's name. |
 | `#top-right` | Beside the toolbar — a Share or Docs button. |
 | `#footer` | Bottom-right, next to the help button. |
 

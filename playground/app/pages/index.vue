@@ -4,8 +4,9 @@
 
 <script setup lang="ts">
 /**
- * The published demo: <OpenDrawApp> with one config — the install command
- * and the docs link top-right, the repository in the main menu.
+ * The published demo: <OpenDrawApp> with one config — the drawings button,
+ * the install command and the docs link top-right, the repository in the
+ * main menu.
  *
  * E2E mirror: the Playwright suite reads document state through the public
  * change/select events (mirrored onto `window.__opendraw`) instead of
@@ -20,6 +21,7 @@ declare global {
 useHead({ title: 'opendraw — hand-drawn diagrams for Vue & Nuxt' })
 
 const config = defineOpenDrawConfig({
+  files: true,
   command: { text: 'npm install @opendraw/nuxt', short: 'npm i @opendraw/nuxt' },
   links: [{ label: 'Docs', icon: 'docs', to: '/docs' }],
   menuLinks: [

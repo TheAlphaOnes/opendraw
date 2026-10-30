@@ -18,4 +18,5 @@ export {
   type OpenDrawContext,
 } from './composables/useOpenDraw.js'
 export { useScenePersistence } from './composables/useScenePersistence.js'
-export { defineOpenDrawConfig, type OpenDrawAppConfig } from './config/openDrawApp.js'
+export { useDrawingFiles, type DrawingFile, type DrawingFilesContext } from './composables/useDrawingFiles.js'
+export { defineOpenDrawConfig, type OpenDrawAppConfig, type OpenDrawAppFiles } from './config/openDrawApp.js'

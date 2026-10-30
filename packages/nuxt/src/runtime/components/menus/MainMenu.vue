@@ -1,10 +1,14 @@
 <script lang="ts">
 import type { IconName } from '../../constants/icons.js'
 
-/** A host link in the main menu; external URLs open in a new tab. */
+/**
+ * A host entry in the main menu: a link (`href`; external URLs open in a
+ * new tab) or an action (`onSelect`).
+ */
 export interface MainMenuLink {
   label: string
-  href: string
+  href?: string
+  onSelect?: () => void
   icon?: IconName
 }
 </script>
@@ -86,11 +90,11 @@ function run(id: ActionId, close: () => void): void {
         <UiMenuSeparator />
         <UiMenuItem
           v-for="link in props.links"
-          :key="link.href"
+          :key="link.label"
           :icon="link.icon"
           :label="link.label"
           :href="link.href"
-          @select="close()"
+          @select="close(), link.onSelect?.()"
         />
       </template>
       <UiMenuSeparator />

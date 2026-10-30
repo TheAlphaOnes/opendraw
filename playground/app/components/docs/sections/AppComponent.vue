@@ -11,6 +11,8 @@ const config = defineOpenDrawConfig({
   ],
   share: true,
   menuLinks: [{ label: 'Changelog', href: '/changelog' }],
+  // many drawings, with a drawings sidebar
+  files: true,
 
   // editor
   theme: 'system',
@@ -41,8 +43,9 @@ const CONFIG = [
   ['command', "string | { text, short?, glow?, prompt? }", 'The copyable command pill, top-right.'],
   ['links', '{ label, icon?, to?, href?, variant?, onClick? }[]', 'Top-right buttons.'],
   ['share', 'boolean | { url?, title?, label? }', 'The primary Share button: share sheet on phones, else copy link.'],
-  ['menuLinks', '{ label, href, icon? }[]', 'Links in the main menu.'],
-  ['theme · persist · grid · initialElements', '—', 'The editor options of <OpenDraw>.'],
+  ['menuLinks', '{ label, href?, onSelect?, icon? }[]', 'Links (or actions) in the main menu.'],
+  ['files', 'boolean | { indexKey? }', 'Many named drawings: a Drawings button and sidebar to create, open, rename, duplicate, delete and search them. Each autosaves on its own.'],
+  ['theme · persist · grid · initialElements', '—', 'The editor options of <OpenDraw> (persist is ignored with files).'],
   ['fullscreen', 'boolean', 'Fill the viewport (default) or the parent.'],
   ['onReady · onChange · onSelect · onCopy · onShare', 'functions', 'Hooks; also emitted as @ready, @change, @select, @copy, @share.'],
 ] as const

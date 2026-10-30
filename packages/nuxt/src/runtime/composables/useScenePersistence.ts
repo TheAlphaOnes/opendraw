@@ -1,10 +1,10 @@
 import { onMounted, onScopeDispose } from 'vue'
 
-import { attachScenePersistence, type ScenePersistenceOptions } from '@opendraw/editor'
+import { attachScenePersistence, type ScenePersistence, type ScenePersistenceOptions } from '@opendraw/editor'
 
 import type { OpenDrawContext } from './useOpenDraw.js'
 
-export type { ScenePersistenceOptions }
+export type { ScenePersistence, ScenePersistenceOptions }
 
 /**
  * Automatic localStorage persistence for a Vue-hosted editor (the editor's
@@ -14,11 +14,12 @@ export type { ScenePersistenceOptions }
  * the server-rendered markup, and mount hooks run before the browser can
  * dispatch any input event, so no user change can precede the restore.
  */
-export function useScenePersistence(ctx: OpenDrawContext, options: ScenePersistenceOptions = {}): void {
+export function useScenePersistence(ctx: OpenDrawContext, options: ScenePersistenceOptions = {}): ScenePersistence | null {
   if (typeof window === 'undefined') {
-    return
+    return null
   }
   const persistence = attachScenePersistence(ctx.editor, options)
   onMounted(persistence.restore)
   onScopeDispose(persistence.dispose)
+  return persistence
 }

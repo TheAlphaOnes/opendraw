@@ -76,6 +76,10 @@ const opendrawModule: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions
         name: 'useScenePersistence',
         from: resolver.resolve('./runtime/composables/useScenePersistence'),
       },
+      {
+        name: 'useDrawingFiles',
+        from: resolver.resolve('./runtime/composables/useDrawingFiles'),
+      },
     ])
   },
 })

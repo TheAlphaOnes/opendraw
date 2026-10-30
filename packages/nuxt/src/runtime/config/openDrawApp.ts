@@ -39,6 +39,12 @@ export interface OpenDrawAppCommand {
   prompt?: string
 }
 
+/** Several named drawings in this browser, with a drawings sidebar. */
+export interface OpenDrawAppFiles {
+  /** Where the drawing index is saved (default `opendraw:files`). */
+  indexKey?: string
+}
+
 /** The Share button: the platform share sheet, or copy the link. */
 export interface OpenDrawAppShare {
   url?: string
@@ -49,8 +55,15 @@ export interface OpenDrawAppShare {
 export interface OpenDrawAppConfig {
   // --- editor -------------------------------------------------------------
   theme?: ThemeDefault
-  /** Autosave: true (shared key), a storage key, or false. */
+  /** Autosave: true (shared key), a storage key, or false. Ignored with `files`. */
   persist?: boolean | string
+  /**
+   * Many drawings instead of one: a Drawings button top-right opens a
+   * sidebar to create, open, rename, duplicate and delete them, each saved
+   * on its own. The scene saved before files were enabled becomes the
+   * first drawing. `true` for the defaults.
+   */
+  files?: boolean | OpenDrawAppFiles
   grid?: boolean | number
   initialElements?: OpenDrawElement[]
   /** Fill the viewport (default) or the parent element. */

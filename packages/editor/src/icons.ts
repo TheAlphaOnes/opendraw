@@ -93,3 +93,10 @@ export type IconName =
   | 'fontHand'
   | 'fontNormal'
   | 'fontCode'
+  // drawing files
+  | 'files'
+  | 'newFile'
+  | 'rename'
+  | 'moreActions'
+  | 'search'
+  | 'drawing'
