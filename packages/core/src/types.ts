@@ -97,6 +97,11 @@ export interface VueDrawElementBase {
    * `groupIds`). A group exists while two or more elements share an id.
    */
   groupIds: readonly string[]
+  /**
+   * The frame this element belongs to (Excalidraw's frameId), or null.
+   * Children move with their frame and render clipped to it.
+   */
+  frameId: string | null
 }
 
 /** Excalidraw's arrowhead kinds (the cardinality markers aside). */

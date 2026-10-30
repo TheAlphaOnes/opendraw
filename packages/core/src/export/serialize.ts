@@ -114,6 +114,7 @@ export function coerceElement(input: unknown): VueDrawElement | null {
     groupIds: Array.isArray(input.groupIds)
       ? input.groupIds.filter((id): id is string => typeof id === 'string')
       : [],
+    frameId: typeof input.frameId === 'string' ? input.frameId : null,
   }
   if (type === 'line' || type === 'arrow') {
     return {
@@ -167,13 +168,18 @@ export function coerceElement(input: unknown): VueDrawElement | null {
  */
 export function normalizeElement(element: VueDrawElement): VueDrawElement {
   const missingGroups = !Array.isArray(element.groupIds)
+  const missingFrame = !('frameId' in element)
   const linear = element.type === 'line' || element.type === 'arrow'
   const missingHeads = linear && (!('startArrowhead' in element) || !('endArrowhead' in element))
   const missingText = element.type === 'text' && (!('originalText' in element) || !('containerId' in element))
-  if (!missingGroups && !missingHeads && !missingText) {
+  if (!missingGroups && !missingFrame && !missingHeads && !missingText) {
     return element
   }
-  const repaired = { ...element, groupIds: missingGroups ? [] : element.groupIds } as VueDrawElement
+  const repaired = {
+    ...element,
+    groupIds: missingGroups ? [] : element.groupIds,
+    frameId: missingFrame ? null : element.frameId,
+  } as VueDrawElement
   if (missingHeads && (repaired.type === 'line' || repaired.type === 'arrow')) {
     repaired.startArrowhead = repaired.startArrowhead ?? null
     repaired.endArrowhead = repaired.endArrowhead === undefined ? (repaired.type === 'arrow' ? 'arrow' : null) : repaired.endArrowhead
