@@ -71,8 +71,15 @@ const textStyle = computed<TextStyle>(() => {
 })
 const roundness = computed(() => {
   const el = first.value
-  const value = el && (el.type === 'rectangle' || el.type === 'diamond') ? el.roundness : ctx.appState.value.shapeRoundness
+  const value =
+    el && (el.type === 'rectangle' || el.type === 'diamond' || el.type === 'line')
+      ? el.roundness
+      : ctx.appState.value.shapeRoundness
   return value === 'round' ? 'round' : 'sharp'
+})
+const arrowType = computed(() => {
+  const el = ctx.selectedElements.value.find((e) => e.type === 'arrow')
+  return el && el.type === 'arrow' ? (el.roundness === 'round' ? 'round' : 'sharp') : ctx.appState.value.arrowType
 })
 
 // Excalidraw shows fill patterns only once there is a background to fill.
@@ -101,6 +108,10 @@ const roughnessOptions: UiSegmentedOption[] = [
 const cornerOptions: UiSegmentedOption[] = [
   { value: 'sharp', label: 'Sharp corners', icon: 'cornerSharp' },
   { value: 'round', label: 'Rounded corners', icon: 'cornerRound' },
+]
+const arrowTypeOptions: UiSegmentedOption[] = [
+  { value: 'sharp', label: 'Sharp arrow', icon: 'arrowSharp' },
+  { value: 'round', label: 'Curved arrow', icon: 'arrowRound' },
 ]
 const fontFamilyOptions: UiSegmentedOption[] = [
   { value: 'hand', label: 'Hand-drawn font', text: 'Hand' },
@@ -183,6 +194,15 @@ const alignOptions: UiSegmentedOption[] = [
           :model-value="roundness"
           ariaLabel="Corner style"
           @update:model-value="ctx.changeRoundness($event === 'round' ? 'round' : null)"
+        />
+      </StyleSection>
+      <StyleSection v-if="targets.arrowheads" label="Arrow type">
+        <UiSegmented
+          block
+          :options="arrowTypeOptions"
+          :model-value="arrowType"
+          ariaLabel="Arrow type"
+          @update:model-value="ctx.editor.changeArrowType($event === 'round' ? 'round' : 'sharp')"
         />
       </StyleSection>
       <StyleSection v-if="targets.arrowheads" label="Arrowheads">

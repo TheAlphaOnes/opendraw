@@ -77,8 +77,10 @@ export const DEFAULT_APP_STATE: OpenDrawAppState = {
   gridSize: null,
   style: { ...DEFAULT_ELEMENT_STYLE },
   textStyle: { ...DEFAULT_TEXT_STYLE },
-  shapeRoundness: null,
+  shapeRoundness: 'round',
   arrowheads: { start: null, end: 'arrow' },
+  // Excalidraw's defaults: rounded shapes and lines, round arrows.
+  arrowType: 'round',
 }
 
 export class OpenDrawDocument {
@@ -807,7 +809,7 @@ export class OpenDrawDocument {
           const layout = layoutText(el.text, payload.textStyle.fontFamily, payload.textStyle.fontSize)
           patch = { ...patch, ...payload.textStyle, width: layout.width, height: layout.height }
         }
-        if ((el.type === 'rectangle' || el.type === 'diamond') && payload.roundness !== undefined) {
+        if ((el.type === 'rectangle' || el.type === 'diamond' || el.type === 'line') && payload.roundness !== undefined) {
           patch = { ...patch, roundness: payload.roundness }
         }
         const patched = patchElement(el, patch)
@@ -839,12 +841,27 @@ export class OpenDrawDocument {
   }
 
   /**
-   * Applies corner roundness to the selected rectangles and diamonds. With no
-   * such element selected it becomes the default for future shapes instead.
+   * Excalidraw's "Arrow type": curves (round) or straightens (sharp) the
+   * selected arrows; with none selected it sets the next arrow's type.
+   */
+  changeArrowType(type: 'round' | 'sharp'): void {
+    const ids = this.getSelectedElements()
+      .filter((el) => el.type === 'arrow')
+      .map((el) => el.id)
+    if (ids.length === 0) {
+      this.commitAppState({ ...this.appState, arrowType: type })
+      return
+    }
+    this.updateElements<OpenDrawLinearElement>(ids, { roundness: type === 'round' ? 'round' : null })
+  }
+
+  /**
+   * Excalidraw's "Edges": rounds the selected rectangles, diamonds and
+   * lines. With none selected it becomes the default for new ones.
    */
   changeRoundness(roundness: Roundness | null): void {
     const ids = this.getSelectedElements()
-      .filter((el) => el.type === 'rectangle' || el.type === 'diamond')
+      .filter((el) => el.type === 'rectangle' || el.type === 'diamond' || el.type === 'line')
       .map((el) => el.id)
     if (ids.length === 0) {
       this.commitAppState({ ...this.appState, shapeRoundness: roundness })

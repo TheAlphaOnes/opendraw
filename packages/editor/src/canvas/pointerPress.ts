@@ -4,6 +4,7 @@ import {
   elementsUnderEraser,
   findElementAt,
   handleAt,
+  hasBoundingBox,
   hitThreshold,
   isTextContainer,
   linearHandleAt,
@@ -53,9 +54,9 @@ export function eraseAlong(rt: CanvasRuntime, from: Point, to: Point): void {
 }
 
 function draftElement(rt: CanvasRuntime, tool: string, at: Point): OpenDrawElement {
-  const { style, shapeRoundness, arrowheads } = rt.ctx.appState
+  const { style, shapeRoundness, arrowheads, arrowType } = rt.ctx.appState
   if (tool === 'line') {
-    return newLinearElement(tool, { x: at.x, y: at.y, style, points: [{ x: 0, y: 0 }] })
+    return newLinearElement(tool, { x: at.x, y: at.y, style, points: [{ x: 0, y: 0 }], roundness: shapeRoundness })
   }
   if (tool === 'arrow') {
     return newLinearElement(tool, {
@@ -63,6 +64,7 @@ function draftElement(rt: CanvasRuntime, tool: string, at: Point): OpenDrawEleme
       y: at.y,
       style,
       points: [{ x: 0, y: 0 }],
+      roundness: arrowType === 'round' ? 'round' : null,
       startArrowhead: arrowheads.start,
       endArrowhead: arrowheads.end,
     })
@@ -322,6 +324,7 @@ function pressWithSelectionTool(rt: CanvasRuntime, event: PointerEvent, scenePoi
   // outline. Shift keeps the add-to-selection gesture instead.
   if (
     frame &&
+    hasBoundingBox(ctx.selectedElements) &&
     !event.shiftKey &&
     !ctx.selectedElements.every((el) => el.locked) &&
     pointInSelectionFrame(frame, scenePoint, SELECTION_GRAB_PADDING / zoom)

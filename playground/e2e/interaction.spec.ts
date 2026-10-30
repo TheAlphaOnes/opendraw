@@ -153,9 +153,9 @@ test('outlines the start shape while a drag crosses onto the end shape', async (
   const startEdge = await overlayPixelAt(page, 190, 150)
   const endEdge = await overlayPixelAt(page, 470, 150)
   expect(startEdge[3]).toBe(255)
-  expect(startEdge.slice(0, 3)).toEqual([12, 133, 153])
+  expect(startEdge.slice(0, 3)).toEqual([105, 101, 219])
   expect(endEdge[3]).toBe(255)
-  expect(endEdge.slice(0, 3)).toEqual([12, 133, 153])
+  expect(endEdge.slice(0, 3)).toEqual([105, 101, 219])
 
   await page.mouse.up()
   await settleFrames(page)
@@ -190,7 +190,7 @@ test('outlines a hoverable shape before the drag even starts', async ({ page }) 
   await settleFrames(page)
   const hovering = await overlayPixelAt(page, 390, 150)
   expect(hovering[3]).toBe(255)
-  expect(hovering.slice(0, 3)).toEqual([12, 133, 153])
+  expect(hovering.slice(0, 3)).toEqual([105, 101, 219])
 
   // Moving off the shape clears the outline without any press.
   await page.mouse.move(at(box, 650, 210).x, at(box, 650, 210).y)

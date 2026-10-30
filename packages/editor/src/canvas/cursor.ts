@@ -1,6 +1,7 @@
 import {
   findElementAt,
   handleAt,
+  hasBoundingBox,
   hitThreshold,
   isTextContainer,
   linearHandleAt,
@@ -79,7 +80,7 @@ export function resolveCursor(rt: CanvasRuntime): string {
     if (side) {
       return resizeCursorFor(side, frame.angle)
     }
-    if (pointInSelectionFrame(frame, point, SELECTION_GRAB_PADDING / zoom)) {
+    if (hasBoundingBox(ctx.selectedElements) && pointInSelectionFrame(frame, point, SELECTION_GRAB_PADDING / zoom)) {
       return 'move'
     }
   }

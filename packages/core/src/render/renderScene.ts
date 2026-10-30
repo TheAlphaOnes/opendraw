@@ -181,7 +181,13 @@ const DEFAULT_BACKGROUND = '#ffffff'
 /** Elements are immutable, so reference identity is a valid cache key. */
 const shapeCache = new WeakMap<OpenDrawElement, CachedShape>()
 
-function buildRoughOptions(element: OpenDrawElement, dark: boolean): Options {
+/**
+ * Rough options — Excalidraw's generateRoughOptions. `continuousPath`
+ * marks single-path outlines (rounded rectangles and diamonds): rough.js
+ * must keep their vertices, or high roughness frays the stroke apart at
+ * every corner join.
+ */
+function buildRoughOptions(element: OpenDrawElement, dark: boolean, continuousPath = false): Options {
   const strokeWidth = element.strokeWidth
   return {
     seed: element.seed,
@@ -206,7 +212,7 @@ function buildRoughOptions(element: OpenDrawElement, dark: boolean): Options {
     fillStyle: element.fillStyle,
     fillWeight: strokeWidth / 2,
     hachureGap: strokeWidth * 4,
-    preserveVertices: element.roughness < 2,
+    preserveVertices: continuousPath || element.roughness < 2,
   }
 }
 
@@ -216,11 +222,27 @@ function toRoughPoints(points: readonly Point[]): [number, number][] {
 }
 
 /**
- * Excalidraw's proportional corner radius: 25% of the element's shorter
- * side (their `DEFAULT_PROPORTIONAL_RADIUS`). Shared with the overlay's
- * highlight so the chrome traces the same corners the renderer draws.
+ * Excalidraw's DEFAULT_PROPORTIONAL_RADIUS: corners at 25% of the side.
+ * Diamonds (and lines) round proportionally.
  */
 export const PROPORTIONAL_RADIUS = 0.25
+
+/** Excalidraw's DEFAULT_ADAPTIVE_RADIUS — rectangles' fixed corner radius. */
+export const ADAPTIVE_RADIUS = 32
+
+/**
+ * Excalidraw's getCornerRadius for a side of length `x`: rectangles use
+ * the adaptive radius (a fixed 32px, proportional below the 128px cutoff),
+ * diamonds the proportional one. Shared with the overlay so chrome traces
+ * exactly the corners the renderer draws.
+ */
+export function cornerRadius(x: number, type: 'rectangle' | 'diamond'): number {
+  if (type === 'diamond') {
+    return x * PROPORTIONAL_RADIUS
+  }
+  const cutoff = ADAPTIVE_RADIUS / PROPORTIONAL_RADIUS
+  return x <= cutoff ? x * PROPORTIONAL_RADIUS : ADAPTIVE_RADIUS
+}
 
 /** Rounded-rectangle outline as an SVG path — Q curves at each corner. */
 function roundedRectPath(width: number, height: number, radius: number): string {
@@ -269,15 +291,17 @@ function buildBoxShape(element: BoxElement, dark: boolean): Drawable[] {
   switch (element.type) {
     case 'rectangle':
       if (element.roundness === 'round') {
-        const radius = Math.min(width, height) * PROPORTIONAL_RADIUS
-        return [generator.path(roundedRectPath(width, height, radius), options)]
+        const radius = cornerRadius(Math.min(width, height), 'rectangle')
+        return [generator.path(roundedRectPath(width, height, radius), buildRoughOptions(element, dark, true))]
       }
       return [generator.rectangle(0, 0, width, height, options)]
     case 'diamond':
       if (element.roundness === 'round') {
-        const vRadius = (width / 2) * PROPORTIONAL_RADIUS
-        const hRadius = (height / 2) * PROPORTIONAL_RADIUS
-        return [generator.path(roundedDiamondPath(width, height, vRadius, hRadius), options)]
+        const vRadius = cornerRadius(width / 2, 'diamond')
+        const hRadius = cornerRadius(height / 2, 'diamond')
+        return [
+          generator.path(roundedDiamondPath(width, height, vRadius, hRadius), buildRoughOptions(element, dark, true)),
+        ]
       }
       return [
         generator.polygon(
@@ -321,12 +345,19 @@ function buildLinearShape(
   background: string,
 ): Drawable[] {
   const points = toRoughPoints(element.points)
-  if (isClosedLoop(element.points)) {
-    // Only closed loops take a fill; the polygon closes the path.
-    return [generator.polygon(points, buildRoughOptions(element, dark))]
-  }
-  const strokeOptions: Options = { ...buildRoughOptions(element, dark), fill: undefined }
-  const drawables: Drawable[] = [generator.linearPath(points, strokeOptions)]
+  // Excalidraw's line/arrow generation: only a closed loop takes a fill;
+  // a round element is a curve through its points (filled when looped),
+  // a sharp one a polygon (looped) or a polyline.
+  const loop = element.type === 'line' && isClosedLoop(element.points)
+  const options: Options = loop ? buildRoughOptions(element, dark) : { ...buildRoughOptions(element, dark), fill: undefined }
+  const body =
+    element.roundness === 'round'
+      ? generator.curve(points, options)
+      : loop
+        ? generator.polygon(points, options)
+        : generator.linearPath(points, options)
+  const drawables: Drawable[] = [body]
+  const strokeOptions: Options = { ...options, fill: undefined }
   // Only arrows render heads (Excalidraw's lines carry the fields unused).
   if (element.type === 'arrow') {
     const stroke = themeColor(element.strokeColor, dark)
@@ -335,7 +366,7 @@ function buildLinearShape(
     const fill = background
     for (const [position, head] of [['start', element.startArrowhead], ['end', element.endArrowhead]] as const) {
       if (head) {
-        drawables.push(...arrowheadDrawables(generator, element, position, head, strokeOptions, stroke, fill))
+        drawables.push(...arrowheadDrawables(generator, element, position, head, strokeOptions, stroke, fill, body))
       }
     }
   }

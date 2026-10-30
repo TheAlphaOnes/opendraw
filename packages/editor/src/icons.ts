@@ -84,3 +84,5 @@ export type IconName =
   | 'arrowheadTriangle'
   | 'arrowheadDiamond'
   | 'chevronDown'
+  | 'arrowSharp'
+  | 'arrowRound'

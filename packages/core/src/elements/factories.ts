@@ -168,6 +168,7 @@ export function newLinearElement(
     // Lines and arrows bind alike (Excalidraw's LinearElement).
     startBinding: null,
     endBinding: null,
+    roundness: opts.roundness ?? null,
     startArrowhead: opts.startArrowhead ?? null,
     endArrowhead: opts.endArrowhead === undefined ? (type === 'arrow' ? 'arrow' : null) : opts.endArrowhead,
   } as OpenDrawLineElement | OpenDrawArrowElement
@@ -289,7 +290,7 @@ export function stylePayloadOf(element: OpenDrawElement): StylePayload {
   if (element.type === 'text') {
     payload.textStyle = textStyleOf(element)
   }
-  if (element.type === 'rectangle' || element.type === 'diamond') {
+  if (element.type === 'rectangle' || element.type === 'diamond' || element.type === 'line') {
     payload.roundness = element.roundness ?? null
   }
   return payload

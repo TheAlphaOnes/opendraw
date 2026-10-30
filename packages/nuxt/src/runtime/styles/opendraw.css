@@ -24,9 +24,9 @@
   --od-ink-soft: #6c757d;
   --od-border: rgba(30, 30, 30, 0.12);
 
-  /* Accents & intents */
-  --od-accent: #0c8599;
-  --od-accent-soft: rgba(12, 133, 153, 0.12);
+  /* Accents & intents — Excalidraw's --color-primary / --color-primary-light */
+  --od-accent: #6965db;
+  --od-accent-soft: #e3e2fe;
   --od-danger: #e03131;
   --od-danger-soft: rgba(224, 49, 49, 0.1);
   --od-hover: rgba(30, 30, 30, 0.06);
@@ -70,6 +70,8 @@
   --od-ink-soft: #adb5bd;
   --od-border: rgba(233, 236, 239, 0.12);
   --od-hover: rgba(233, 236, 239, 0.08);
+  --od-accent: #a8a5ff;
+  --od-accent-soft: #4f4d6f;
 }
 
 /* Box-sizing reset scoped to the editor so host pages stay untouched. */

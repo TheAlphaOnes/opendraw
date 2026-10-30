@@ -53,6 +53,7 @@ import {
   Minus,
   Moon,
   MousePointer2,
+  MoveUpRight,
   Paintbrush,
   PaintBucket,
   PaintRoller,
@@ -67,6 +68,7 @@ import {
   Scissors,
   SendToBack,
   Slash,
+  Spline,
   Square,
   Sun,
   Trash2,
@@ -169,4 +171,6 @@ export const iconRegistry: Record<IconName, Component> = {
   arrowheadTriangle: Triangle,
   arrowheadDiamond: Diamond,
   chevronDown: ChevronDown,
+  arrowSharp: MoveUpRight,
+  arrowRound: Spline,
 }

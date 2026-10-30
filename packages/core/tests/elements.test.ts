@@ -24,7 +24,8 @@ describe('defaults', () => {
     expect(DEFAULT_ELEMENT_STYLE).toMatchObject({
       strokeColor: '#1e1e1e',
       backgroundColor: 'transparent',
-      fillStyle: 'hachure',
+      // Excalidraw's DEFAULT_ELEMENT_PROPS.fillStyle.
+      fillStyle: 'solid',
       strokeWidth: 2,
       strokeStyle: 'solid',
       roughness: 1,
@@ -68,7 +69,7 @@ describe('factories', () => {
     })
     expect(el.strokeColor).toBe('#e03131')
     expect(el.strokeWidth).toBe(4)
-    expect(el.fillStyle).toBe('hachure')
+    expect(el.fillStyle).toBe('solid')
   })
 
   it('accepts a deterministic id and seed', () => {

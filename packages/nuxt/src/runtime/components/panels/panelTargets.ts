@@ -37,7 +37,8 @@ const STYLED_TOOLS: ReadonlySet<ToolId> = new Set([
 const FILLABLE: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond', 'ellipse', 'line', 'freedraw'])
 const STROKE_SHAPED: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond', 'ellipse', 'arrow', 'line', 'freedraw'])
 const SLOPPY: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond', 'ellipse', 'arrow', 'line'])
-const CORNERED: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond'])
+/** Excalidraw's "Edges" control. Arrows have their own "Arrow type". */
+const CORNERED: ReadonlySet<ElementType> = new Set(['rectangle', 'diamond', 'line'])
 /** Images carry no ink of their own — only opacity applies. */
 const INKED: ReadonlySet<ElementType> = new Set([
   'rectangle', 'diamond', 'ellipse', 'arrow', 'line', 'freedraw', 'text', 'frame',

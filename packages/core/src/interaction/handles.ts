@@ -72,6 +72,20 @@ export function selectionFrameOf(elements: readonly OpenDrawElement[]): Selectio
   return { x: bounds.x1, y: bounds.y1, width: bounds.x2 - bounds.x1, height: bounds.y2 - bounds.y1, angle: 0 }
 }
 
+/**
+ * Whether a selection shows its box and transform handles — Excalidraw's
+ * hasBoundingBox: always for several elements, never for a lone line or
+ * arrow of two points (only its point handles show), and for longer
+ * polylines yes.
+ */
+export function hasBoundingBox(elements: readonly OpenDrawElement[]): boolean {
+  if (elements.length !== 1) {
+    return elements.length > 1
+  }
+  const only = elements[0]!
+  return !((only.type === 'line' || only.type === 'arrow') && only.points.length <= 2)
+}
+
 export interface HandleLayoutOptions {
   zoom: number
   pointer: PointerKind

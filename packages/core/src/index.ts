@@ -41,6 +41,8 @@ export * from './scene/document.js'
 
 export * from './render/theme.js'
 export {
+  ADAPTIVE_RADIUS,
+  cornerRadius,
   exportElementShape,
   PROPORTIONAL_RADIUS,
   renderElementShape,

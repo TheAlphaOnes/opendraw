@@ -7,7 +7,7 @@ import type {
   OpenDrawElement,
   OpenDrawLinearElement,
 } from '@opendraw/core'
-import { getHandleLayout, isLinearElement, selectionFrameOf, sideHandleAt } from '@opendraw/core'
+import { getHandleLayout, hasBoundingBox, isLinearElement, selectionFrameOf, sideHandleAt } from '@opendraw/core'
 
 import type { CanvasRuntime } from './runtime.js'
 
@@ -21,7 +21,8 @@ export const SELECTION_GRAB_PADDING = 12
 /** The transform handles of the current selection, zoom-aware. */
 export function selectionHandleLayout(rt: CanvasRuntime): readonly HandleBox[] {
   const selected = rt.ctx.selectedElements
-  if (selected.length === 0) {
+  // A lone two-point line/arrow has no box, hence no transform handles.
+  if (selected.length === 0 || !hasBoundingBox(selected)) {
     return []
   }
   const frame = selectionFrameOf(selected)

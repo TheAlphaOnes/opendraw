@@ -119,6 +119,11 @@ export type Arrowhead =
 export interface OpenDrawLinearElement extends OpenDrawElementBase {
   type: 'line' | 'arrow'
   points: Point[]
+  /**
+   * 'round' draws the polyline as a smooth curve through its points
+   * (Excalidraw's round lines / "round" arrow type); null keeps it sharp.
+   */
+  roundness: Roundness | null
   /** Head drawn at the first point, or null. Only arrows render heads. */
   startArrowhead: Arrowhead | null
   /** Head drawn at the last point, or null. */
@@ -307,6 +312,8 @@ export interface OpenDrawAppState {
   shapeRoundness: Roundness | null
   /** Heads given to newly drawn arrows. */
   arrowheads: { start: Arrowhead | null; end: Arrowhead | null }
+  /** Shape of newly drawn arrows: curved through their points, or sharp. */
+  arrowType: 'round' | 'sharp'
 }
 
 // ---------------------------------------------------------------------------

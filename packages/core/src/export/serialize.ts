@@ -126,6 +126,8 @@ export function coerceElement(input: unknown): OpenDrawElement | null {
       points: points(input.points),
       startBinding: linearBinding(input.startBinding),
       endBinding: linearBinding(input.endBinding),
+      // Files from before curved lines were drawn straight: absent is sharp.
+      roundness: input.roundness === 'round' ? 'round' : null,
       startArrowhead: arrowhead(input.startArrowhead, null),
       // Files from before arrowheads were configurable: arrows always had
       // an end head, so absent means 'arrow' for them.
@@ -173,7 +175,8 @@ export function normalizeElement(element: OpenDrawElement): OpenDrawElement {
   const missingGroups = !Array.isArray(element.groupIds)
   const missingFrame = !('frameId' in element)
   const linear = element.type === 'line' || element.type === 'arrow'
-  const missingHeads = linear && (!('startArrowhead' in element) || !('endArrowhead' in element))
+  const missingHeads =
+    linear && (!('startArrowhead' in element) || !('endArrowhead' in element) || !('roundness' in element))
   const missingText = element.type === 'text' && (!('originalText' in element) || !('containerId' in element))
   if (!missingGroups && !missingFrame && !missingHeads && !missingText) {
     return element
@@ -184,6 +187,8 @@ export function normalizeElement(element: OpenDrawElement): OpenDrawElement {
     frameId: missingFrame ? null : element.frameId,
   } as OpenDrawElement
   if (missingHeads && (repaired.type === 'line' || repaired.type === 'arrow')) {
+    // Hand-built lines from before curves were straight.
+    repaired.roundness = repaired.roundness ?? null
     repaired.startArrowhead = repaired.startArrowhead ?? null
     repaired.endArrowhead = repaired.endArrowhead === undefined ? (repaired.type === 'arrow' ? 'arrow' : null) : repaired.endArrowhead
   }

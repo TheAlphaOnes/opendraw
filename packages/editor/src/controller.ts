@@ -386,6 +386,11 @@ export class EditorController {
     this.doc.changeRoundness(roundness)
   }
 
+  /** Curved or straight arrows — the selected ones, else the next arrow. */
+  changeArrowType(type: 'round' | 'sharp'): void {
+    this.doc.changeArrowType(type)
+  }
+
   /** Sets one end's head on the selected arrows (or the next arrow's). */
   changeArrowhead(position: 'start' | 'end', arrowhead: Arrowhead | null): void {
     this.doc.changeArrowhead(position, arrowhead)

@@ -11,9 +11,10 @@ import type { OpenDrawBindableShape } from '../elements/binding.js'
 import { isLinearElement } from '../elements/factories.js'
 import type { GroupSelectionChrome } from '../elements/groups.js'
 import { clamp } from '../geometry/points.js'
-import type { HandleBox, LinearHandle, PointerKind, SelectionFrame } from '../interaction/handles.js'
+import type { HandleBox, PointerKind, SelectionFrame } from '../interaction/handles.js'
 import {
   getHandleLayout,
+  hasBoundingBox,
   linearMidpointHandle,
   linearPointHandles,
   POINT_HANDLE_RADIUS,
@@ -22,8 +23,8 @@ import {
 import type { Bounds, OpenDrawAppState, OpenDrawElement, OpenDrawLinearElement } from '../types.js'
 import { applyViewportTransform } from '../viewport.js'
 import type { CanvasSize } from './renderScene.js'
-import { PROPORTIONAL_RADIUS, renderElementShape } from './renderScene.js'
-import { UI } from './theme.js'
+import { cornerRadius, renderElementShape } from './renderScene.js'
+import { themeColor, UI } from './theme.js'
 
 export interface OverlayRenderInput {
   /** The committed selection. Empty when nothing is selected. */
@@ -67,6 +68,7 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
   const { theme, viewport, editingId } = appState
   const zoom = viewport.zoom
   const dark = theme === 'dark'
+  const selectionColor = dark ? UI.selection.dark : UI.selection.light
 
   // The overlay is transparent by design and nothing else wipes it, so each
   // frame starts by clearing the whole bitmap — under the identity transform,
@@ -90,7 +92,7 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
   // dock onto, before the selection chrome (a highlight never reads as a
   // selection). A drag from shape A to shape B outlines both at once.
   for (const candidate of bindingCandidates) {
-    drawBindingHighlight(ctx, candidate, UI.selection, zoom)
+    drawBindingHighlight(ctx, candidate, selectionColor, zoom)
   }
 
   // While text is being edited — free text, or a label inside its selected
@@ -101,7 +103,7 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
   // The edited group keeps its dashed box even with nothing selected, so
   // the user always sees which group they are inside.
   if (groupChrome?.editingBounds && !isEditingText) {
-    drawDashedBounds(ctx, groupChrome.editingBounds, UI.selection, zoom)
+    drawDashedBounds(ctx, groupChrome.editingBounds, selectionColor, zoom)
   }
 
   if (selectedElements.length > 0 && !isEditingText) {
@@ -113,8 +115,12 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
       const accent =
         selectedElements.length === 1 && selectedElements[0]!.locked
           ? UI.locked
-          : UI.selection
-      if (selectedElements.length === 1) {
+          : selectionColor
+      const boxed = hasBoundingBox(selectedElements)
+      if (!boxed) {
+        // A lone two-point line or arrow: no box, no transform handles —
+        // only its point handles below (Excalidraw's hasBoundingBox).
+      } else if (selectedElements.length === 1) {
         drawSingleBorder(ctx, frame, accent, zoom)
       } else {
         // Excalidraw's multi-selection: every element selected on its own
@@ -124,7 +130,7 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
           if (groupChrome?.individualIds.has(element.id)) {
             const own = selectionFrameOf([element])
             if (own) {
-              drawSingleBorder(ctx, own, element.locked ? UI.locked : UI.selection, zoom)
+              drawSingleBorder(ctx, own, element.locked ? UI.locked : selectionColor, zoom)
             }
           }
         }
@@ -136,19 +142,21 @@ export function renderOverlay(ctx: CanvasRenderingContext2D, input: OverlayRende
         }
         drawGroupBorder(ctx, frame, accent, zoom)
       }
-      drawHandles(ctx, getHandleLayout(frame, { zoom, pointer }), accent, zoom, dark)
+      if (boxed) {
+        drawHandles(ctx, getHandleLayout(frame, { zoom, pointer }), accent, zoom, dark)
+      }
       // A lone selected line/arrow also shows its point handles: filled
       // endpoint circles that drag tips, plus the hollow midpoint that
       // inserts a point — Excalidraw's selected-linear affordance.
       const only = selectedElements.length === 1 ? selectedElements[0]! : null
       if (only && isLinearElement(only)) {
-        drawLinearPointHandles(ctx, only, accent, zoom, dark)
+        drawLinearPointHandles(ctx, only, zoom, dark)
       }
     }
   }
 
   if (marquee) {
-    drawMarquee(ctx, marquee, UI.selection, zoom)
+    drawMarquee(ctx, marquee, selectionColor, zoom)
   }
   ctx.restore()
 }
@@ -281,44 +289,40 @@ function appendRoundRect(
 function drawLinearPointHandles(
   ctx: CanvasRenderingContext2D,
   element: OpenDrawLinearElement,
-  color: string,
   zoom: number,
   dark: boolean,
 ): void {
+  // Excalidraw's renderSingleLinearPoint: themed white dots ringed in
+  // #5e5ad8; the segment midpoint is a ring-less lavender "phantom" dot.
   const radius = POINT_HANDLE_RADIUS / zoom
   for (const handle of linearPointHandles(element)) {
-    drawPointDot(ctx, handle, radius, color, zoom, dark)
+    drawPointDot(ctx, handle.at, radius, themeColor('rgba(255, 255, 255, 0.9)', dark), themeColor(UI.point, dark), zoom)
   }
   const mid = linearMidpointHandle(element)
   if (mid) {
-    ctx.save()
-    ctx.beginPath()
-    ctx.arc(mid.at.x, mid.at.y, (POINT_HANDLE_RADIUS - 1) / zoom, 0, Math.PI * 2)
-    ctx.strokeStyle = color
-    ctx.lineWidth = 1.5 / zoom
-    ctx.setLineDash([])
-    ctx.stroke()
-    ctx.restore()
+    drawPointDot(ctx, mid.at, radius, themeColor(UI.phantomPoint, dark), null, zoom)
   }
 }
 
 function drawPointDot(
   ctx: CanvasRenderingContext2D,
-  handle: LinearHandle,
+  at: { x: number; y: number },
   radius: number,
-  color: string,
+  fill: string,
+  stroke: string | null,
   zoom: number,
-  dark: boolean,
 ): void {
   ctx.save()
   ctx.beginPath()
-  ctx.arc(handle.at.x, handle.at.y, radius, 0, Math.PI * 2)
-  ctx.fillStyle = dark ? HANDLE_FILL_DARK : HANDLE_FILL_LIGHT
-  ctx.strokeStyle = color
-  ctx.lineWidth = 1 / zoom
-  ctx.setLineDash([])
+  ctx.arc(at.x, at.y, radius, 0, Math.PI * 2)
+  ctx.fillStyle = fill
   ctx.fill()
-  ctx.stroke()
+  if (stroke) {
+    ctx.strokeStyle = stroke
+    ctx.lineWidth = 1 / zoom
+    ctx.setLineDash([])
+    ctx.stroke()
+  }
   ctx.restore()
 }
 
@@ -384,8 +388,8 @@ function drawBindingHighlight(
   } else if (shape.type === 'diamond') {
     if (shape.roundness === 'round') {
       // Same cubic corners the renderer's rounded diamond draws.
-      const vr = (width / 2) * PROPORTIONAL_RADIUS
-      const hr = (height / 2) * PROPORTIONAL_RADIUS
+      const vr = cornerRadius(width / 2, 'diamond')
+      const hr = cornerRadius(height / 2, 'diamond')
       const topX = width / 2
       const rightY = height / 2
       ctx.moveTo(topX + vr, hr)
@@ -405,7 +409,7 @@ function drawBindingHighlight(
       ctx.closePath()
     }
   } else if (shape.type === 'rectangle' && shape.roundness === 'round') {
-    appendRoundRect(ctx, 0, 0, width, height, Math.min(width, height) * PROPORTIONAL_RADIUS)
+    appendRoundRect(ctx, 0, 0, width, height, cornerRadius(Math.min(width, height), 'rectangle'))
   } else {
     // Sharp rectangle, or the text element's frame box.
     ctx.rect(0, 0, width, height)

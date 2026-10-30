@@ -56,6 +56,7 @@ export function arrowheadPoints(
   element: Pick<OpenDrawLinearElement, 'points' | 'strokeWidth'>,
   position: Position,
   arrowhead: Arrowhead,
+  body?: Drawable,
 ): number[] | null {
   const { points } = element
   if (points.length < 2) {
@@ -67,8 +68,14 @@ export function arrowheadPoints(
   if (length === 0) {
     return null
   }
-  const nx = (tip.x - previous.x) / length
-  const ny = (tip.y - previous.y) / length
+  // The head points along the rendered stroke where it meets the tip — for
+  // a curve, its tangent there, not the straight last segment.
+  const direction = (body && strokeDirection(body, position)) ?? {
+    x: (tip.x - previous.x) / length,
+    y: (tip.y - previous.y) / length,
+  }
+  const nx = direction.x
+  const ny = direction.y
   const lengthMultiplier = arrowhead === 'diamond' || arrowhead === 'diamond_outline' ? 0.25 : 0.5
   const size = Math.min(arrowheadSize(arrowhead), length * lengthMultiplier)
   const tx = tip.x
@@ -94,6 +101,41 @@ export function arrowheadPoints(
 }
 
 /**
+ * Direction of the rendered stroke arriving at a tip — Excalidraw's
+ * getArrowheadPoints: take the stroke's first (start) or last (end) cubic
+ * bezier, evaluate it at t = 0.3 and point from there to the tip.
+ */
+function strokeDirection(body: Drawable, position: Position): { x: number; y: number } | null {
+  const ops = body.sets.find((set) => set.type === 'path')?.ops
+  if (!ops || ops.length < 2) {
+    return null
+  }
+  const index = position === 'start' ? 1 : ops.length - 1
+  const op = ops[index]!
+  const prev = ops[index - 1]!
+  if (op.op !== 'bcurveTo' || op.data.length !== 6) {
+    return null
+  }
+  const [c1x, c1y, c2x, c2y, ex, ey] = op.data as [number, number, number, number, number, number]
+  const p0 =
+    prev.op === 'move' ? [prev.data[0]!, prev.data[1]!] : prev.op === 'bcurveTo' ? [prev.data[4]!, prev.data[5]!] : [0, 0]
+  // Excalidraw's (reversed-weight) cubic: B(0.3) lands near the far end.
+  const at = (t: number, i: 0 | 1): number =>
+    Math.pow(1 - t, 3) * (i === 0 ? ex : ey) +
+    3 * t * Math.pow(1 - t, 2) * (i === 0 ? c2x : c2y) +
+    3 * Math.pow(t, 2) * (1 - t) * (i === 0 ? c1x : c1y) +
+    p0[i]! * Math.pow(t, 3)
+  const [x2, y2] = position === 'start' ? [p0[0]!, p0[1]!] : [ex, ey]
+  const x1 = at(0.3, 0)
+  const y1 = at(0.3, 1)
+  const distance = Math.hypot(x2 - x1, y2 - y1)
+  if (distance === 0) {
+    return null
+  }
+  return { x: (x2 - x1) / distance, y: (y2 - y1) / distance }
+}
+
+/**
  * Rough.js drawables for one head. Heads always draw with a solid stroke
  * and at most roughness 1 (Excalidraw keeps caps legible); filled heads
  * use the stroke color, outline heads the canvas background.
@@ -106,8 +148,9 @@ export function arrowheadDrawables(
   options: Options,
   strokeColor: string,
   backgroundColor: string,
+  body?: Drawable,
 ): Drawable[] {
-  const head = arrowheadPoints(element, position, arrowhead)
+  const head = arrowheadPoints(element, position, arrowhead, body)
   if (!head) {
     return []
   }

@@ -29,7 +29,7 @@ export const TRANSPARENT = 'transparent'
 export const DEFAULT_ELEMENT_STYLE: ElementStyle = {
   strokeColor: '#1e1e1e',
   backgroundColor: TRANSPARENT,
-  fillStyle: 'hachure',
+  fillStyle: 'solid',
   strokeWidth: 2,
   strokeStyle: 'solid',
   roughness: 1,
@@ -46,24 +46,14 @@ export const DEFAULT_TEXT_STYLE: TextStyle = {
 // Palette — the swatches shipped with the default UI
 // ---------------------------------------------------------------------------
 
-/** Stroke swatches, light-friendly (dark theme reuses the same inks). */
-export const STROKE_PALETTE: readonly string[] = [
-  '#1e1e1e',
-  '#e03131',
-  '#2f9e44',
-  '#1971c2',
-  '#f08c00',
-  '#6741d9',
-]
+/**
+ * Excalidraw's quick-pick strips (DEFAULT_ELEMENT_STROKE_PICKS /
+ * DEFAULT_ELEMENT_BACKGROUND_PICKS): five each, in Excalidraw's order.
+ * The dark theme reuses the same inks (the renderer dark-filters them).
+ */
+export const STROKE_PALETTE: readonly string[] = ['#1e1e1e', '#e03131', '#2f9e44', '#1971c2', '#f08c00']
 
-export const BACKGROUND_PALETTE: readonly string[] = [
-  'transparent',
-  '#ffc9c9',
-  '#b2f2bb',
-  '#a5d8ff',
-  '#ffec99',
-  '#d0bfff',
-]
+export const BACKGROUND_PALETTE: readonly string[] = ['transparent', '#ffc9c9', '#b2f2bb', '#a5d8ff', '#ffec99']
 
 /** Canvas background defaults per theme. */
 export const CANVAS_BACKGROUND = {

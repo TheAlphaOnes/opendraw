@@ -176,10 +176,11 @@ test('outlines the shape an in-flight arrow tip would dock onto', async ({ page 
   await page.mouse.move(at(box, 390, 210).x, at(box, 390, 210).y)
   await settleFrames(page)
 
-  // The highlight strokes the shape's own outline in the selection teal.
+  // The highlight strokes the shape's own outline in Excalidraw's
+  // selection color (#6965db).
   const during = await overlayPixelAt(page, 390, 150)
   expect(during[3]).toBe(255)
-  expect(during.slice(0, 3)).toEqual([12, 133, 153])
+  expect(during.slice(0, 3)).toEqual([105, 101, 219])
 
   await page.mouse.up()
   await settleFrames(page)
@@ -187,31 +188,29 @@ test('outlines the shape an in-flight arrow tip would dock onto', async ({ page 
   expect((await overlayPixelAt(page, 390, 150))[3]).toBe(0)
 })
 
-test('rounds a selected rectangle from the style panel', async ({ page }) => {
+test('draws rounded rectangles by default and toggles their edges', async ({ page }) => {
   await openEditor(page)
   const box = await canvasBox(page)
 
   await pickTool(page, 'Rectangle (2)')
   await drag(page, at(box, 300, 150), at(box, 480, 270))
   await expect.poll(async () => (await scene(page)).elements.length).toBe(1)
-  const rect = (await scene(page)).elements[0]!
-  expect(rect.roundness ?? null).toBe(null)
+  // Excalidraw's default: new shapes are round (currentItemRoundness).
+  expect((await scene(page)).elements[0]!.roundness).toBe('round')
 
+  // The corner arc's closest pass is ~9px out along the diagonal, so the
+  // window right at the corner stays quiet.
+  await settleFrames(page)
+  expect(await staticInkPixels(page, 300, 150, 6, 6)).toBeLessThanOrEqual(3)
+
+  await page.getByRole('radio', { name: 'Sharp corners' }).click()
+  await expect.poll(async () => (await scene(page)).elements[0]!.roundness ?? null).toBe(null)
   // Sharp corners: both edges run straight through the corner window.
   await settleFrames(page)
   expect(await staticInkPixels(page, 300, 150, 6, 6)).toBeGreaterThan(8)
 
   await page.getByRole('radio', { name: 'Rounded corners' }).click()
   await expect.poll(async () => (await scene(page)).elements[0]!.roundness).toBe('round')
-
-  // The corner arc's closest pass is ~10px out along the diagonal, so the
-  // window right at the corner goes quiet.
-  await settleFrames(page)
-  expect(await staticInkPixels(page, 300, 150, 6, 6)).toBeLessThanOrEqual(3)
-
-  // Toggling back patches roundness to null on the same element.
-  await page.getByRole('radio', { name: 'Sharp corners' }).click()
-  await expect.poll(async () => (await scene(page)).elements[0]!.roundness ?? null).toBe(null)
 })
 
 test('frames a line drawn up-left around its true bounds', async ({ page }) => {
